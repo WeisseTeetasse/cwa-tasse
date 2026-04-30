@@ -12,7 +12,6 @@ This module provides a client for interacting with Hardcover's GraphQL API to:
 - Track reading progress
 - Sync book annotations/highlights
 - Manage reading journal entries
-- Update book status (Want to Read, Reading, Read)
 """
 
 from datetime import datetime
@@ -148,19 +147,15 @@ class HardcoverClient:
         response = self.execute(query, variables)
         return next(iter(response.get("me")[0].get("user_books")), None)
 
-    # TODO Add option for autocreate if missing books instead of forcing it.
     def update_reading_progress(self, identifiers, progress_percent):
         ids = self.parse_identifiers(identifiers)
         if len(ids) != 0:
             book = self.get_user_book(ids)
-            # Book doesn't exist, add it in Reading status
             if not book:
-                book = self.add_book(ids, status=STATUS_READING)
-            # Book is either WTR or Read, and we aren't finished reading
-            if book.get("status_id") != STATUS_READING and progress_percent != MAX_PROGRESS_PERCENTAGE:
-                book = self.change_book_status(book, STATUS_READING)
-            # Book is already marked as read, and we are also done
-            if book.get("status_id") == STATUS_READ and progress_percent == MAX_PROGRESS_PERCENTAGE:
+                log.info("Book not found on Hardcover, skipping progress sync")
+                return
+            if book.get("status_id") != STATUS_READING:
+                log.info("Book is not currently reading on Hardcover, skipping progress sync")
                 return
             pages = book.get("edition", {}).get("pages", 0)
             if pages:
@@ -189,14 +184,8 @@ class HardcoverClient:
                         "startedAt": read.get(
                             "started_at", datetime.now().strftime("%Y-%m-%d")
                         ),
-                        "finishedAt": (
-                            datetime.now().strftime("%Y-%m-%d")
-                            if progress_percent == MAX_PROGRESS_PERCENTAGE
-                            else None
-                        ),
+                        "finishedAt": read.get("finished_at"),
                     }
-                    if progress_percent == MAX_PROGRESS_PERCENTAGE:
-                        self.change_book_status(book, STATUS_READ)
                     self.execute(query=mutation, variables=variables)
             return
         else:

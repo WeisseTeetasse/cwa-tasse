@@ -17,7 +17,6 @@ from sqlalchemy.sql.expression import func, true
 from . import calibre_db, config, db, logger, ub
 from .render_template import render_title_template
 from .usermanagement import login_required_if_no_ano, user_login_required
-from .services import hardcover
 log = logger.create()
 
 shelf = Blueprint('shelf', __name__)
@@ -102,20 +101,6 @@ def add_to_shelf(shelf_id, book_id):
             return redirect(request.environ["HTTP_REFERER"])
         else:
             return redirect(url_for('web.index'))
-    if shelf.kobo_sync and config.config_hardcover_sync and bool(hardcover):
-        try:
-            hardcoverClient = hardcover.HardcoverClient(current_user.hardcover_token)
-            # Will add the book to Hardcover if it doesn't exist,
-            # and leave it alone otherwise
-            # (updating status is handled in update_reading_progress
-            # and the book may be blacklisted from syncing)
-            if not hardcoverClient.get_user_book(book.identifiers):
-                hardcoverClient.add_book(book.identifiers)
-        except hardcover.MissingHardcoverToken:
-            log.info(f"User {current_user.name} has no Hardcover token, cannot add to Hardcover")
-        except Exception as e:
-            log.debug(f"Failed to create Hardcover client for {current_user.name}: {e}")
-
     return "", 204
 
 
