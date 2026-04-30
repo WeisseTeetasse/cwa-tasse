@@ -339,6 +339,10 @@ def HandleSyncRequest():
 
     changed_reading_states = changed_reading_states.filter(
         and_(ub.KoboReadingState.user_id == current_user.id,
+             ub.KoboReadingState.book_id.in_(
+                 ub.session.query(ub.KoboSyncedBooks.book_id)
+                 .filter(ub.KoboSyncedBooks.user_id == current_user.id)
+             ),
              ub.KoboReadingState.book_id.notin_(reading_states_in_new_entitlements)))\
         .order_by(ub.KoboReadingState.last_modified)
     log.debug("Kobo Sync: changed states: {}".format(changed_reading_states.count()))
