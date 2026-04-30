@@ -905,8 +905,10 @@ def render_magic_shelf(shelf_id, sort_param, page):
     # Build sort order - order[0] is a list, we need to unpack it
     sort_order = order[0] if order and len(order) > 0 else []
     
-    # Check for cache bypass
-    bypass_cache = request.args.get('refresh') == '1'
+    # Magic shelves are expected to reflect changing book metadata/read state
+    # whenever the user opens them in the web UI. Other callers can still use
+    # the shared cache for bulk/sync paths.
+    bypass_cache = True
 
     # Get books with pagination
     try:
@@ -959,15 +961,19 @@ def render_magic_shelf(shelf_id, sort_param, page):
             ub.HiddenMagicShelfTemplate.shelf_id == shelf_id
         ).first() is not None
     
-    return render_title_template('index.html', 
-                                 entries=entries, 
-                                 pagination=pagination,
-                                 title=_("Magic Shelf&nbsp&nbsp&nbsp—&nbsp&nbsp&nbsp%(icon)s %(name)s", icon=shelf.icon, name=shelf.name), 
-                                 page="magicshelf",
-                                 shelf=shelf,
-                                 is_hidden_shelf=is_hidden,
-                                 id=shelf_id, 
-                                 order=order[1])
+    response = make_response(render_title_template('index.html',
+                                                   entries=entries,
+                                                   pagination=pagination,
+                                                   title=_("Magic Shelf&nbsp&nbsp&nbsp—&nbsp&nbsp&nbsp%(icon)s %(name)s", icon=shelf.icon, name=shelf.name),
+                                                   page="magicshelf",
+                                                   shelf=shelf,
+                                                   is_hidden_shelf=is_hidden,
+                                                   id=shelf_id,
+                                                   order=order[1]))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 # ################################### Health Check ##################################################################
