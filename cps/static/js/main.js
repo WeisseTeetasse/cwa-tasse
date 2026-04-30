@@ -123,7 +123,13 @@ $(".container-fluid").bind('drop', function (e) {
         var files = e.originalEvent.dataTransfer.files;
         var test = $("#btn-upload")[0].accept;
         $(this).css('background', '');
-        const dt = new DataTransfer();
+        var dt;
+        try {
+            dt = new DataTransfer();
+        } catch (error) {
+            console.warn("Drag-and-drop upload is not supported by this browser.", error);
+            return false;
+        }
         jQuery.each(files, function (index, item) {
             if (test.toLowerCase().indexOf(item.name.substr(item.name.lastIndexOf('.')).toLowerCase()) !== -1) {
                 dt.items.add(item);
@@ -150,21 +156,23 @@ $("#btn-upload-format").change(function() {
 });
 
 
-$("#form-upload").uploadprogress({
-    redirect_url: getPath() + "/",
-    uploadedMsg: $("#form-upload").data("message"),
-    modalTitle: $("#form-upload").data("title"),
-    modalFooter: $("#form-upload").data("footer"),
-    modalTitleFailed: $("#form-upload").data("failed")
-});
+if ($.fn.uploadprogress) {
+    $("#form-upload").uploadprogress({
+        redirect_url: getPath() + "/",
+        uploadedMsg: $("#form-upload").data("message"),
+        modalTitle: $("#form-upload").data("title"),
+        modalFooter: $("#form-upload").data("footer"),
+        modalTitleFailed: $("#form-upload").data("failed")
+    });
 
-$("#form-upload-format").uploadprogress({
-    redirect_url: getPath() + "/",
-    uploadedMsg: $("#form-upload-format").data("message"),
-    modalTitle: $("#form-upload-format").data("title"),
-    modalFooter: $("#form-upload-format").data("footer"),
-    modalTitleFailed: $("#form-upload-format").data("failed")
-});
+    $("#form-upload-format").uploadprogress({
+        redirect_url: getPath() + "/",
+        uploadedMsg: $("#form-upload-format").data("message"),
+        modalTitle: $("#form-upload-format").data("title"),
+        modalFooter: $("#form-upload-format").data("footer"),
+        modalTitleFailed: $("#form-upload-format").data("failed")
+    });
+}
 
 $(document).ready(function() {
     var inp = $('#query').first()

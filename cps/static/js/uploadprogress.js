@@ -13,10 +13,7 @@
     $.support.xhrFileUpload = !!(window.FileReader && window.ProgressEvent);
     $.support.xhrFormData = !!window.FormData;
 
-    var ua = (navigator && navigator.userAgent) ? navigator.userAgent : "";
-    var isSafari = /safari/i.test(ua) && !/chrome|chromium|crios|android/i.test(ua);
-
-    if (!$.support.xhrFileUpload || !$.support.xhrFormData || isSafari) {
+    if (!$.support.xhrFileUpload || !$.support.xhrFormData) {
         // skip decorating form
         return;
     }
@@ -109,7 +106,7 @@
             }
             this.setProgress(100);
             var url;
-            var contentType = xhr.getResponseHeader("Content-Type");
+            var contentType = xhr.getResponseHeader("Content-Type") || "";
 
             // make it possible to return the redirect URL in
             // a JSON response
@@ -132,7 +129,7 @@
             this.$modalBar.addClass("progress-bar-danger");
             this.$modalFooter.show();
 
-            var contentType = xhr.getResponseHeader("Content-Type");
+            var contentType = xhr.getResponseHeader("Content-Type") || "";
             // Write the error response to the document.
             if (xhr.status === 502 || xhr.status === 0) {
                 if (xhr.statusText) {
