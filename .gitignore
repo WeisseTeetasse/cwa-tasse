@@ -18,6 +18,7 @@ replit.nix
 .replit
 .breakpoints
 .venv
+cwa-fork-latest.tar.gz
 .vscode
 .history
 cwa-wiki/

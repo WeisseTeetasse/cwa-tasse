@@ -1,5 +1,11 @@
 # Calibre-Web Automated _(formerly Calibre-Web Automator)_
 
+> [!IMPORTANT]
+> This repository is a personal fork of [crocodilestick/Calibre-Web-Automated](https://github.com/crocodilestick/Calibre-Web-Automated).
+> It carries local patches for Kobo, KOReader, Hardcover, Safari compatibility, and Magic Shelf behavior.
+> Additional code in this fork is 100% AI-generated.
+> See [FORK_CHANGES.md](FORK_CHANGES.md) for the maintained patch list.
+
 ![Calibre-Web Automated](README_images/CWA-banner.png "Calibre-Web Automated")
 
 ## Making Calibre-Web your _dream_, all-in-one self-hosted digital library solution.
