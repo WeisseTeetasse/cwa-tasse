@@ -27,7 +27,12 @@
         {% for token in tokens %}
         <tr>
           <td>
-            <strong>{{ token.token_name or _('Kobo Device %(num)s', num=token.id) }}</strong><br>
+            <div class="input-group input-group-sm" style="min-width: 180px;">
+              <input type="text" class="form-control kobo-token-name" value="{{ token.token_name or _('Kobo Device %(num)s', num=token.id) }}" maxlength="80" data-original-value="{{ token.token_name or _('Kobo Device %(num)s', num=token.id) }}">
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default kobo-token-rename" data-user-id="{{ user_id }}" data-token-id="{{ token.id }}">{{ _('Save') }}</button>
+              </span>
+            </div>
             <small>{{ _('Token ID') }} {{ token.id }}</small>
           </td>
           <td>{{ _('%(count)s books synced', count=token.synced_books_count) }}</td>

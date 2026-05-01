@@ -866,6 +866,27 @@ $(function() {
         );
     });
 
+    $("#modal_kobo_token").on("click", ".kobo-token-rename", function() {
+        var $button = $(this);
+        var $modalBody = $("#modal_kobo_token").find(".modal-body");
+        var $input = $button.closest("td").find(".kobo-token-name");
+        $.ajax({
+            method: "post",
+            url: getPath() + "/kobo_auth/rename/" + $button.data("user-id") + "/" + $button.data("token-id"),
+            data: {token_name: $input.val()},
+            success: function() {
+                reloadKoboTokenManager($modalBody);
+            }
+        });
+    });
+
+    $("#modal_kobo_token").on("keydown", ".kobo-token-name", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            $(this).closest("td").find(".kobo-token-rename").trigger("click");
+        }
+    });
+
     $("#config_delete_kobo_token").click(function() {
         confirmDialog(
             $(this).attr('id'),

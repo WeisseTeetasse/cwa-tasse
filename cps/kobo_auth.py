@@ -159,6 +159,28 @@ def full_sync_token(user_id, token_id):
     return jsonify({"type": "success", "message": _("{} sync entries deleted").format(count)})
 
 
+@kobo_auth.route("/rename/<int:user_id>/<int:token_id>", methods=["POST"])
+@user_login_required
+def rename_token(user_id, token_id):
+    if user_id != current_user.id and not current_user.role_admin():
+        return abort(403)
+
+    token = ub.session.query(ub.RemoteAuthToken).filter(
+        ub.RemoteAuthToken.user_id == user_id,
+        ub.RemoteAuthToken.id == token_id,
+        ub.RemoteAuthToken.token_type == 1
+    ).first()
+    if not token:
+        return abort(404)
+
+    token_name = (request.form.get("token_name") or "").strip()
+    if not token_name:
+        token_name = _("Kobo Device %(num)s", num=token.id)
+    token.token_name = token_name[:80]
+    ub.session_commit()
+    return jsonify({"type": "success", "token_name": token.token_name})
+
+
 def get_kobo_tokens_for_user(user_id):
     token_rows = ub.session.query(ub.RemoteAuthToken).filter(
         ub.RemoteAuthToken.user_id == user_id,
@@ -185,6 +207,10 @@ def get_auth_token():
 
 def get_auth_token_id():
     return g.get("auth_token_id")
+
+
+def get_auth_token_name():
+    return g.get("auth_token_name") or _("Unknown Kobo Device")
 
 
 def register_url_value_preprocessor(kobo):
@@ -217,6 +243,14 @@ def requires_kobo_auth(f):
                 auth_token_row.last_used = datetime.now()
                 ub.session_commit()
                 g.auth_token_id = auth_token_row.id
+                g.auth_token_name = auth_token_row.token_name or _("Kobo Device %(num)s", num=auth_token_row.id)
+                log.info(
+                    "Kobo request from device '%s' (token %s): %s %s",
+                    g.auth_token_name,
+                    auth_token_row.id,
+                    request.method,
+                    request.path,
+                )
                 login_user(user)
                 [limiter.limiter.storage.clear(k.key) for k in limiter.current_limits]
                 return f(*args, **kwargs)

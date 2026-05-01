@@ -44,7 +44,7 @@ from .kobo_cover_cache import build_cover_image_id, normalize_cover_uuid
 from .helper import get_download_link
 from .services import SyncToken as SyncToken, hardcover
 from .web import download_required
-from .kobo_auth import requires_kobo_auth, get_auth_token, get_auth_token_id
+from .kobo_auth import requires_kobo_auth, get_auth_token, get_auth_token_id, get_auth_token_name
 
 KOBO_FORMATS = {"KEPUB": ["KEPUB"], "EPUB": ["EPUB3", "EPUB"]}
 KOBO_STOREAPI_URL = "https://storeapi.kobo.com"
@@ -161,7 +161,7 @@ def HandleSyncRequest():
 
     sync_token = SyncToken.SyncToken.from_headers(request.headers)
     current_kobo_token_id = get_auth_token_id()
-    log.info("Kobo library sync request received")
+    log.info("Kobo library sync request received from device '%s' (token %s)", get_auth_token_name(), current_kobo_token_id)
     log.debug("SyncToken: {}".format(sync_token))
     log.debug("Download link format {}".format(get_download_url_for_book('[bookid]', '[bookformat]')))
     if not current_app.wsgi_app.is_proxied:
