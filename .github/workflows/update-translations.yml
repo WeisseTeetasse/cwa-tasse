@@ -1,4 +1,4 @@
-name: Update Translations and Wiki Status
+name: Update Translations
 
 on:
   push:
@@ -69,22 +69,3 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/ghcr-image.yml/dispatches \
             -d "{\"ref\":\"main\"}"
-
-      - name: Clone wiki repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git wiki-tmp
-
-      - name: Generate translation status table (in wiki repo)
-        run: |
-          python scripts/generate_translation_status.py wiki-tmp/Contributing-Translations.md
-
-      - name: Commit and push wiki update
-        run: |
-          cd wiki-tmp
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Contributing-Translations.md
-          git commit -m "Update translation status table [skip ci]" || echo "No changes to commit"
-          git push
