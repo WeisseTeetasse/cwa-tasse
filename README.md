@@ -10,9 +10,9 @@
 
 ## Making Calibre-Web your _dream_, all-in-one self-hosted digital library solution.
 
-![Docker Pulls](https://img.shields.io/docker/pulls/crocodilestick/calibre-web-automated)
-![GitHub Release](https://img.shields.io/github/v/release/crocodilestick/calibre-web-automated)
-![GitHub commits since latest release](https://img.shields.io/github/commits-since/crocodilestick/calibre-web-automated/latest)
+![GHCR Image](https://img.shields.io/badge/container-ghcr.io%2Fweisseteetasse%2Fcwa--tasse-blue)
+![GitHub Release](https://img.shields.io/github/v/release/WeisseTeetasse/cwa-tasse)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/WeisseTeetasse/cwa-tasse/latest)
 ![OAuth 2.0 + OIDC](https://img.shields.io/badge/OAuth-2.0%20%2B%20OIDC-blue?style=flat&logo=oauth)
 
 # Supporting the Project ❤️
@@ -325,7 +325,7 @@ Please suggest any ideas or wishes you might have! we're open to anything!
 1. Download the Docker Compose template file using the command below:
 
 ```
-curl -OL https://raw.githubusercontent.com/crocodilestick/calibre-web-automated/main/docker-compose.yml
+curl -OL https://raw.githubusercontent.com/WeisseTeetasse/cwa-tasse/main/docker-compose.yml
 ```
 
 2. Move the compose file to an empty folder (e.g. ~/docker/calibre-web-automated/docker-compose.yml). This will be used to store the server data and library
@@ -349,7 +349,7 @@ And that's you off to the races! 🥳 HOWEVER to avoid potential problems and en
 ---
 services:
   calibre-web-automated:
-    image: crocodilestick/calibre-web-automated:latest
+    image: ghcr.io/weisseteetasse/cwa-tasse:latest
     container_name: calibre-web-automated
     environment:
       # Only change these if you know what you're doing

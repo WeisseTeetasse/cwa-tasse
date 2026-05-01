@@ -52,7 +52,7 @@ Scripts use **filesystem locks** to prevent concurrent execution (e.g., `ingest_
 ## Development Workflows
 
 ### Local Development Setup
-1. **Build custom image**: Edit and run `build.sh` (prompts for repo dir, Docker Hub username, version)
+1. **Build custom image**: Use the GHCR workflow or run `docker build` locally with a `ghcr.io/weisseteetasse/cwa-tasse` tag
 2. **Development compose**: Use `docker-compose.yml.dev` with volume mounts for live-reload:
    ```yaml
    volumes:
