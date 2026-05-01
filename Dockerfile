@@ -23,21 +23,20 @@
 ARG CALIBRE_RELEASE=9.1.0
 ARG KEPUBIFY_RELEASE=v4.0.4
 
+FROM python:3.13-slim-bookworm AS python-runtime
+
 FROM ghcr.io/linuxserver/baseimage-ubuntu:noble AS dependencies
 
 ARG CALIBRE_RELEASE
 ARG KEPUBIFY_RELEASE
+
+COPY --from=python-runtime /usr/local /usr/local
 
 # Set the default shell for the following RUN instructions to bash instead of sh
 SHELL ["/bin/bash", "-c"]
 
 # STEP 1 - Install Required Packages
 RUN \
-  # STEP 1.1 - Add deadsnakes PPA for Python 3.13 and install required apt packages
-  echo "**** add deadsnakes PPA for Python 3.13 ****" && \
-  apt-get update && \
-  apt-get install -y --no-install-recommends ca-certificates && \
-  echo "deb [trusted=yes] http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble main" > /etc/apt/sources.list.d/deadsnakes.list && \
   apt-get update && \
   echo "**** install build packages ****" && \
   apt-get install -y --no-install-recommends \
@@ -45,23 +44,31 @@ RUN \
   libldap2-dev \
   libsasl2-dev \
   gettext \
-  python3.13-dev \
-  python3.13-venv \
   curl && \
   echo "**** install runtime packages ****" && \
   apt-get install -y --no-install-recommends \
+  ca-certificates \
   imagemagick \
   ghostscript \
+  libbz2-1.0 \
+  libexpat1 \
+  libffi8 \
   libldap2 \
+  liblzma5 \
   libmagic1 \
+  libncursesw6 \
+  libreadline8 \
   libsasl2-2 \
+  libsqlite3-0 \
+  libssl3 \
   libxi6 \
   libxslt1.1 \
   xdg-utils \
   inotify-tools \
-  python3.13 \
   nano \
   sqlite3 \
+  uuid-runtime \
+  zlib1g \
   zip && \
   # STEP 1.2 - Install additional Calibre required packages
   apt-get install -y --no-install-recommends \
@@ -95,9 +102,8 @@ RUN \
   cd / && \
   rm -rf /tmp/lsof* && \
   # Create python3 symlink to point to python3.13
-  ln -sf /usr/bin/python3.13 /usr/bin/python3 && \
-  # Install pip for Python 3.13
-  curl -sS https://bootstrap.pypa.io/get-pip.py | python3.13
+  ln -sf /usr/local/bin/python3.13 /usr/bin/python3.13 && \
+  ln -sf /usr/local/bin/python3.13 /usr/bin/python3
 
 # STEP 2 - Set up Python virtual environment
 RUN \
@@ -181,34 +187,39 @@ LABEL maintainer="CrocodileStick"
 SHELL ["/bin/bash", "-c"]
 
 # Copy installed dependencies from the dependencies stage
+COPY --from=python-runtime /usr/local /usr/local
 COPY --from=dependencies /lsiopy /lsiopy
 COPY --from=dependencies /usr/bin/kepubify /usr/bin/kepubify
 COPY --from=dependencies /app/calibre /app/calibre
 COPY --from=dependencies /usr/bin/lsof /usr/bin/lsof
-COPY --from=dependencies /usr/bin/python3.13 /usr/bin/python3.13
-COPY --from=dependencies /usr/lib/python3.13 /usr/lib/python3.13
 
 # Install only runtime packages (no build tools)
 RUN \
-  echo "**** add deadsnakes PPA for Python 3.13 runtime ****" && \
-  apt-get update && \
-  apt-get install -y --no-install-recommends ca-certificates && \
-  echo "deb [trusted=yes] http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble main" > /etc/apt/sources.list.d/deadsnakes.list && \
   apt-get update && \
   echo "**** install runtime packages ****" && \
   apt-get install -y --no-install-recommends \
+  ca-certificates \
   imagemagick \
   ghostscript \
+  libbz2-1.0 \
+  libexpat1 \
+  libffi8 \
   libldap2 \
+  liblzma5 \
   libmagic1 \
+  libncursesw6 \
+  libreadline8 \
   libsasl2-2 \
+  libsqlite3-0 \
+  libssl3 \
   libxi6 \
   libxslt1.1 \
   xdg-utils \
   inotify-tools \
-  python3.13 \
   nano \
   sqlite3 \
+  uuid-runtime \
+  zlib1g \
   zip \
   gettext \
   libasound2t64 \
@@ -229,7 +240,8 @@ RUN \
   xz-utils \
   curl && \
   # Create python3 symlink to point to python3.13
-  ln -sf /usr/bin/python3.13 /usr/bin/python3 && \
+  ln -sf /usr/local/bin/python3.13 /usr/bin/python3.13 && \
+  ln -sf /usr/local/bin/python3.13 /usr/bin/python3 && \
   # Cleanup
   apt-get -y autoremove && \
   rm -rf \
