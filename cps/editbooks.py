@@ -1500,11 +1500,19 @@ def edit_book_ratings(to_save, book):
 
 def edit_book_tags(tags, book):
     if tags is not None:
+        old_tags = [tag.name for tag in book.tags]
         input_tags = tags.split(',')
         input_tags = list(map(lambda it: strip_whitespaces(it), input_tags))
         # Remove duplicates
         input_tags = helper.uniq(input_tags)
-        return modify_database_object(input_tags, book.tags, db.Tags, calibre_db.session, 'tags')
+        changed = modify_database_object(input_tags, book.tags, db.Tags, calibre_db.session, 'tags')
+        if changed:
+            try:
+                from . import hardcover_state_sync
+                hardcover_state_sync.handle_tag_change(current_user, book, old_tags, [tag.name for tag in book.tags])
+            except Exception as ex:
+                log.error("Hardcover state sync: tag hook failed for book %s: %s", getattr(book, "id", None), ex)
+        return changed
     return False
 
 def edit_book_series(series, book):

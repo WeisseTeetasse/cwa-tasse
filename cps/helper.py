@@ -337,10 +337,12 @@ def get_sorted_author(value):
 
 
 def edit_book_read_status(book_id, read_status=None):
+    marked_read = False
     if not config.config_read_column:
         book = ub.session.query(ub.ReadBook).filter(and_(ub.ReadBook.user_id == int(current_user.id),
                                                          ub.ReadBook.book_id == book_id)).first()
         if book:
+            old_status = book.read_status
             if read_status is None:
                 if book.read_status == ub.ReadBook.STATUS_FINISHED:
                     book.read_status = ub.ReadBook.STATUS_UNREAD
@@ -348,10 +350,12 @@ def edit_book_read_status(book_id, read_status=None):
                     book.read_status = ub.ReadBook.STATUS_FINISHED
             else:
                 book.read_status = ub.ReadBook.STATUS_FINISHED if read_status else ub.ReadBook.STATUS_UNREAD
+            marked_read = old_status != ub.ReadBook.STATUS_FINISHED and book.read_status == ub.ReadBook.STATUS_FINISHED
         else:
             read_book = ub.ReadBook(user_id=current_user.id, book_id=book_id)
             read_book.read_status = ub.ReadBook.STATUS_FINISHED
             book = read_book
+            marked_read = True
         if not book.kobo_reading_state:
             kobo_reading_state = ub.KoboReadingState(user_id=current_user.id, book_id=book_id)
             kobo_reading_state.current_bookmark = ub.KoboBookmark()
@@ -365,16 +369,19 @@ def edit_book_read_status(book_id, read_status=None):
             book = calibre_db.get_filtered_book(book_id, True)
             book_read_status = getattr(book, 'custom_column_' + str(config.config_read_column))
             if len(book_read_status):
+                old_value = bool(book_read_status[0].value)
                 if read_status is None:
                     book_read_status[0].value = not book_read_status[0].value
                 else:
                     book_read_status[0].value = read_status is True
+                marked_read = not old_value and bool(book_read_status[0].value)
                 calibre_db.session.commit()
             else:
                 cc_class = db.cc_classes[config.config_read_column]
                 new_cc = cc_class(value=read_status or 1, book=book_id)
                 calibre_db.session.add(new_cc)
                 calibre_db.session.commit()
+                marked_read = read_status is not False
         except (KeyError, AttributeError, IndexError):
             log.error(
                 "Custom Column No.{} does not exist in calibre database".format(config.config_read_column))
@@ -383,6 +390,12 @@ def edit_book_read_status(book_id, read_status=None):
             calibre_db.session.rollback()
             log.error("Read status could not set: {}".format(ex))
             return _("Read status could not set: {}".format(ex.orig))
+    if marked_read:
+        try:
+            from . import hardcover_state_sync
+            hardcover_state_sync.handle_book_marked_read(current_user, book_id)
+        except Exception as ex:
+            log.error("Hardcover state sync: read status hook failed for book %s: %s", book_id, ex)
     return ""
 
 

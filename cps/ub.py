@@ -281,6 +281,21 @@ class User(UserBase, Base):
     view_settings = Column(JSON, default={})
     kobo_only_shelves_sync = Column(Integer, default=0)
     hardcover_token = Column(String, unique=True, default=None)
+    hardcover_state_sync_enabled = Column(Boolean, default=False)
+    hardcover_state_sync_shelf_id = Column(Integer, default=None)
+    hardcover_state_pull_currently_reading = Column(Boolean, default=True)
+    hardcover_state_push_currently_reading = Column(Boolean, default=True)
+    hardcover_state_pull_read_status = Column(Boolean, default=True)
+    hardcover_list_tag_sync_enabled = Column(Boolean, default=False)
+    hardcover_list_sync_list_id = Column(Integer, default=None)
+    hardcover_list_sync_list_name = Column(String, default="")
+    hardcover_list_sync_tag = Column(String, default="Up Next")
+    hardcover_list_pull_enabled = Column(Boolean, default=True)
+    hardcover_list_push_enabled = Column(Boolean, default=True)
+    hardcover_state_read_cleanup_enabled = Column(Boolean, default=True)
+    hardcover_state_poll_interval = Column(Integer, default=30)
+    hardcover_state_push_immediately = Column(Boolean, default=True)
+    hardcover_state_last_sync = Column(DateTime, nullable=True)
     # New per-user theme (0=default/light, 1=caliBlur) replacing global-only behavior
     theme = Column(Integer, default=1)
     # Auto-send settings for new books
@@ -321,6 +336,21 @@ class OAuthProvider(Base):
 class Anonymous(AnonymousUserMixin, UserBase):
     def __init__(self):
         self.hardcover_token = None
+        self.hardcover_state_sync_enabled = False
+        self.hardcover_state_sync_shelf_id = None
+        self.hardcover_state_pull_currently_reading = True
+        self.hardcover_state_push_currently_reading = True
+        self.hardcover_state_pull_read_status = True
+        self.hardcover_list_tag_sync_enabled = False
+        self.hardcover_list_sync_list_id = None
+        self.hardcover_list_sync_list_name = ""
+        self.hardcover_list_sync_tag = "Up Next"
+        self.hardcover_list_pull_enabled = True
+        self.hardcover_list_push_enabled = True
+        self.hardcover_state_read_cleanup_enabled = True
+        self.hardcover_state_poll_interval = 30
+        self.hardcover_state_push_immediately = True
+        self.hardcover_state_last_sync = None
         self.kobo_only_shelves_sync = None
         self.view_settings = None
         self.allowed_column_value = None
@@ -355,6 +385,21 @@ class Anonymous(AnonymousUserMixin, UserBase):
         self.view_settings = data.view_settings
         self.kobo_only_shelves_sync = data.kobo_only_shelves_sync
         self.hardcover_token = data.hardcover_token
+        self.hardcover_state_sync_enabled = data.hardcover_state_sync_enabled
+        self.hardcover_state_sync_shelf_id = data.hardcover_state_sync_shelf_id
+        self.hardcover_state_pull_currently_reading = data.hardcover_state_pull_currently_reading
+        self.hardcover_state_push_currently_reading = data.hardcover_state_push_currently_reading
+        self.hardcover_state_pull_read_status = data.hardcover_state_pull_read_status
+        self.hardcover_list_tag_sync_enabled = data.hardcover_list_tag_sync_enabled
+        self.hardcover_list_sync_list_id = data.hardcover_list_sync_list_id
+        self.hardcover_list_sync_list_name = data.hardcover_list_sync_list_name
+        self.hardcover_list_sync_tag = data.hardcover_list_sync_tag
+        self.hardcover_list_pull_enabled = data.hardcover_list_pull_enabled
+        self.hardcover_list_push_enabled = data.hardcover_list_push_enabled
+        self.hardcover_state_read_cleanup_enabled = data.hardcover_state_read_cleanup_enabled
+        self.hardcover_state_poll_interval = data.hardcover_state_poll_interval
+        self.hardcover_state_push_immediately = data.hardcover_state_push_immediately
+        self.hardcover_state_last_sync = data.hardcover_state_last_sync
         self.auto_send_enabled = data.auto_send_enabled
     def role_admin(self):
         return False
@@ -675,6 +720,39 @@ class HardcoverMatchQueue(Base):
         return f'<HardcoverMatchQueue book_id={self.book_id} title="{self.book_title}" reviewed={bool(self.reviewed)}>'
 
 
+class HardcoverStateSync(Base):
+    """Track per-user Hardcover state sync for each local book and sync concept."""
+    __tablename__ = 'hardcover_state_sync'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    book_id = Column(Integer, nullable=False)
+    hardcover_book_id = Column(Integer, nullable=True)
+    hardcover_edition_id = Column(Integer, nullable=True)
+    hardcover_user_book_id = Column(Integer, nullable=True)
+    hardcover_list_id = Column(Integer, nullable=True)
+    hardcover_list_book_id = Column(Integer, nullable=True)
+    sync_key = Column(String, nullable=False)
+    cwa_value = Column(String, nullable=True)
+    hardcover_value = Column(String, nullable=True)
+    cwa_changed_at = Column(DateTime, nullable=True)
+    hardcover_changed_at = Column(DateTime, nullable=True)
+    last_applied_source = Column(String, nullable=True)
+    last_synced_at = Column(DateTime, nullable=True)
+    last_error = Column(String, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'book_id', 'sync_key', name='unique_hardcover_state_sync_book_key'),
+        Index('ix_hardcover_state_sync_user_book_key', 'user_id', 'book_id', 'sync_key'),
+        Index('ix_hardcover_state_sync_user_hc_book', 'user_id', 'hardcover_book_id'),
+        Index('ix_hardcover_state_sync_user_hc_edition', 'user_id', 'hardcover_edition_id'),
+        Index('ix_hardcover_state_sync_user_list_book', 'user_id', 'hardcover_list_id', 'hardcover_list_book_id'),
+    )
+
+    def __repr__(self):
+        return f'<HardcoverStateSync user={self.user_id} book={self.book_id} key={self.sync_key}>'
+
+
 # Updates the last_modified timestamp in the KoboReadingState table if any of its children tables are modified.
 @event.listens_for(Session, 'before_flush')
 def receive_before_flush(session, flush_context, instances):
@@ -800,6 +878,8 @@ def add_missing_tables(engine, _session):
         MagicShelfCache.__table__.create(bind=engine, checkfirst=True)
     if not engine.dialect.has_table(engine.connect(), "hidden_magic_shelf_templates"):
         HiddenMagicShelfTemplate.__table__.create(bind=engine, checkfirst=True)
+    if not engine.dialect.has_table(engine.connect(), "hardcover_state_sync"):
+        HardcoverStateSync.__table__.create(bind=engine, checkfirst=True)
 
 
 # migrate all settings missing in registration table
@@ -838,6 +918,32 @@ def migrate_user_table(engine, _session):
     except exc.OperationalError:  # Database is not compatible, some columns are missing
         _safe_session_rollback(_session, "user.hardcover_token")
         _run_ddl_with_retry(engine, "ALTER TABLE user ADD column 'hardcover_token' String")
+
+    hardcover_state_columns = (
+        (User.hardcover_state_sync_enabled, "hardcover_state_sync_enabled", "Boolean DEFAULT 0"),
+        (User.hardcover_state_sync_shelf_id, "hardcover_state_sync_shelf_id", "Integer DEFAULT NULL"),
+        (User.hardcover_state_pull_currently_reading, "hardcover_state_pull_currently_reading", "Boolean DEFAULT 1"),
+        (User.hardcover_state_push_currently_reading, "hardcover_state_push_currently_reading", "Boolean DEFAULT 1"),
+        (User.hardcover_state_pull_read_status, "hardcover_state_pull_read_status", "Boolean DEFAULT 1"),
+        (User.hardcover_list_tag_sync_enabled, "hardcover_list_tag_sync_enabled", "Boolean DEFAULT 0"),
+        (User.hardcover_list_sync_list_id, "hardcover_list_sync_list_id", "Integer DEFAULT NULL"),
+        (User.hardcover_list_sync_list_name, "hardcover_list_sync_list_name", "String DEFAULT ''"),
+        (User.hardcover_list_sync_tag, "hardcover_list_sync_tag", "String DEFAULT 'Up Next'"),
+        (User.hardcover_list_pull_enabled, "hardcover_list_pull_enabled", "Boolean DEFAULT 1"),
+        (User.hardcover_list_push_enabled, "hardcover_list_push_enabled", "Boolean DEFAULT 1"),
+        (User.hardcover_state_read_cleanup_enabled, "hardcover_state_read_cleanup_enabled", "Boolean DEFAULT 1"),
+        (User.hardcover_state_poll_interval, "hardcover_state_poll_interval", "Integer DEFAULT 30"),
+        (User.hardcover_state_push_immediately, "hardcover_state_push_immediately", "Boolean DEFAULT 1"),
+        (User.hardcover_state_last_sync, "hardcover_state_last_sync", "DateTime DEFAULT NULL"),
+    )
+    for column, name, ddl_type in hardcover_state_columns:
+        try:
+            _session.query(exists().where(column)).scalar()
+            _session.commit()
+        except exc.OperationalError:
+            _safe_session_rollback(_session, f"user.{name}")
+            _run_ddl_with_retry(engine, f"ALTER TABLE user ADD column '{name}' {ddl_type}")
+
     # Migration for per-user theme column
     try:
         _session.query(exists().where(User.theme)).scalar()

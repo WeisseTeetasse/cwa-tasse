@@ -29,6 +29,7 @@ REQUEST_TIMEOUT = 10  # seconds
 STATUS_WANT_TO_READ = 1
 STATUS_READING = 2
 STATUS_READ = 3
+STATUS_DID_NOT_FINISH = 5
 
 # Progress Calculation Constants
 MAX_PROGRESS_PERCENTAGE = 100
@@ -39,7 +40,11 @@ USER_BOOK_FRAGMENT = """
         id
         status_id
         book_id
+        edition_id
+        created_at
+        updated_at
         book {
+            id
             slug
             title
         }
@@ -147,6 +152,19 @@ class HardcoverClient:
         response = self.execute(query, variables)
         return next(iter(response.get("me")[0].get("user_books")), None)
 
+    def get_user_books(self):
+        """Fetch the current user's Hardcover books with status and identifiers."""
+        query = """
+            query {
+                me {
+                    user_books {
+                        ...userBookFragment
+                    }
+                }
+            }""" + USER_BOOK_FRAGMENT
+        response = self.execute(query)
+        return (response.get("me") or [{}])[0].get("user_books", [])
+
     def update_reading_progress(self, identifiers, progress_percent):
         ids = self.parse_identifiers(identifiers)
         if len(ids) != 0:
@@ -207,6 +225,102 @@ class HardcoverClient:
         variables = {"id": book.get("id"), "status_id": status}
         response = self.execute(query=mutation, variables=variables)
         return response.get("update_user_book", {}).get("user_book", {})
+
+    def change_book_status_by_identifiers(self, identifiers, status):
+        """Change status for an existing Hardcover user book only."""
+        book = self.get_user_book(identifiers)
+        if not book:
+            return None
+        return self.change_book_status(book, status)
+
+    def get_lists(self):
+        """Fetch lists owned by the current Hardcover user."""
+        query = """
+            query {
+                me {
+                    lists(order_by: {name: asc}) {
+                        id
+                        name
+                        slug
+                        updated_at
+                    }
+                }
+            }"""
+        response = self.execute(query)
+        return (response.get("me") or [{}])[0].get("lists", [])
+
+    def get_list_books(self, list_id):
+        """Fetch books on a Hardcover list, including the list_books row id."""
+        query = """
+            query ($listId: Int!) {
+                list_books(where: {list_id: {_eq: $listId}}) {
+                    id
+                    list_id
+                    book_id
+                    edition_id
+                    created_at
+                    updated_at
+                    book {
+                        id
+                        title
+                        slug
+                    }
+                    edition {
+                        id
+                    }
+                }
+            }"""
+        response = self.execute(query, {"listId": int(list_id)})
+        return response.get("list_books", [])
+
+    def find_list_book(self, list_id, book_id=None, edition_id=None):
+        """Find a list_books row by reliable Hardcover book/edition id."""
+        for list_book in self.get_list_books(list_id):
+            if edition_id and str(list_book.get("edition_id") or "") == str(edition_id):
+                return list_book
+            if book_id and str(list_book.get("book_id") or "") == str(book_id):
+                return list_book
+        return None
+
+    def add_book_to_list(self, list_id, book_id, edition_id=None):
+        """Add a book to a Hardcover list, avoiding duplicate list_books rows."""
+        existing = self.find_list_book(list_id, book_id=book_id, edition_id=edition_id)
+        if existing:
+            return existing
+        mutation = """
+            mutation ($object: ListBookCreateInput!) {
+                insert_list_book(object: $object) {
+                    error
+                    list_book {
+                        id
+                        list_id
+                        book_id
+                        edition_id
+                        created_at
+                        updated_at
+                    }
+                }
+            }"""
+        variables = {
+            "object": {
+                "list_id": int(list_id),
+                "book_id": int(book_id),
+                "edition_id": int(edition_id) if edition_id else None,
+            }
+        }
+        response = self.execute(query=mutation, variables=variables)
+        return response.get("insert_list_book", {}).get("list_book")
+
+    def delete_list_book(self, list_book_id):
+        """Remove a Hardcover list_books row by its own id."""
+        mutation = """
+            mutation ($id: Int!) {
+                delete_list_book(id: $id) {
+                    id
+                }
+            }"""
+        response = self.execute(query=mutation, variables={"id": int(list_book_id)})
+        return response.get("delete_list_book", {}).get("id")
 
 
     def add_journal_entry(self, identifiers, note_text, progress_percent=None, progress_page=None, highlighted_text=None):

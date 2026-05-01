@@ -316,6 +316,95 @@
         <input type="text" class="form-control" name="hardcover_token" id="hardcover_token" value="{{ content.hardcover_token if content.hardcover_token != None }}">
         <p class="cwa-settings-tip">{{_('API token for Hardcover metadata provider integration.')}}</p>
       </div>
+
+      <div style="margin-top: 25px; background: #202c34a3; padding: 2rem;">
+        <h4 class="settings-section-header">{{_('Hardcover State Sync')}}</h4>
+
+        <h5>{{_('Status Sync')}}</h5>
+        <div>
+          <input type="checkbox" id="hardcover_state_sync_enabled" name="hardcover_state_sync_enabled" {% if content.hardcover_state_sync_enabled %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_state_sync_enabled">{{_('Enable Hardcover status sync')}}</label>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="hardcover_state_sync_shelf_id">{{_('Currently Reading Shelf')}}</label>
+          <select class="form-control" name="hardcover_state_sync_shelf_id" id="hardcover_state_sync_shelf_id">
+            <option value="">{{_('Currently Reading')}}</option>
+            {% for shelf in hardcover_state_shelves %}
+              <option value="{{ shelf.id }}" {% if content.hardcover_state_sync_shelf_id == shelf.id %}selected{% endif %}>{{ shelf.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <input type="checkbox" id="hardcover_state_pull_currently_reading" name="hardcover_state_pull_currently_reading" {% if content.hardcover_state_pull_currently_reading %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_state_pull_currently_reading">{{_('Pull Hardcover Currently Reading into CWA shelf')}}</label>
+        </div>
+        <div>
+          <input type="checkbox" id="hardcover_state_push_currently_reading" name="hardcover_state_push_currently_reading" {% if content.hardcover_state_push_currently_reading %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_state_push_currently_reading">{{_('Push CWA Currently Reading shelf changes to Hardcover')}}</label>
+        </div>
+        <div>
+          <input type="checkbox" id="hardcover_state_pull_read_status" name="hardcover_state_pull_read_status" {% if content.hardcover_state_pull_read_status %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_state_pull_read_status">{{_('Pull Hardcover Read into CWA read status')}}</label>
+        </div>
+
+        <h5 style="margin-top: 20px;">{{_('List and Tag Sync')}}</h5>
+        <div>
+          <input type="checkbox" id="hardcover_list_tag_sync_enabled" name="hardcover_list_tag_sync_enabled" {% if content.hardcover_list_tag_sync_enabled %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_list_tag_sync_enabled">{{_('Enable Hardcover list/tag sync')}}</label>
+        </div>
+
+        {% if hardcover_list_warning %}
+          <p class="text-warning">{{ hardcover_list_warning }}</p>
+        {% endif %}
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="hardcover_list_sync_list_id">{{_('Hardcover List')}}</label>
+          <select class="form-control" name="hardcover_list_sync_list_id" id="hardcover_list_sync_list_id">
+            <option value="">{{_('Choose a Hardcover list')}}</option>
+            {% for list_item in hardcover_lists %}
+              <option value="{{ list_item.id }}" data-name="{{ list_item.name }}" {% if content.hardcover_list_sync_list_id|string == list_item.id|string %}selected{% endif %}>{{ list_item.name }}</option>
+            {% endfor %}
+          </select>
+          <input type="hidden" name="hardcover_list_sync_list_name" id="hardcover_list_sync_list_name" value="{{ content.hardcover_list_sync_list_name or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="hardcover_list_sync_tag">{{_('CWA Tag')}}</label>
+          <input type="text" class="form-control" name="hardcover_list_sync_tag" id="hardcover_list_sync_tag" value="{{ content.hardcover_list_sync_tag or 'Up Next' }}">
+        </div>
+
+        <div>
+          <input type="checkbox" id="hardcover_list_pull_enabled" name="hardcover_list_pull_enabled" {% if content.hardcover_list_pull_enabled %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_list_pull_enabled">{{_('Pull selected Hardcover list into CWA tag')}}</label>
+        </div>
+        <div>
+          <input type="checkbox" id="hardcover_list_push_enabled" name="hardcover_list_push_enabled" {% if content.hardcover_list_push_enabled %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_list_push_enabled">{{_('Push CWA tag changes to selected Hardcover list')}}</label>
+        </div>
+        <div>
+          <input type="checkbox" id="hardcover_state_read_cleanup_enabled" name="hardcover_state_read_cleanup_enabled" {% if content.hardcover_state_read_cleanup_enabled %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_state_read_cleanup_enabled">{{_('Remove selected list/tag when book becomes read')}}</label>
+        </div>
+
+        <h5 style="margin-top: 20px;">{{_('Polling')}}</h5>
+        <div class="form-group">
+          <label for="hardcover_state_poll_interval">{{_('Fetch Hardcover changes every')}}</label>
+          <select class="form-control" name="hardcover_state_poll_interval" id="hardcover_state_poll_interval">
+            {% for interval in hardcover_poll_intervals %}
+              <option value="{{ interval }}" {% if content.hardcover_state_poll_interval == interval %}selected{% endif %}>
+                {% if interval == 0 %}{{_('Off')}}{% elif interval < 60 %}{{_('%(minutes)s minutes', minutes=interval)}}{% elif interval == 60 %}{{_('1 hour')}}{% elif interval == 360 %}{{_('6 hours')}}{% else %}{{_('24 hours')}}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <input type="checkbox" id="hardcover_state_push_immediately" name="hardcover_state_push_immediately" {% if content.hardcover_state_push_immediately %}checked{% endif %} style="accent-color: var(--color-secondary);">
+          <label for="hardcover_state_push_immediately">{{_('Push local changes immediately')}}</label>
+        </div>
+        <button type="submit" name="hardcover_state_sync_now" value="1" class="btn btn-primary" style="margin-top: 15px;">{{_('Sync Now')}}</button>
+      </div>
       {% endif %}
       
       {% if kobo_support and not new_user %}
@@ -802,6 +891,12 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function() {
       updateOpdsHiddenInput();
       updateMagicShelfHiddenInput();
+      const hardcoverListSelect = document.getElementById('hardcover_list_sync_list_id');
+      const hardcoverListName = document.getElementById('hardcover_list_sync_list_name');
+      if (hardcoverListSelect && hardcoverListName) {
+        const selected = hardcoverListSelect.options[hardcoverListSelect.selectedIndex];
+        hardcoverListName.value = selected ? (selected.dataset.name || selected.text || '') : '';
+      }
     });
   }
 

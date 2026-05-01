@@ -16,6 +16,7 @@ from .tasks.thumbnail_migration import check_and_migrate_thumbnails
 from .services.worker import WorkerThread
 from .tasks.metadata_backup import TaskBackupMetadata
 from .tasks.auto_hardcover_id import TaskAutoHardcoverID
+from .tasks.hardcover_state_sync import TaskHardcoverStateSync
 
 def get_scheduled_tasks(reconnect=True):
     tasks = list()
@@ -70,6 +71,7 @@ def register_scheduled_tasks(reconnect=True):
                            name="end scheduled task")
 
         _schedule_hardcover_auto_fetch(scheduler, timezone_info)
+        _schedule_hardcover_state_sync(scheduler, timezone_info)
         _schedule_archived_book_cleanup(scheduler, timezone_info)
 
         # Kick-off tasks, if they should currently be running
@@ -312,6 +314,30 @@ def _schedule_hardcover_auto_fetch(scheduler, timezone_info):
         
         if trigger:
             scheduler.schedule_task(task_lambda, user='System', trigger=trigger, name=name, hidden=False)
+    except Exception:
+        # Scheduling is best-effort; never block startup
+        pass
+
+
+def _schedule_hardcover_state_sync(scheduler, timezone_info):
+    """Schedule per-user Hardcover state sync jobs."""
+    try:
+        users = ub.session.query(ub.User).filter(
+            ub.User.hardcover_token.isnot(None)
+        ).all()
+        for user in users:
+            if not (getattr(user, "hardcover_state_sync_enabled", False) or
+                    getattr(user, "hardcover_list_tag_sync_enabled", False)):
+                continue
+            minutes = int(getattr(user, "hardcover_state_poll_interval", 30) or 0)
+            if minutes <= 0:
+                continue
+            trigger = IntervalTrigger(minutes=minutes, timezone=timezone_info)
+            scheduler.schedule_task(lambda uid=user.id: TaskHardcoverStateSync(uid),
+                                    user=user.name,
+                                    trigger=trigger,
+                                    name=f"hardcover state sync user {user.id}",
+                                    hidden=True)
     except Exception:
         # Scheduling is best-effort; never block startup
         pass

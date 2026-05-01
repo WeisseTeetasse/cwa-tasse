@@ -14,7 +14,7 @@ from .cw_login import current_user
 from sqlalchemy.exc import InvalidRequestError, OperationalError
 from sqlalchemy.sql.expression import func, true
 
-from . import calibre_db, config, db, logger, ub
+from . import calibre_db, config, db, hardcover_state_sync, logger, ub
 from .render_template import render_title_template
 from .usermanagement import login_required_if_no_ano, user_login_required
 log = logger.create()
@@ -85,6 +85,12 @@ def add_to_shelf(shelf_id, book_id):
             )
         except Exception as e:
             log.debug(f"Failed to log shelf activity: {e}")
+
+        try:
+            hardcover_state_sync.handle_shelf_added(current_user, shelf.id, book_id)
+        except Exception as e:
+            log.error("Hardcover state sync: shelf add hook failed for shelf %s book %s: %s",
+                      shelf.id, book_id, e)
             
     except (OperationalError, InvalidRequestError) as e:
         ub.session.rollback()
@@ -206,6 +212,12 @@ def remove_from_shelf(shelf_id, book_id):
                 )
             except Exception as e:
                 log.debug(f"Failed to log shelf activity: {e}")
+
+            try:
+                hardcover_state_sync.handle_shelf_removed(current_user, shelf.id, book_id)
+            except Exception as e:
+                log.error("Hardcover state sync: shelf remove hook failed for shelf %s book %s: %s",
+                          shelf.id, book_id, e)
                 
         except (OperationalError, InvalidRequestError) as e:
             ub.session.rollback()
@@ -526,6 +538,7 @@ def add_selected_to_shelf():
 
     success_count = 0
     errors = []
+    added_book_ids = []
 
     if not book_ids:
         return jsonify({'status': 'error', 'message': 'No books selected'}), 400
@@ -550,6 +563,7 @@ def add_selected_to_shelf():
 
         new_entry = ub.BookShelf(shelf=shelf.id, book_id=book_id, order=maxOrder + 1)
         shelf.books.append(new_entry)
+        added_book_ids.append(book_id)
         success_count += 1
 
     if success_count > 0:
@@ -558,6 +572,12 @@ def add_selected_to_shelf():
             ub.session.merge(shelf)
             ub.session.commit()
             log.info(f"Successfully added {success_count} books to shelf: {shelf.name}")
+            for book_id in added_book_ids:
+                try:
+                    hardcover_state_sync.handle_shelf_added(current_user, shelf.id, book_id)
+                except Exception as e:
+                    log.error("Hardcover state sync: bulk shelf add hook failed for shelf %s book %s: %s",
+                              shelf.id, book_id, e)
         except (OperationalError, InvalidRequestError) as e:
             ub.session.rollback()
             log.error_or_exception(f"Database error while adding books to shelf {shelf.name}: {e}")

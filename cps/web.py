@@ -30,7 +30,7 @@ from werkzeug.datastructures import Headers
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import constants, logger, isoLanguages, services, helper
-from . import db, ub, config, app
+from . import db, ub, config, app, hardcover_state_sync
 from . import calibre_db, kobo_sync_status
 from .search import render_search_results, render_adv_search_results
 from .gdriveutils import getFileFromEbooksFolder, do_gdrive_download
@@ -67,6 +67,31 @@ feature_support = {
     'kobo': bool(services.kobo),
     'hardcover' : bool(services.hardcover)
 }
+
+
+def _hardcover_state_profile_context(user):
+    normal_shelves = []
+    hardcover_lists = []
+    hardcover_list_warning = None
+    try:
+        normal_shelves = hardcover_state_sync.get_normal_shelves(user)
+    except Exception as e:
+        log.debug("Failed to load normal shelves for Hardcover state sync settings: %s", e)
+    try:
+        if getattr(user, "hardcover_token", None):
+            hardcover_lists = hardcover_state_sync.fetch_hardcover_lists(user)
+            saved_list_id = getattr(user, "hardcover_list_sync_list_id", None)
+            if saved_list_id and not any(str(item.get("id")) == str(saved_list_id) for item in hardcover_lists):
+                hardcover_list_warning = _("The selected Hardcover list no longer exists. Choose another list.")
+    except Exception as e:
+        hardcover_list_warning = _("Could not fetch Hardcover lists. Check your Hardcover token.")
+        log.warning("Failed to load Hardcover lists for user %s: %s", getattr(user, "id", None), e)
+    return {
+        "hardcover_state_shelves": normal_shelves,
+        "hardcover_lists": hardcover_lists,
+        "hardcover_list_warning": hardcover_list_warning,
+        "hardcover_poll_intervals": hardcover_state_sync.POLL_INTERVALS,
+    }
 
 try:
     from . import oauth_bb
@@ -2434,6 +2459,26 @@ def change_profile(kobo_support, hardcover_support, local_oauth_check, oauth_sta
         if old_state == 0 and current_user.kobo_only_shelves_sync == 1:
             kobo_sync_status.update_on_sync_shelfs(current_user.id)
         current_user.hardcover_token = to_save.get("hardcover_token","" ).replace("Bearer ","" ) or None
+        current_user.hardcover_state_sync_enabled = to_save.get("hardcover_state_sync_enabled") == "on"
+        current_user.hardcover_state_pull_currently_reading = to_save.get("hardcover_state_pull_currently_reading") == "on"
+        current_user.hardcover_state_push_currently_reading = to_save.get("hardcover_state_push_currently_reading") == "on"
+        current_user.hardcover_state_pull_read_status = to_save.get("hardcover_state_pull_read_status") == "on"
+        current_user.hardcover_list_tag_sync_enabled = to_save.get("hardcover_list_tag_sync_enabled") == "on"
+        current_user.hardcover_list_pull_enabled = to_save.get("hardcover_list_pull_enabled") == "on"
+        current_user.hardcover_list_push_enabled = to_save.get("hardcover_list_push_enabled") == "on"
+        current_user.hardcover_state_read_cleanup_enabled = to_save.get("hardcover_state_read_cleanup_enabled") == "on"
+        current_user.hardcover_state_push_immediately = to_save.get("hardcover_state_push_immediately") == "on"
+        current_user.hardcover_state_poll_interval = hardcover_state_sync.normalize_poll_interval(
+            to_save.get("hardcover_state_poll_interval", 30)
+        )
+        shelf_id = to_save.get("hardcover_state_sync_shelf_id")
+        current_user.hardcover_state_sync_shelf_id = int(shelf_id) if shelf_id else None
+        if current_user.hardcover_state_sync_enabled and not current_user.hardcover_state_sync_shelf_id:
+            hardcover_state_sync.ensure_currently_reading_shelf(current_user)
+        list_id = to_save.get("hardcover_list_sync_list_id")
+        current_user.hardcover_list_sync_list_id = int(list_id) if list_id else None
+        current_user.hardcover_list_sync_list_name = strip_whitespaces(to_save.get("hardcover_list_sync_list_name", "")) or ""
+        current_user.hardcover_list_sync_tag = strip_whitespaces(to_save.get("hardcover_list_sync_tag", "")) or "Up Next"
         # Auto-send and metadata fetch settings
         current_user.auto_send_enabled = to_save.get("auto_send_enabled") == "on"
         current_user.auto_metadata_fetch = to_save.get("auto_metadata_fetch") == "on"
@@ -2649,6 +2694,7 @@ def change_profile(kobo_support, hardcover_support, local_oauth_check, oauth_sta
                                      magic_shelf_order_string=magic_shelf_order_string,
                                      magic_shelf_order_labels=magic_shelf_order_labels,
                                      magic_shelf_order_mode=magic_shelf_order_mode,
+                                     **_hardcover_state_profile_context(current_user),
                                      title=_(f"{current_user.name.capitalize()}'s Profile", name=current_user.name),
                                      page="me",
                                      kobo_support=kobo_support,
@@ -2670,6 +2716,19 @@ def change_profile(kobo_support, hardcover_support, local_oauth_check, oauth_sta
 
     try:
         ub.session.commit()
+        if to_save.get("hardcover_state_sync_now") == "1":
+            try:
+                result = hardcover_state_sync.sync_user(current_user, source="manual")
+                if result.get("errors"):
+                    flash(_("Hardcover state sync finished with errors. Check the log."), category="warning")
+                else:
+                    flash(_("Hardcover state sync complete. %(count)s change(s) applied.", count=result.get("changed", 0)),
+                          category="success")
+            except Exception as e:
+                ub.session.rollback()
+                calibre_db.session.rollback()
+                log.error("Hardcover state sync: manual sync failed for user %s: %s", current_user.id, e)
+                flash(_("Hardcover state sync failed: %(error)s", error=e), category="error")
         flash(_("Success! Profile Updated"), category="success")
         log.debug("Profile updated")
         # Redirect to refresh sidebar with updated shelf visibility
@@ -2777,6 +2836,7 @@ def profile():
                                  magic_shelf_order_string=magic_shelf_order_string,
                                  magic_shelf_order_labels=magic_shelf_order_labels,
                                  magic_shelf_order_mode=magic_shelf_order_mode,
+                                 **_hardcover_state_profile_context(current_user),
                                  title=_(f"{current_user.name.capitalize()}'s Profile", name=current_user.name),
                                  page="me",
                                  registered_oauth=local_oauth_check,
