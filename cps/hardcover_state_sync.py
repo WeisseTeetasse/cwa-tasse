@@ -148,6 +148,7 @@ def _local_book_maps():
     books = calibre_db.session.query(db.Books).all()
     by_hc_book = {}
     by_hc_edition = {}
+    by_hc_slug = {}
     tagged_books = []
     for book in books:
         ids = _book_hardcover_ids(book)
@@ -155,19 +156,24 @@ def _local_book_maps():
             by_hc_book[str(ids["book_id"])] = book
         if ids["edition_id"]:
             by_hc_edition[str(ids["edition_id"])] = book
+        if ids["slug"]:
+            by_hc_slug[str(ids["slug"]).casefold()] = book
         tagged_books.append(book)
-    return by_hc_book, by_hc_edition, tagged_books
+    return by_hc_book, by_hc_edition, by_hc_slug, tagged_books
 
 
-def _match_local_book(hc_item, by_hc_book, by_hc_edition):
+def _match_local_book(hc_item, by_hc_book, by_hc_edition, by_hc_slug):
     edition_id = hc_item.get("edition_id")
     if not edition_id and hc_item.get("edition"):
         edition_id = hc_item.get("edition", {}).get("id")
     book_id = hc_item.get("book_id")
+    slug = (hc_item.get("book") or {}).get("slug") or hc_item.get("slug")
     if edition_id and str(edition_id) in by_hc_edition:
         return by_hc_edition[str(edition_id)]
     if book_id and str(book_id) in by_hc_book:
         return by_hc_book[str(book_id)]
+    if slug and str(slug).casefold() in by_hc_slug:
+        return by_hc_slug[str(slug).casefold()]
     return None
 
 
@@ -350,6 +356,9 @@ def _matching_list_book(book, list_books):
         if ids["edition_id"] and str(list_book.get("edition_id") or "") == str(ids["edition_id"]):
             return list_book
         if ids["book_id"] and str(list_book.get("book_id") or "") == str(ids["book_id"]):
+            return list_book
+        list_slug = (list_book.get("book") or {}).get("slug") or list_book.get("slug")
+        if ids["slug"] and list_slug and str(list_slug).casefold() == str(ids["slug"]).casefold():
             return list_book
     return None
 
@@ -549,7 +558,7 @@ def sync_user(user, source="manual"):
     client = get_client(user)
     changed = 0
     errors = []
-    by_hc_book, by_hc_edition, local_books = _local_book_maps()
+    by_hc_book, by_hc_edition, by_hc_slug, local_books = _local_book_maps()
 
     shelf = None
     if getattr(user, "hardcover_state_sync_enabled", False):
@@ -568,7 +577,7 @@ def sync_user(user, source="manual"):
     seen_books = set()
     unmatched_hc_books = 0
     for hc_book in user_books:
-        local_book = _match_local_book(hc_book, by_hc_book, by_hc_edition)
+        local_book = _match_local_book(hc_book, by_hc_book, by_hc_edition, by_hc_slug)
         if not local_book:
             unmatched_hc_books += 1
             log.debug("Hardcover state sync: skipped HC book %s, no matching CWA book found.",
@@ -616,7 +625,7 @@ def sync_user(user, source="manual"):
         current_hc_members = {}
         unmatched_hc_list_books = 0
         for list_book in selected_list_books:
-            local_book = _match_local_book(list_book, by_hc_book, by_hc_edition)
+            local_book = _match_local_book(list_book, by_hc_book, by_hc_edition, by_hc_slug)
             if not local_book:
                 unmatched_hc_list_books += 1
                 log.debug("Hardcover state sync: skipped HC list book %s, no matching CWA book found.",
