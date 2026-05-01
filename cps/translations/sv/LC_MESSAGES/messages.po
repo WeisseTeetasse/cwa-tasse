@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version:  Calibre-Web Automated\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-03-11 17:35+0000\n"
+"POT-Creation-Date: 2026-05-01 14:55+0000\n"
 "PO-Revision-Date: 2021-05-13 11:00+0000\n"
 "Last-Translator: Jonatan Nyberg <jonatan.nyberg.karl@gmail.com>\n"
 "Language-Team: \n"
@@ -300,7 +300,7 @@ msgstr "Förneka"
 msgid "Allow"
 msgstr "Tillåt"
 
-#: cps/admin.py:1252
+#: cps/admin.py:1252 cps/kobo_auth.py:159
 #, python-brace-format
 msgid "{} sync entries deleted"
 msgstr ""
@@ -389,9 +389,9 @@ msgstr ""
 
 #: cps/admin.py:1743 cps/admin.py:1746 cps/admin.py:2232 cps/admin.py:2443
 #: cps/admin.py:2558 cps/admin.py:2829 cps/editbooks.py:1042
-#: cps/editbooks.py:1808 cps/shelf.py:93 cps/shelf.py:167 cps/shelf.py:228
-#: cps/shelf.py:278 cps/shelf.py:315 cps/shelf.py:389 cps/shelf.py:511
-#: cps/tasks/convert.py:145 cps/web.py:2678
+#: cps/editbooks.py:1808 cps/shelf.py:92 cps/shelf.py:152 cps/shelf.py:213
+#: cps/shelf.py:263 cps/shelf.py:300 cps/shelf.py:374 cps/shelf.py:496
+#: cps/tasks/convert.py:145 cps/web.py:2684
 #, python-format
 msgid "Oops! Database Error: %(error)s."
 msgstr "Databasfel: %(error)s."
@@ -433,7 +433,7 @@ msgstr ""
 msgid "Scheduled tasks settings updated"
 msgstr ""
 
-#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2825 cps/web.py:2109
+#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2825 cps/web.py:2115
 msgid "Oops! An unknown error occurred. Please try again later."
 msgstr "Ett okänt fel uppstod. Försök igen senare."
 
@@ -441,7 +441,7 @@ msgstr "Ett okänt fel uppstod. Försök igen senare."
 msgid "Settings DB is not Writeable"
 msgstr ""
 
-#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2604 cps/web.py:2729
+#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2610 cps/web.py:2735
 #, fuzzy
 msgid "title"
 msgstr "Titel"
@@ -606,7 +606,7 @@ msgstr "E-postserverinställningar uppdaterade"
 msgid "Database Configuration"
 msgstr "Funktion konfiguration"
 
-#: cps/admin.py:2514 cps/web.py:2078
+#: cps/admin.py:2514 cps/web.py:2084
 msgid "Oops! Please complete all fields."
 msgstr "Fyll i alla fält!"
 
@@ -640,7 +640,7 @@ msgstr "Det går inte att ta bort gästanvändaren"
 msgid "No admin user remaining, can't delete user"
 msgstr "Ingen adminstratörsanvändare kvar, kan inte ta bort användaren"
 
-#: cps/admin.py:2780 cps/web.py:2413
+#: cps/admin.py:2780 cps/web.py:2419
 msgid "Email can't be empty and has to be a valid Email"
 msgstr ""
 
@@ -1111,8 +1111,8 @@ msgstr ""
 #: cps/templates/config_view_edit.html:79
 #: cps/templates/config_view_edit.html:90 cps/templates/email_edit.html:41
 #: cps/web.py:645 cps/web.py:679 cps/web.py:724 cps/web.py:764 cps/web.py:793
-#: cps/web.py:1599 cps/web.py:1636 cps/web.py:1687 cps/web.py:1719
-#: cps/web.py:1758
+#: cps/web.py:1605 cps/web.py:1642 cps/web.py:1693 cps/web.py:1725
+#: cps/web.py:1764
 msgid "None"
 msgstr "Ingen"
 
@@ -1205,8 +1205,8 @@ msgstr "Filändelsen '%(ext)s' får inte laddas upp till den här servern"
 msgid "File to be uploaded must have an extension"
 msgstr "Filen som ska laddas upp måste ha en ändelse"
 
-#: cps/editbooks.py:849 cps/editbooks.py:1431 cps/web.py:612 cps/web.py:2790
-#: cps/web.py:2881 cps/web.py:2966
+#: cps/editbooks.py:849 cps/editbooks.py:1431 cps/web.py:612 cps/web.py:2796
+#: cps/web.py:2887 cps/web.py:2972
 msgid ""
 "Oops! Selected book is unavailable. File does not exist or is not accessible"
 msgstr ""
@@ -1544,7 +1544,7 @@ msgstr "Fel vid körning av UnRar"
 msgid "Queue all books for metadata backup"
 msgstr ""
 
-#: cps/kobo_auth.py:80
+#: cps/kobo_auth.py:83
 #, fuzzy
 msgid ""
 "Please access Calibre-Web Automated from non localhost to get valid "
@@ -1553,9 +1553,19 @@ msgstr ""
 "Vänligen få tillgång till calibre-web från icke localhost för att få giltig "
 "api_endpoint för Kobo-enhet"
 
-#: cps/kobo_auth.py:106
+#: cps/kobo_auth.py:93 cps/kobo_auth.py:178 cps/kobo_auth.py:246
+#: cps/templates/generate_kobo_auth_url.html:31
+#, python-format
+msgid "Kobo Device %(num)s"
+msgstr ""
+
+#: cps/kobo_auth.py:107
 msgid "Kobo Setup"
 msgstr "Kobo-installation"
+
+#: cps/kobo_auth.py:213
+msgid "Unknown Kobo Device"
+msgstr ""
 
 #: cps/oauth_bb.py:199
 #, python-format
@@ -1718,7 +1728,7 @@ msgstr "{} stjärnor"
 
 #: cps/remotelogin.py:76 cps/templates/layout.html:135
 #: cps/templates/layout.html:177 cps/templates/login.html:11
-#: cps/templates/login.html:39 cps/web.py:2187
+#: cps/templates/login.html:39 cps/web.py:2193
 msgid "Login"
 msgstr "Logga in"
 
@@ -1793,7 +1803,7 @@ msgstr "Upptäck"
 msgid "Show Random Books"
 msgstr "Visa slumpmässiga böcker"
 
-#: cps/render_template.py:70 cps/templates/book_table.html:106 cps/web.py:1762
+#: cps/render_template.py:70 cps/templates/book_table.html:106 cps/web.py:1768
 msgid "Categories"
 msgstr "Kategorier"
 
@@ -1806,7 +1816,7 @@ msgstr "Visa kategorival"
 #: cps/templates/book_table.html:107 cps/templates/cwa_settings.html:362
 #: cps/templates/cwa_settings.html:364 cps/templates/cwa_settings.html:1103
 #: cps/templates/hardcover_review_matches.html:140
-#: cps/templates/search_form.html:70 cps/web.py:1642 cps/web.py:1654
+#: cps/templates/search_form.html:70 cps/web.py:1648 cps/web.py:1660
 msgid "Series"
 msgstr "Serier"
 
@@ -1826,7 +1836,7 @@ msgstr "Författare"
 msgid "Show Author Section"
 msgstr "Visa författarval"
 
-#: cps/render_template.py:80 cps/templates/book_table.html:111 cps/web.py:1610
+#: cps/render_template.py:80 cps/templates/book_table.html:111 cps/web.py:1616
 msgid "Publishers"
 msgstr "Förlag"
 
@@ -1837,7 +1847,7 @@ msgstr "Visa urval av förlag"
 
 #: cps/render_template.py:83 cps/templates/book_table.html:109
 #: cps/templates/detail.html:706 cps/templates/search_form.html:108
-#: cps/web.py:1734
+#: cps/web.py:1740
 msgid "Languages"
 msgstr "Språk"
 
@@ -1846,7 +1856,7 @@ msgstr "Språk"
 msgid "Show Language Section"
 msgstr "Visa språkval"
 
-#: cps/render_template.py:87 cps/web.py:1694
+#: cps/render_template.py:87 cps/web.py:1700
 msgid "Ratings"
 msgstr "Betyg"
 
@@ -1873,7 +1883,7 @@ msgstr "Arkiverade böcker"
 msgid "Show Archived Books"
 msgstr "Visa arkiverade böcker"
 
-#: cps/render_template.py:99 cps/web.py:1430
+#: cps/render_template.py:99 cps/web.py:1436
 msgid "Books List"
 msgstr "Boklista"
 
@@ -1934,120 +1944,120 @@ msgstr ""
 msgid "Advanced Search"
 msgstr "Avancerad sökning"
 
-#: cps/shelf.py:34 cps/shelf.py:128
+#: cps/shelf.py:33 cps/shelf.py:113
 msgid "Invalid shelf specified"
 msgstr "Ogiltig hylla specificerad"
 
-#: cps/shelf.py:40
+#: cps/shelf.py:39
 #, fuzzy
 msgid "Sorry you are not allowed to add a book to that shelf"
 msgstr "Tyvärr får du inte lägga till en bok på hyllan: %(shelfname)s"
 
-#: cps/shelf.py:49
+#: cps/shelf.py:48
 #, python-format
 msgid "Book is already part of the shelf: %(shelfname)s"
 msgstr "Boken är redan en del av hyllan: %(shelfname)s"
 
-#: cps/shelf.py:63
+#: cps/shelf.py:62
 #, python-format
 msgid "%(book_id)s is a invalid Book Id. Could not be added to Shelf"
 msgstr ""
 
-#: cps/shelf.py:100
+#: cps/shelf.py:99
 #, python-format
 msgid "Book has been added to shelf: %(sname)s"
 msgstr "Boken har lagts till i hyllan: %(sname)s"
 
-#: cps/shelf.py:133
+#: cps/shelf.py:118
 msgid "You are not allowed to add a book to the shelf"
 msgstr ""
 
-#: cps/shelf.py:151
+#: cps/shelf.py:136
 #, python-format
 msgid "Books are already part of the shelf: %(name)s"
 msgstr "Böcker är redan en del av hyllan: %(name)s"
 
-#: cps/shelf.py:163
+#: cps/shelf.py:148
 #, python-format
 msgid "Books have been added to shelf: %(sname)s"
 msgstr "Böcker har lagts till hyllan: %(sname)s"
 
-#: cps/shelf.py:170
+#: cps/shelf.py:155
 #, python-format
 msgid "Could not add books to shelf: %(sname)s"
 msgstr "Kunde inte lägga till böcker till hyllan: %(sname)s"
 
-#: cps/shelf.py:234
+#: cps/shelf.py:219
 #, python-format
 msgid "Book has been removed from shelf: %(sname)s"
 msgstr "Boken har tagits bort från hyllan: %(sname)s"
 
-#: cps/shelf.py:243
+#: cps/shelf.py:228
 msgid "Sorry you are not allowed to remove a book from this shelf"
 msgstr ""
 
-#: cps/shelf.py:253
+#: cps/shelf.py:238
 msgid "Create a Shelf"
 msgstr "Skapa en hylla"
 
-#: cps/shelf.py:261
+#: cps/shelf.py:246
 #, fuzzy
 msgid "Sorry you are not allowed to edit this shelf"
 msgstr ""
 "Tyvärr har du inte rätt att ta bort en bok från den här hyllan: %(sname)s"
 
-#: cps/shelf.py:263
+#: cps/shelf.py:248
 msgid "Edit a shelf"
 msgstr "Redigera en hylla"
 
-#: cps/shelf.py:272
+#: cps/shelf.py:257
 msgid "Error deleting Shelf"
 msgstr ""
 
-#: cps/shelf.py:274
+#: cps/shelf.py:259
 #, fuzzy
 msgid "Shelf successfully deleted"
 msgstr "Boken har tagits bort"
 
-#: cps/shelf.py:324
+#: cps/shelf.py:309
 #, python-format
 msgid "Change order of Shelf: '%(name)s'"
 msgstr "Ändra ordning på hyllan: '%(name)s'"
 
-#: cps/shelf.py:359
+#: cps/shelf.py:344
 msgid "Sorry you are not allowed to create a public shelf"
 msgstr ""
 
-#: cps/shelf.py:376
+#: cps/shelf.py:361
 #, python-format
 msgid "Shelf %(title)s created"
 msgstr "Hyllan %(title)s skapad"
 
-#: cps/shelf.py:379
+#: cps/shelf.py:364
 #, python-format
 msgid "Shelf %(title)s changed"
 msgstr "Hyllan %(title)s ändrad"
 
-#: cps/shelf.py:393
+#: cps/shelf.py:378
 msgid "There was an error"
 msgstr "Det fanns ett fel"
 
-#: cps/shelf.py:415
+#: cps/shelf.py:400
 #, python-format
 msgid "A public shelf with the name '%(title)s' already exists."
 msgstr "En offentlig hylla med namnet \"%(title)s\" finns redan."
 
-#: cps/shelf.py:426
+#: cps/shelf.py:411
 #, python-format
 msgid "A private shelf with the name '%(title)s' already exists."
 msgstr "En privat hylla med namnet \"%(title)s\" finns redan."
 
-#: cps/shelf.py:516
+#: cps/shelf.py:501
 #, python-format
 msgid "Shelf: '%(name)s'"
 msgstr "Hylla: '%(name)s'"
 
-#: cps/shelf.py:522
+#: cps/shelf.py:507
 msgid "Error opening shelf. Shelf does not exist or is not accessible"
 msgstr "Fel vid öppning av hyllan. Hylla finns inte eller är inte tillgänglig"
 
@@ -2175,302 +2185,302 @@ msgstr "Kategori: %(name)s"
 msgid "Language: %(name)s"
 msgstr "Språk: %(name)s"
 
-#: cps/web.py:940
+#: cps/web.py:942
 #, fuzzy
 msgid "Error loading magic shelf"
 msgstr "Fel vid hämtning av omslaget"
 
-#: cps/web.py:965
+#: cps/web.py:967
 #, python-format
 msgid "Magic Shelf&nbsp&nbsp&nbsp—&nbsp&nbsp&nbsp%(icon)s %(name)s"
 msgstr ""
 
-#: cps/web.py:1038
+#: cps/web.py:1044
 msgid "No rules provided"
 msgstr ""
 
-#: cps/web.py:1044
+#: cps/web.py:1050
 #, fuzzy
 msgid "Invalid rules format"
 msgstr "Ogiltigt e-postadressformat"
 
-#: cps/web.py:1066
+#: cps/web.py:1072
 msgid "Error processing rules"
 msgstr ""
 
-#: cps/web.py:1070
+#: cps/web.py:1076
 #, fuzzy
 msgid "Invalid request"
 msgstr "Ogiltig roll"
 
-#: cps/web.py:1114
+#: cps/web.py:1120
 msgid "Name and rules are required"
 msgstr ""
 
-#: cps/web.py:1117 cps/web.py:1214
+#: cps/web.py:1123 cps/web.py:1220
 msgid "Shelf name too long (max 100 characters)"
 msgstr ""
 
-#: cps/web.py:1139
+#: cps/web.py:1145
 #, fuzzy
 msgid "Error creating shelf"
 msgstr "Fel vid hämtning av omslaget"
 
-#: cps/templates/layout.html:314 cps/web.py:1153
+#: cps/templates/layout.html:314 cps/web.py:1159
 #, fuzzy
 msgid "Create Magic Shelf"
 msgstr "Skapa en hylla"
 
-#: cps/web.py:1207
+#: cps/web.py:1213
 msgid "Permission denied to change public status"
 msgstr ""
 
-#: cps/web.py:1211
+#: cps/web.py:1217
 #, fuzzy
 msgid "Shelf name is required"
 msgstr "Detta fält är obligatoriskt"
 
-#: cps/web.py:1245
+#: cps/web.py:1251
 #, fuzzy
 msgid "Error updating shelf"
 msgstr "Fel vid hämtning av omslaget"
 
-#: cps/web.py:1260
+#: cps/web.py:1266
 #, fuzzy
 msgid "Edit Magic Shelf"
 msgstr "Redigera en hylla"
 
-#: cps/web.py:1273
+#: cps/web.py:1279
 #, fuzzy
 msgid "Shelf not found"
 msgstr "Användaren hittades inte"
 
-#: cps/web.py:1278
+#: cps/web.py:1284
 msgid "Permission denied"
 msgstr ""
 
-#: cps/web.py:1309
+#: cps/web.py:1315
 #, fuzzy
 msgid "Shelf duplicated successfully"
 msgstr "{} användare har tagits bort"
 
-#: cps/web.py:1315
+#: cps/web.py:1321
 #, fuzzy
 msgid "Error duplicating shelf"
 msgstr "Fel vid hämtning av omslaget"
 
-#: cps/templates/magic_shelf_edit.html:448 cps/web.py:1342
+#: cps/templates/magic_shelf_edit.html:448 cps/web.py:1348
 msgid ""
 "System shelves cannot be deleted. You can hide them in your user profile "
 "settings."
 msgstr ""
 
-#: cps/web.py:1359
+#: cps/web.py:1365
 #, fuzzy
 msgid "Error deleting shelf"
 msgstr "Fel vid hämtning av omslaget"
 
-#: cps/web.py:1375
+#: cps/web.py:1381
 msgid ""
 "You cannot hide your own shelves. Delete them instead if you don't want them."
 msgstr ""
 
-#: cps/web.py:1385
+#: cps/web.py:1391
 msgid "Shelf already hidden"
 msgstr ""
 
-#: cps/web.py:1399
+#: cps/web.py:1405
 #, fuzzy
 msgid "Error hiding shelf"
 msgstr "Fel vid hämtning av omslaget"
 
-#: cps/web.py:1413
+#: cps/web.py:1419
 msgid "Shelf was not hidden"
 msgstr ""
 
-#: cps/web.py:1422
+#: cps/web.py:1428
 #, fuzzy
 msgid "Error unhiding shelf"
 msgstr "Fel vid hämtning av omslaget"
 
-#: cps/templates/admin.html:18 cps/web.py:1569
+#: cps/templates/admin.html:18 cps/web.py:1575
 msgid "Downloads"
 msgstr "Hämtningar"
 
-#: cps/web.py:1721
+#: cps/web.py:1727
 msgid "File formats list"
 msgstr "Lista över filformat"
 
-#: cps/web.py:1961 cps/web.py:1999
+#: cps/web.py:1967 cps/web.py:2005
 #, fuzzy
 msgid "Please configure the SMTP mail settings first..."
 msgstr "Konfigurera SMTP-postinställningarna först..."
 
-#: cps/web.py:1965
+#: cps/web.py:1971
 #, fuzzy
 msgid "Oops! Please update your profile with a valid eReader Email."
 msgstr "Konfigurera din kindle-e-postadress först..."
 
-#: cps/web.py:1987
+#: cps/web.py:1993
 #, python-format
 msgid "Success! Book queued for sending to %(eReadermail)s"
 msgstr "Boken är i kö för att skicka till %(eReadermail)s"
 
-#: cps/web.py:1990 cps/web.py:2048
+#: cps/web.py:1996 cps/web.py:2054
 #, python-format
 msgid "Oops! There was an error sending book: %(res)s"
 msgstr "Det gick inte att skicka den här boken: %(res)s"
 
-#: cps/web.py:2007 cps/web.py:2017
+#: cps/web.py:2013 cps/web.py:2023
 msgid "No email addresses selected"
 msgstr ""
 
-#: cps/web.py:2024
+#: cps/web.py:2030
 msgid "Additional email addresses are disabled for your account."
 msgstr ""
 
-#: cps/web.py:2046
+#: cps/web.py:2052
 #, fuzzy
 msgid "Success! Book queued for sending to the selected address(es)!"
 msgstr "Boken är i kö för att skicka till %(eReadermail)s"
 
-#: cps/web.py:2065
+#: cps/web.py:2071
 msgid "Please wait one minute to register next user"
 msgstr ""
 
 #: cps/templates/layout.html:136 cps/templates/layout.html:178
-#: cps/templates/login.html:48 cps/templates/register.html:17 cps/web.py:2066
-#: cps/web.py:2070 cps/web.py:2075 cps/web.py:2079 cps/web.py:2085
-#: cps/web.py:2110 cps/web.py:2114 cps/web.py:2127 cps/web.py:2130
+#: cps/templates/login.html:48 cps/templates/register.html:17 cps/web.py:2072
+#: cps/web.py:2076 cps/web.py:2081 cps/web.py:2085 cps/web.py:2091
+#: cps/web.py:2116 cps/web.py:2120 cps/web.py:2133 cps/web.py:2136
 msgid "Register"
 msgstr "Registrera"
 
-#: cps/web.py:2069 cps/web.py:2234
+#: cps/web.py:2075 cps/web.py:2240
 #, fuzzy
 msgid "Connection error to limiter backend, please contact your administrator"
 msgstr "E-postservern är inte konfigurerad, kontakta din administratör!"
 
-#: cps/web.py:2074 cps/web.py:2126
+#: cps/web.py:2080 cps/web.py:2132
 msgid ""
 "Oops! Email server is not configured, please contact your administrator."
 msgstr "E-postservern är inte konfigurerad, kontakta din administratör!"
 
-#: cps/web.py:2112
+#: cps/web.py:2118
 msgid "Oops! Your Email is not allowed."
 msgstr "Din e-post är inte tillåten att registrera"
 
-#: cps/web.py:2115
+#: cps/web.py:2121
 msgid "Success! Confirmation Email has been sent."
 msgstr "Bekräftelsemail skickades till ditt e-postkonto."
 
-#: cps/web.py:2163
+#: cps/web.py:2169
 #, fuzzy
 msgid ""
 "Authentication loop detected. If you're experiencing login issues, please "
 "contact your administrator."
 msgstr "E-postservern är inte konfigurerad, kontakta din administratör!"
 
-#: cps/web.py:2208
+#: cps/web.py:2214
 #, fuzzy
 msgid ""
 "OAuth authentication is not properly configured. Please contact "
 "administrator."
 msgstr "E-postservern är inte konfigurerad, kontakta din administratör!"
 
-#: cps/web.py:2213 cps/web.py:2240
+#: cps/web.py:2219 cps/web.py:2246
 #, fuzzy
 msgid "Cannot activate LDAP authentication"
 msgstr "Det går inte att aktivera LDAP-autentisering"
 
-#: cps/web.py:2222
+#: cps/web.py:2228
 msgid "Standard login is disabled."
 msgstr ""
 
-#: cps/web.py:2230
+#: cps/web.py:2236
 msgid "Please wait one minute before next login"
 msgstr ""
 
-#: cps/web.py:2248
+#: cps/web.py:2254
 msgid "Username cannot be empty"
 msgstr ""
 
-#: cps/web.py:2260
+#: cps/web.py:2266
 #, fuzzy, python-format
 msgid "you are now logged in as: '%(nickname)s'"
 msgstr "du är nu inloggad som: \"%(nickname)s\""
 
-#: cps/web.py:2279
+#: cps/web.py:2285
 #, fuzzy, python-format
 msgid ""
 "Welcome! Your account has been automatically created. You are now logged in "
 "as: '%(nickname)s'"
 msgstr "du är nu inloggad som: \"%(nickname)s\""
 
-#: cps/web.py:2284 cps/web.py:2287
+#: cps/web.py:2290 cps/web.py:2293
 #, fuzzy
 msgid ""
 "Authentication successful, but account creation failed. Please contact your "
 "administrator."
 msgstr "E-postservern är inte konfigurerad, kontakta din administratör!"
 
-#: cps/web.py:2291
+#: cps/web.py:2297
 msgid ""
 "Authentication successful, but no local account found. Please contact your "
 "administrator to create your account."
 msgstr ""
 
-#: cps/web.py:2299
+#: cps/web.py:2305
 #, python-format
 msgid ""
 "Fallback Login as: '%(nickname)s', LDAP Server not reachable, or user not "
 "known"
 msgstr ""
 
-#: cps/web.py:2305
+#: cps/web.py:2311
 #, fuzzy, python-format
 msgid "Could not login: %(message)s"
 msgstr "Det gick inte att logga in: %(message)s"
 
-#: cps/web.py:2328 cps/web.py:2329 cps/web.py:2372
+#: cps/web.py:2334 cps/web.py:2335 cps/web.py:2378
 #, fuzzy
 msgid "Wrong Username or Password"
 msgstr "Fel användarnamn eller lösenord"
 
-#: cps/web.py:2337
+#: cps/web.py:2343
 #, fuzzy
 msgid "New Password was sent to your email address"
 msgstr "Nytt lösenord skickades till din e-postadress"
 
-#: cps/web.py:2341
+#: cps/web.py:2347
 #, fuzzy
 msgid "An unknown error occurred. Please try again later."
 msgstr "Ett okänt fel uppstod. Försök igen senare."
 
-#: cps/web.py:2343
+#: cps/web.py:2349
 #, fuzzy
 msgid "Please enter valid username to reset password"
 msgstr "Ange giltigt användarnamn för att återställa lösenordet"
 
-#: cps/web.py:2351
+#: cps/web.py:2357
 #, fuzzy, python-format
 msgid "You are now logged in as: '%(nickname)s'"
 msgstr "du är nu inloggad som: \"%(nickname)s\""
 
-#: cps/web.py:2667
+#: cps/web.py:2673
 #, fuzzy
 msgid "Success! Profile Updated"
 msgstr "Profilen uppdaterad"
 
-#: cps/web.py:2673
+#: cps/web.py:2679
 msgid "Oops! An account already exists for this Email."
 msgstr "Hittade ett befintligt konto för den här e-postadressen"
 
-#: cps/web.py:2894
+#: cps/web.py:2900
 #, fuzzy
 msgid "Invalid book ID."
 msgstr "Ogiltig roll"
 
-#: cps/progress_syncing/protocols/kosync.py:454
+#: cps/progress_syncing/protocols/kosync.py:494
 msgid "KOReader Sync Plugin"
 msgstr ""
 
@@ -2691,8 +2701,9 @@ msgstr "Redigera"
 #: cps/templates/admin.html:27 cps/templates/book_edit.html:17
 #: cps/templates/book_table.html:62 cps/templates/book_table.html:141
 #: cps/templates/book_table.html:190 cps/templates/duplicates.html:539
+#: cps/templates/generate_kobo_auth_url.html:52
 #: cps/templates/modal_dialogs.html:63 cps/templates/modal_dialogs.html:116
-#: cps/templates/user_edit.html:326 cps/templates/user_table.html:150
+#: cps/templates/user_table.html:150
 msgid "Delete"
 msgstr "Ta bort"
 
@@ -3184,9 +3195,10 @@ msgstr "Hämta metadata"
 
 #: cps/templates/book_edit.html:252 cps/templates/config_db.html:110
 #: cps/templates/config_edit.html:619 cps/templates/config_view_edit.html:214
-#: cps/templates/email_edit.html:65 cps/templates/schedule_edit.html:45
-#: cps/templates/shelf_edit.html:25 cps/templates/shelf_order.html:41
-#: cps/templates/user_edit.html:553
+#: cps/templates/email_edit.html:65
+#: cps/templates/generate_kobo_auth_url.html:33
+#: cps/templates/schedule_edit.html:45 cps/templates/shelf_edit.html:25
+#: cps/templates/shelf_order.html:41 cps/templates/user_edit.html:553
 msgid "Save"
 msgstr "Spara"
 
@@ -5722,7 +5734,54 @@ msgstr "Nästa"
 msgid "(Magic)"
 msgstr ""
 
-#: cps/templates/generate_kobo_auth_url.html:6
+#: cps/templates/generate_kobo_auth_url.html:8
+msgid ""
+"Create one Kobo sync token for each physical Kobo device. Reading progress "
+"is shared by the user account, while sync delivery is tracked per device "
+"token."
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:11
+msgid "Add Kobo Device"
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:19
+msgid "Device"
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:20
+#, fuzzy
+msgid "Sync Progress"
+msgstr "Förlopp"
+
+#: cps/templates/generate_kobo_auth_url.html:21
+msgid "Last Contact"
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:22
+#, fuzzy
+msgid "Kobo Configuration"
+msgstr "Konfiguration"
+
+#: cps/templates/generate_kobo_auth_url.html:23 cps/templates/tasks.html:22
+#: cps/templates/tasks.html:46 cps/templates/tasks.html:68
+msgid "Actions"
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:36
+msgid "Token ID"
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:38
+#, python-format
+msgid "%(count)s books synced"
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:43
+msgid "Never"
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:47
 msgid ""
 "Open the .kobo/Kobo/Kobo eReader.conf file in a text editor and add (or "
 "edit):"
@@ -5730,10 +5789,13 @@ msgstr ""
 "Öppna filen .kobo/Kobo/Kobo eReader.conf i en textredigerare och lägg till "
 "(eller redigera):"
 
-#: cps/templates/generate_kobo_auth_url.html:11
-#, fuzzy
-msgid "Kobo Token:"
-msgstr "Kobo Sync Token"
+#: cps/templates/generate_kobo_auth_url.html:51
+msgid "Force full sync"
+msgstr ""
+
+#: cps/templates/generate_kobo_auth_url.html:60
+msgid "No Kobo device tokens have been created yet."
+msgstr ""
 
 #: cps/templates/grid.html:21
 msgid "List"
@@ -6716,11 +6778,6 @@ msgstr "Drifttid"
 msgid "Message"
 msgstr "Slå samman"
 
-#: cps/templates/tasks.html:22 cps/templates/tasks.html:46
-#: cps/templates/tasks.html:68
-msgid "Actions"
-msgstr ""
-
 #: cps/templates/tasks.html:33
 msgid "Upcoming scheduled sends"
 msgstr ""
@@ -6890,16 +6947,17 @@ msgstr ""
 msgid "API token for Hardcover metadata provider integration."
 msgstr ""
 
-#: cps/templates/user_edit.html:323
-msgid "Kobo Sync Token"
+#: cps/templates/user_edit.html:324
+#, fuzzy
+msgid "Kobo Sync Devices"
 msgstr "Kobo Sync Token"
 
-#: cps/templates/user_edit.html:325
-msgid "Create/View"
-msgstr "Skapa/Visa"
+#: cps/templates/user_edit.html:326
+msgid "Manage Devices"
+msgstr ""
 
 #: cps/templates/user_edit.html:329
-msgid "Force full kobo sync"
+msgid "Force full kobo sync for all devices"
 msgstr ""
 
 #: cps/templates/user_edit.html:336
@@ -7030,8 +7088,8 @@ msgid "Delete User"
 msgstr "Ta bort den här användaren"
 
 #: cps/templates/user_edit.html:569
-msgid "Generate Kobo Auth URL"
-msgstr "Skapa Kobo Auth URL"
+msgid "Manage Kobo Devices"
+msgstr ""
 
 #: cps/templates/user_edit.html:631
 msgid "Visible"
@@ -7140,6 +7198,16 @@ msgstr ""
 #, fuzzy
 msgid "Show Read/Unread Section"
 msgstr "Visa läst/oläst val"
+
+#, fuzzy
+#~ msgid "Kobo Token:"
+#~ msgstr "Kobo Sync Token"
+
+#~ msgid "Create/View"
+#~ msgstr "Skapa/Visa"
+
+#~ msgid "Generate Kobo Auth URL"
+#~ msgstr "Skapa Kobo Auth URL"
 
 #~ msgid "Standard Theme"
 #~ msgstr "Standard tema"
@@ -7303,9 +7371,6 @@ msgstr "Visa läst/oläst val"
 
 #~ msgid "Users"
 #~ msgstr "Användarlista"
-
-#~ msgid "Configuration"
-#~ msgstr "Konfiguration"
 
 #~ msgid "Click the cover to load metadata to the form"
 #~ msgstr "Klicka på omslaget för att läsa in metadata till formuläret"
