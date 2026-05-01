@@ -36,8 +36,11 @@ RUN \
   # STEP 1.1 - Add deadsnakes PPA for Python 3.13 and install required apt packages
   echo "**** add deadsnakes PPA for Python 3.13 ****" && \
   apt-get update && \
-  apt-get install -y --no-install-recommends software-properties-common && \
-  add-apt-repository ppa:deadsnakes/ppa && \
+  apt-get install -y --no-install-recommends ca-certificates curl gnupg && \
+  install -d -m 0755 /etc/apt/keyrings && \
+  curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF23C5A6CF475977595C89F51BA6932366A755776" | \
+  gpg --dearmor -o /etc/apt/keyrings/deadsnakes.gpg && \
+  echo "deb [signed-by=/etc/apt/keyrings/deadsnakes.gpg] https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble main" > /etc/apt/sources.list.d/deadsnakes.list && \
   apt-get update && \
   echo "**** install build packages ****" && \
   apt-get install -y --no-install-recommends \
@@ -192,8 +195,11 @@ COPY --from=dependencies /usr/lib/python3.13 /usr/lib/python3.13
 RUN \
   echo "**** add deadsnakes PPA for Python 3.13 runtime ****" && \
   apt-get update && \
-  apt-get install -y --no-install-recommends software-properties-common && \
-  add-apt-repository ppa:deadsnakes/ppa && \
+  apt-get install -y --no-install-recommends ca-certificates curl gnupg && \
+  install -d -m 0755 /etc/apt/keyrings && \
+  curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF23C5A6CF475977595C89F51BA6932366A755776" | \
+  gpg --dearmor -o /etc/apt/keyrings/deadsnakes.gpg && \
+  echo "deb [signed-by=/etc/apt/keyrings/deadsnakes.gpg] https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble main" > /etc/apt/sources.list.d/deadsnakes.list && \
   apt-get update && \
   echo "**** install runtime packages ****" && \
   apt-get install -y --no-install-recommends \
@@ -231,7 +237,7 @@ RUN \
   # Create python3 symlink to point to python3.13
   ln -sf /usr/bin/python3.13 /usr/bin/python3 && \
   # Cleanup
-  apt-get -y purge software-properties-common && \
+  apt-get -y purge gnupg && \
   apt-get -y autoremove && \
   rm -rf \
   /tmp/* \
