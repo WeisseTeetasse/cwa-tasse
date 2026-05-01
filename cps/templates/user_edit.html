@@ -320,13 +320,13 @@
       
       {% if kobo_support and not new_user %}
       <div style="margin-top: 25px;">
-        <label style="display: block; margin-bottom: 12px; font-weight: bold;">{{ _('Kobo Sync Token')}}</label>
+        {% set has_kobo_tokens = content.remote_auth_token.filter_by(token_type=1).first() %}
+        <label style="display: block; margin-bottom: 12px; font-weight: bold;">{{ _('Kobo Sync Devices')}}</label>
         <div style="margin-bottom: 10px;">
-          <a class="btn btn-default" id="config_create_kobo_token" data-toggle="modal" data-target="#modal_kobo_token" data-remote="false" href="{{ url_for('kobo_auth.generate_auth_token', user_id=content.id) }}">{{_('Create/View')}}</a>
-          <div class="btn btn-danger" id="config_delete_kobo_token" data-value="{{ content.id }}" data-remote="false" {% if not content.remote_auth_token.first() %} style="display: none;" {% endif %}>{{_('Delete')}}</div>
+          <a class="btn btn-default" id="config_create_kobo_token" data-toggle="modal" data-target="#modal_kobo_token" data-remote="false" href="{{ url_for('kobo_auth.generate_auth_token', user_id=content.id) }}">{{_('Manage Devices')}}</a>
         </div>
         <div>
-          <div class="btn btn-default" id="kobo_full_sync" data-value="{% if current_user.role_admin() %}{{ content.id }}{% else %}0{% endif %}" {% if not content.remote_auth_token.first() %} style="display: none;" {% endif %}>{{_('Force full kobo sync')}}</div>
+          <div class="btn btn-default" id="kobo_full_sync" data-value="{% if current_user.role_admin() %}{{ content.id }}{% else %}0{% endif %}" {% if not has_kobo_tokens %} style="display: none;" {% endif %}>{{_('Force full kobo sync for all devices')}}</div>
         </div>
         {% if kobo_support and not content.role_anonymous() and not simple %}
         <div style="margin-top: 20px;
@@ -566,7 +566,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="kobo_tokenModalLabel">{{_('Generate Kobo Auth URL')}}</h4>
+        <h4 class="modal-title" id="kobo_tokenModalLabel">{{_('Manage Kobo Devices')}}</h4>
       </div>
       <div class="modal-body">...</div>
       <div class="modal-footer">

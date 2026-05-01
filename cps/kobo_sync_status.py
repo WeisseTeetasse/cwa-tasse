@@ -8,34 +8,44 @@
 from .cw_login import current_user
 from . import ub
 from datetime import datetime, timezone
+from flask import g
 from sqlalchemy.sql.expression import or_, and_, true
 # from sqlalchemy import exc
 
 
+def get_current_kobo_auth_token_id():
+    return g.get("auth_token_id")
+
+
 # Add the current book id to kobo_synced_books table for current user, if entry is already present,
 # do nothing (safety precaution)
-def add_synced_books(book_id):
+def add_synced_books(book_id, remote_auth_token_id=None):
+    if remote_auth_token_id is None:
+        remote_auth_token_id = get_current_kobo_auth_token_id()
     is_present = ub.session.query(ub.KoboSyncedBooks).filter(ub.KoboSyncedBooks.book_id == book_id)\
-        .filter(ub.KoboSyncedBooks.user_id == current_user.id).count()
+        .filter(ub.KoboSyncedBooks.user_id == current_user.id)\
+        .filter(ub.KoboSyncedBooks.remote_auth_token_id == remote_auth_token_id).count()
     if not is_present:
         synced_book = ub.KoboSyncedBooks()
         synced_book.user_id = current_user.id
+        synced_book.remote_auth_token_id = remote_auth_token_id
         synced_book.book_id = book_id
         ub.session.add(synced_book)
         ub.session_commit()
 
 
 # Select all entries of current book in kobo_synced_books table, which are from current user and delete them
-def remove_synced_book(book_id, all=False, session=None):
+def remove_synced_book(book_id, all=False, session=None, remote_auth_token_id=None):
     if not all:
         user = ub.KoboSyncedBooks.user_id == current_user.id
     else:
         user = true()
+    device = true() if remote_auth_token_id is None else ub.KoboSyncedBooks.remote_auth_token_id == remote_auth_token_id
     if not session:
-        ub.session.query(ub.KoboSyncedBooks).filter(ub.KoboSyncedBooks.book_id == book_id).filter(user).delete()
+        ub.session.query(ub.KoboSyncedBooks).filter(ub.KoboSyncedBooks.book_id == book_id).filter(user).filter(device).delete()
         ub.session_commit()
     else:
-        session.query(ub.KoboSyncedBooks).filter(ub.KoboSyncedBooks.book_id == book_id).filter(user).delete()
+        session.query(ub.KoboSyncedBooks).filter(ub.KoboSyncedBooks.book_id == book_id).filter(user).filter(device).delete()
         ub.session_commit(_session=session)
 
 

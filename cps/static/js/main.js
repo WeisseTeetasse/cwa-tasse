@@ -777,23 +777,94 @@ $(function() {
             $(e.relatedTarget).one('focus', function(e){$(this).blur();});
             var $modalBody = $(this).find(".modal-body");
 
-            // Prevent static assets from loading multiple times
-            var useCache = function(options) {
-                options.async = true;
-                options.cache = true;
-            };
-            preFilters.add(useCache);
-
-            $.get(e.relatedTarget.href).done(function(content) {
+            $.ajax({
+                method: "get",
+                url: e.relatedTarget.href,
+                cache: false,
+            }).done(function(content) {
                 $modalBody.html(content);
-                preFilters.remove(useCache);
             });
         })
         .on("hidden.bs.modal", function() {
+            if ($(this).find("#kobo-token-manager").data("has-tokens")) {
+                $("#kobo_full_sync").show();
+            } else {
+                $("#kobo_full_sync").hide();
+            }
             $(this).find(".modal-body").html("...");
-            $("#config_delete_kobo_token").show();
+        });
+
+    function reloadKoboTokenManager($modalBody) {
+        var refreshUrl = $modalBody.find("#kobo-token-manager").data("refresh-url");
+        if (!refreshUrl) {
+            return;
+        }
+        $.ajax({
+            method: "get",
+            url: refreshUrl,
+            cache: false,
+        }).done(function(content) {
+            $modalBody.html(content);
+        });
+    }
+
+    $("#modal_kobo_token").on("click", ".kobo-token-create", function(event) {
+        event.preventDefault();
+        var $modalBody = $("#modal_kobo_token").find(".modal-body");
+        $.ajax({
+            method: "get",
+            url: $(this).attr("href"),
+            cache: false,
+        }).done(function(content) {
+            $modalBody.html(content);
             $("#kobo_full_sync").show();
         });
+    });
+
+    $("#modal_kobo_token").on("click", ".kobo-token-delete", function() {
+        var $button = $(this);
+        confirmDialog(
+            "config_delete_kobo_token",
+            "GeneralDeleteModal",
+            {
+                userId: $button.data("user-id"),
+                tokenId: $button.data("token-id"),
+            },
+            function(value) {
+                var $modalBody = $("#modal_kobo_token").find(".modal-body");
+                $.ajax({
+                    method: "post",
+                    url: getPath() + "/kobo_auth/deleteauthtoken/" + value.userId,
+                    data: {token_id: value.tokenId},
+                    success: function() {
+                        reloadKoboTokenManager($modalBody);
+                    }
+                });
+            }
+        );
+    });
+
+    $("#modal_kobo_token").on("click", ".kobo-token-reset", function() {
+        var $button = $(this);
+        confirmDialog(
+            "btnfullsync",
+            "GeneralDeleteModal",
+            {
+                userId: $button.data("user-id"),
+                tokenId: $button.data("token-id"),
+            },
+            function(value) {
+                var $modalBody = $("#modal_kobo_token").find(".modal-body");
+                $.ajax({
+                    method: "post",
+                    url: getPath() + "/kobo_auth/fullsync/" + value.userId + "/" + value.tokenId,
+                    success: function() {
+                        reloadKoboTokenManager($modalBody);
+                    }
+                });
+            }
+        );
+    });
 
     $("#config_delete_kobo_token").click(function() {
         confirmDialog(

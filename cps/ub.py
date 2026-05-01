@@ -573,6 +573,7 @@ class KoboSyncedBooks(Base):
     __tablename__ = 'kobo_synced_books'
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('user.id'))
+    remote_auth_token_id = Column(Integer, ForeignKey('remote_auth_token.id'), nullable=True)
     book_id = Column(Integer)
 
 # The Kobo ReadingState API keeps track of 4 timestamped entities:
@@ -717,6 +718,9 @@ class RemoteAuthToken(Base):
     id = Column(Integer, primary_key=True)
     auth_token = Column(String, unique=True)
     user_id = Column(Integer, ForeignKey('user.id'))
+    token_name = Column(String, default="")
+    created = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_used = Column(DateTime, nullable=True)
     verified = Column(Boolean, default=False)
     expiration = Column(DateTime)
     token_type = Column(Integer, default=0)
@@ -1037,6 +1041,48 @@ def migrate_magic_shelf_table(engine, _session):
         _run_ddl_with_retry(engine, "ALTER TABLE magic_shelf ADD column 'kobo_sync' Boolean DEFAULT 0")
 
 
+def migrate_kobo_multi_device_tables(engine, _session):
+    token_columns = (
+        (RemoteAuthToken.token_name, "token_name", "String DEFAULT ''"),
+        (RemoteAuthToken.created, "created", "DateTime DEFAULT NULL"),
+        (RemoteAuthToken.last_used, "last_used", "DateTime DEFAULT NULL"),
+    )
+    for column, name, ddl_type in token_columns:
+        try:
+            _session.query(exists().where(column)).scalar()
+            _session.commit()
+        except exc.OperationalError:
+            _safe_session_rollback(_session, f"remote_auth_token.{name}")
+            _run_ddl_with_retry(engine, f"ALTER TABLE remote_auth_token ADD column '{name}' {ddl_type}")
+
+    try:
+        _session.query(exists().where(KoboSyncedBooks.remote_auth_token_id)).scalar()
+        _session.commit()
+    except exc.OperationalError:
+        _safe_session_rollback(_session, "kobo_synced_books.remote_auth_token_id")
+        _run_ddl_with_retry(engine, "ALTER TABLE kobo_synced_books ADD column 'remote_auth_token_id' Integer DEFAULT NULL")
+
+    try:
+        now = datetime.now(timezone.utc)
+        kobo_tokens = _session.query(RemoteAuthToken).filter(RemoteAuthToken.token_type == 1).all()
+        for token in kobo_tokens:
+            if not token.token_name:
+                token.token_name = f"Kobo Device {token.id}"
+            if not token.created:
+                token.created = now
+        _session.commit()
+
+        for token in kobo_tokens:
+            _session.query(KoboSyncedBooks).filter(
+                KoboSyncedBooks.user_id == token.user_id,
+                KoboSyncedBooks.remote_auth_token_id.is_(None)
+            ).update({KoboSyncedBooks.remote_auth_token_id: token.id}, synchronize_session=False)
+        _session.commit()
+    except Exception as e:
+        log.warning("Failed to backfill Kobo multi-device metadata: %s", e)
+        _session.rollback()
+
+
 # Migrate database to current version, has to be updated after every database change. Currently migration from
 # maybe 4/5 versions back to current should work.
 # Migration is done by checking if relevant columns are existing, and then adding rows with SQL commands
@@ -1049,6 +1095,7 @@ def migrate_Database(_session):
     migrate_oauth_provider_table(engine, _session)
     migrate_config_table(engine, _session)
     migrate_magic_shelf_table(engine, _session)
+    migrate_kobo_multi_device_tables(engine, _session)
 
     # Ensure progress syncing tables in app.db (user-related tables)
     from .progress_syncing.models import ensure_app_db_tables

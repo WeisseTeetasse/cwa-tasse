@@ -52,7 +52,7 @@ from datetime import datetime
 from os import urandom
 from functools import wraps
 
-from flask import g, Blueprint, abort, request
+from flask import g, Blueprint, abort, request, jsonify
 from .cw_login import login_user, current_user
 from flask_babel import gettext as _
 from flask_limiter import RateLimitExceeded
@@ -70,6 +70,9 @@ kobo_auth = Blueprint("kobo_auth", __name__, url_prefix="/kobo_auth")
 @kobo_auth.route("/generate_auth_token/<int:user_id>")
 @user_login_required
 def generate_auth_token(user_id):
+    if user_id != current_user.id and not current_user.role_admin():
+        return abort(403)
+
     warning = False
     host_list = request.host.rsplit(':')
     if len(host_list) == 1:
@@ -79,19 +82,15 @@ def generate_auth_token(user_id):
     if host.startswith('127.') or host.lower() == 'localhost' or host.startswith('[::ffff:7f') or host == "[::1]":
         warning = _('Please access Calibre-Web Automated from non localhost to get valid api_endpoint for kobo device')
 
-    # Generate auth token if none is existing for this user
-    auth_token = ub.session.query(ub.RemoteAuthToken).filter(
-        ub.RemoteAuthToken.user_id == user_id
-    ).filter(ub.RemoteAuthToken.token_type==1).first()
-
-    if not auth_token:
+    if request.args.get("create") == "1":
         auth_token = ub.RemoteAuthToken()
         auth_token.user_id = user_id
         auth_token.expiration = datetime.max
         auth_token.auth_token = (hexlify(urandom(16))).decode("utf-8")
         auth_token.token_type = 1
-
         ub.session.add(auth_token)
+        ub.session.flush()
+        auth_token.token_name = _("Kobo Device %(num)s", num=auth_token.id)
         ub.session_commit()
 
     books = calibre_db.session.query(db.Books).join(db.Data).all()
@@ -101,10 +100,13 @@ def generate_auth_token(user_id):
         if 'KEPUB' not in formats and config.config_kepubifypath and 'EPUB' in formats:
             helper.convert_book_format(book.id, config.config_calibre_dir, 'EPUB', 'KEPUB', current_user.name)
 
+    tokens = get_kobo_tokens_for_user(user_id)
+
     return render_title_template(
         "generate_kobo_auth_url.html",
         title=_("Kobo Setup"),
-        auth_token=auth_token.auth_token,
+        tokens=tokens,
+        user_id=user_id,
         warning=warning
     )
 
@@ -112,11 +114,62 @@ def generate_auth_token(user_id):
 @kobo_auth.route("/deleteauthtoken/<int:user_id>", methods=["POST"])
 @user_login_required
 def delete_auth_token(user_id):
-    # Invalidate any previously generated Kobo Auth token for this user
-    ub.session.query(ub.RemoteAuthToken).filter(ub.RemoteAuthToken.user_id == user_id)\
-        .filter(ub.RemoteAuthToken.token_type==1).delete()
+    if user_id != current_user.id and not current_user.role_admin():
+        return abort(403)
+
+    token_id = request.form.get("token_id", type=int)
+    token_query = ub.session.query(ub.RemoteAuthToken).filter(
+        ub.RemoteAuthToken.user_id == user_id,
+        ub.RemoteAuthToken.token_type == 1
+    )
+    if token_id:
+        token_query = token_query.filter(ub.RemoteAuthToken.id == token_id)
+        ub.session.query(ub.KoboSyncedBooks).filter(
+            ub.KoboSyncedBooks.user_id == user_id,
+            ub.KoboSyncedBooks.remote_auth_token_id == token_id
+        ).delete()
+    else:
+        ub.session.query(ub.KoboSyncedBooks).filter(
+            ub.KoboSyncedBooks.user_id == user_id
+        ).delete()
+    token_query.delete()
 
     return ub.session_commit()
+
+
+@kobo_auth.route("/fullsync/<int:user_id>/<int:token_id>", methods=["POST"])
+@user_login_required
+def full_sync_token(user_id, token_id):
+    if user_id != current_user.id and not current_user.role_admin():
+        return abort(403)
+
+    token = ub.session.query(ub.RemoteAuthToken).filter(
+        ub.RemoteAuthToken.user_id == user_id,
+        ub.RemoteAuthToken.id == token_id,
+        ub.RemoteAuthToken.token_type == 1
+    ).first()
+    if not token:
+        return abort(404)
+
+    count = ub.session.query(ub.KoboSyncedBooks).filter(
+        ub.KoboSyncedBooks.user_id == user_id,
+        ub.KoboSyncedBooks.remote_auth_token_id == token_id
+    ).delete()
+    ub.session_commit()
+    return jsonify({"type": "success", "message": _("{} sync entries deleted").format(count)})
+
+
+def get_kobo_tokens_for_user(user_id):
+    token_rows = ub.session.query(ub.RemoteAuthToken).filter(
+        ub.RemoteAuthToken.user_id == user_id,
+        ub.RemoteAuthToken.token_type == 1
+    ).order_by(ub.RemoteAuthToken.id).all()
+    for token in token_rows:
+        token.synced_books_count = ub.session.query(ub.KoboSyncedBooks).filter(
+            ub.KoboSyncedBooks.user_id == user_id,
+            ub.KoboSyncedBooks.remote_auth_token_id == token.id
+        ).count()
+    return token_rows
 
 
 def disable_failed_auth_redirect_for_blueprint(bp):
@@ -128,6 +181,10 @@ def get_auth_token():
         return g.get("auth_token")
     else:
         return None
+
+
+def get_auth_token_id():
+    return g.get("auth_token_id")
 
 
 def register_url_value_preprocessor(kobo):
@@ -149,13 +206,17 @@ def requires_kobo_auth(f):
             except (ConnectionError, Exception) as e:
                 log.error("Connection error to limiter backend: %s", e)
                 return abort(429)
-            user = (
-                ub.session.query(ub.User)
-                .join(ub.RemoteAuthToken)
-                .filter(ub.RemoteAuthToken.auth_token == auth_token).filter(ub.RemoteAuthToken.token_type==1)
+            auth_token_row = (
+                ub.session.query(ub.RemoteAuthToken)
+                .filter(ub.RemoteAuthToken.auth_token == auth_token)
+                .filter(ub.RemoteAuthToken.token_type == 1)
                 .first()
             )
+            user = auth_token_row.user if auth_token_row else None
             if user is not None:
+                auth_token_row.last_used = datetime.now()
+                ub.session_commit()
+                g.auth_token_id = auth_token_row.id
                 login_user(user)
                 [limiter.limiter.storage.clear(k.key) for k in limiter.current_limits]
                 return f(*args, **kwargs)

@@ -44,7 +44,7 @@ from .kobo_cover_cache import build_cover_image_id, normalize_cover_uuid
 from .helper import get_download_link
 from .services import SyncToken as SyncToken, hardcover
 from .web import download_required
-from .kobo_auth import requires_kobo_auth, get_auth_token
+from .kobo_auth import requires_kobo_auth, get_auth_token, get_auth_token_id
 
 KOBO_FORMATS = {"KEPUB": ["KEPUB"], "EPUB": ["EPUB3", "EPUB"]}
 KOBO_STOREAPI_URL = "https://storeapi.kobo.com"
@@ -160,6 +160,7 @@ def HandleSyncRequest():
         return abort(403)
 
     sync_token = SyncToken.SyncToken.from_headers(request.headers)
+    current_kobo_token_id = get_auth_token_id()
     log.info("Kobo library sync request received")
     log.debug("SyncToken: {}".format(sync_token))
     log.debug("Download link format {}".format(get_download_url_for_book('[bookid]', '[bookformat]')))
@@ -167,7 +168,9 @@ def HandleSyncRequest():
         log.debug('Kobo: Received unproxied request, changed request port to external server port')
 
     # if no books synced don't respect sync_token
-    if not ub.session.query(ub.KoboSyncedBooks).filter(ub.KoboSyncedBooks.user_id == current_user.id).count():
+    if not ub.session.query(ub.KoboSyncedBooks).filter(
+            ub.KoboSyncedBooks.user_id == current_user.id,
+            ub.KoboSyncedBooks.remote_auth_token_id == current_kobo_token_id).count():
         sync_token.books_last_modified = datetime.min
         sync_token.books_last_created = datetime.min
         sync_token.reading_state_last_modified = datetime.min
@@ -188,7 +191,9 @@ def HandleSyncRequest():
         magic_shelf_book_ids = get_magic_shelf_book_ids_for_kobo(current_user.id)
         try:
             # Check all books that are on Kobo according to the database
-            synced_books_query = ub.session.query(ub.KoboSyncedBooks.book_id).filter(ub.KoboSyncedBooks.user_id == current_user.id)
+            synced_books_query = ub.session.query(ub.KoboSyncedBooks.book_id).filter(
+                ub.KoboSyncedBooks.user_id == current_user.id,
+                ub.KoboSyncedBooks.remote_auth_token_id == current_kobo_token_id)
             synced_book_ids = {item.book_id for item in synced_books_query}
 
             # Check all books currently on a Kobo Sync shelf
@@ -220,6 +225,7 @@ def HandleSyncRequest():
                 if books_to_delete_ids:
                     ub.session.query(ub.KoboSyncedBooks).filter(
                         ub.KoboSyncedBooks.user_id == current_user.id,
+                        ub.KoboSyncedBooks.remote_auth_token_id == current_kobo_token_id,
                         ub.KoboSyncedBooks.book_id.in_(books_to_delete_ids)
                     ).delete(synchronize_session=False)
                     ub.session_commit()
@@ -241,7 +247,8 @@ def HandleSyncRequest():
                            .join(db.Data).outerjoin(ub.ArchivedBook, and_(db.Books.id == ub.ArchivedBook.book_id,
                                                                           ub.ArchivedBook.user_id == current_user.id))
                            .filter(db.Books.id.notin_(calibre_db.session.query(ub.KoboSyncedBooks.book_id)
-                                                      .filter(ub.KoboSyncedBooks.user_id == current_user.id)))
+                                                      .filter(ub.KoboSyncedBooks.user_id == current_user.id)
+                                                      .filter(ub.KoboSyncedBooks.remote_auth_token_id == current_kobo_token_id)))
                           .filter(or_(
                               ub.BookShelf.date_added > sync_token.books_last_modified,
                               db.Books.last_modified > sync_token.books_last_modified,
@@ -266,7 +273,8 @@ def HandleSyncRequest():
                            .join(db.Data).outerjoin(ub.ArchivedBook, and_(db.Books.id == ub.ArchivedBook.book_id,
                                                                           ub.ArchivedBook.user_id == current_user.id))
                            .filter(db.Books.id.notin_(calibre_db.session.query(ub.KoboSyncedBooks.book_id)
-                                                      .filter(ub.KoboSyncedBooks.user_id == current_user.id)))
+                                                      .filter(ub.KoboSyncedBooks.user_id == current_user.id)
+                                                      .filter(ub.KoboSyncedBooks.remote_auth_token_id == current_kobo_token_id)))
                            .filter(calibre_db.common_filters(allow_show_archived=True))
                            .filter(db.Data.format.in_(KOBO_FORMATS))
                            .order_by(db.Books.last_modified)
@@ -304,7 +312,7 @@ def HandleSyncRequest():
         )
 
         new_books_last_created = max(ts_created, new_books_last_created)
-        kobo_sync_status.add_synced_books(book.Books.id)
+        kobo_sync_status.add_synced_books(book.Books.id, current_kobo_token_id)
 
     max_change = changed_entries.filter(ub.ArchivedBook.is_archived)\
         .filter(ub.ArchivedBook.user_id == current_user.id) \
@@ -342,6 +350,7 @@ def HandleSyncRequest():
              ub.KoboReadingState.book_id.in_(
                  ub.session.query(ub.KoboSyncedBooks.book_id)
                  .filter(ub.KoboSyncedBooks.user_id == current_user.id)
+                 .filter(ub.KoboSyncedBooks.remote_auth_token_id == current_kobo_token_id)
              ),
              ub.KoboReadingState.book_id.notin_(reading_states_in_new_entitlements)))\
         .order_by(ub.KoboReadingState.last_modified)
@@ -1169,7 +1178,7 @@ def HandleBookDeletionRequest(book_uuid):
     elif current_user.check_visibility(32768):
         kobo_sync_status.change_archived_books(book_id, True)
 
-    kobo_sync_status.remove_synced_book(book_id)
+    kobo_sync_status.remove_synced_book(book_id, remote_auth_token_id=get_auth_token_id())
     return "", 204
 
 

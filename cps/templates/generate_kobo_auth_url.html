@@ -1,15 +1,58 @@
 {% extends "fragment.html" %}
 {% block body %}
-<div class="well">
-<h3 style="margin-top: 0; margin-bottom: 3rem;">
-  {% if not warning %}
-      {{_('Open the .kobo/Kobo/Kobo eReader.conf file in a text editor and add (or edit):')}}
-</h3><code style="font-size: larger; overflow-wrap: anywhere;">
-      api_endpoint={{url_for("kobo.TopLevelEndpoint", auth_token=auth_token, _external=True)}}
-  {% else %}
-      {{warning}}
-</code><code style="font-size: larger; overflow-wrap: anywhere;">{{_('Kobo Token:')}} {{ auth_token }}
+<div id="kobo-token-manager" data-refresh-url="{{ url_for('kobo_auth.generate_auth_token', user_id=user_id) }}" data-has-tokens="{{ 1 if tokens else 0 }}">
+  {% if warning %}
+  <div class="alert alert-warning">{{ warning }}</div>
   {% endif %}
-</code>
+
+  <p>{{ _('Create one Kobo sync token for each physical Kobo device. Reading progress is shared by the user account, while sync delivery is tracked per device token.') }}</p>
+
+  <div style="margin-bottom: 15px;">
+    <a class="btn btn-default kobo-token-create" href="{{ url_for('kobo_auth.generate_auth_token', user_id=user_id, create=1) }}">{{ _('Add Kobo Device') }}</a>
+  </div>
+
+  {% if tokens %}
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>{{ _('Device') }}</th>
+          <th>{{ _('Sync Progress') }}</th>
+          <th>{{ _('Last Contact') }}</th>
+          <th>{{ _('Kobo Configuration') }}</th>
+          <th>{{ _('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for token in tokens %}
+        <tr>
+          <td>
+            <strong>{{ token.token_name or _('Kobo Device %(num)s', num=token.id) }}</strong><br>
+            <small>{{ _('Token ID') }} {{ token.id }}</small>
+          </td>
+          <td>{{ _('%(count)s books synced', count=token.synced_books_count) }}</td>
+          <td>
+            {% if token.last_used %}
+              {{ token.last_used.strftime('%Y-%m-%d %H:%M:%S') }}
+            {% else %}
+              {{ _('Never') }}
+            {% endif %}
+          </td>
+          <td>
+            <div>{{ _('Open the .kobo/Kobo/Kobo eReader.conf file in a text editor and add (or edit):') }}</div>
+            <code style="display: block; font-size: larger; overflow-wrap: anywhere;">api_endpoint={{ url_for("kobo.TopLevelEndpoint", auth_token=token.auth_token, _external=True) }}</code>
+          </td>
+          <td style="white-space: nowrap;">
+            <button type="button" class="btn btn-default btn-sm kobo-token-reset" data-user-id="{{ user_id }}" data-token-id="{{ token.id }}">{{ _('Force full sync') }}</button>
+            <button type="button" class="btn btn-danger btn-sm kobo-token-delete" data-user-id="{{ user_id }}" data-token-id="{{ token.id }}">{{ _('Delete') }}</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="well">{{ _('No Kobo device tokens have been created yet.') }}</div>
+  {% endif %}
 </div>
 {% endblock %}
