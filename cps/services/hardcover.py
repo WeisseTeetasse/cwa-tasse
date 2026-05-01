@@ -288,7 +288,7 @@ class HardcoverClient:
         if existing:
             return existing
         mutation = """
-            mutation ($object: ListBookCreateInput!) {
+            mutation ($object: ListBookInput!) {
                 insert_list_book(object: $object) {
                     error
                     list_book {
