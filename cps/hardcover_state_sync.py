@@ -342,14 +342,34 @@ def _determine_removed_currently_reading_status(user, book_id):
     return hardcover.STATUS_WANT_TO_READ
 
 
-def _remove_hardcover_list_entry(client, row, list_id, book):
-    list_book_id = row.hardcover_list_book_id if row else None
+def _matching_list_book(book, list_books):
+    if list_books is None:
+        return None
     ids = _book_hardcover_ids(book)
+    for list_book in list_books:
+        if ids["edition_id"] and str(list_book.get("edition_id") or "") == str(ids["edition_id"]):
+            return list_book
+        if ids["book_id"] and str(list_book.get("book_id") or "") == str(ids["book_id"]):
+            return list_book
+    return None
+
+
+def _remove_hardcover_list_entry(client, row, list_id, book, selected_list_books=None, list_book=None):
+    if list_book is None and selected_list_books is not None:
+        list_book = _matching_list_book(book, selected_list_books)
+        if list_book is None:
+            return False
+    list_book_id = _as_int(list_book.get("id")) if list_book else None
+    if not list_book_id and row and selected_list_books is None:
+        list_book_id = row.hardcover_list_book_id
     if not list_book_id:
+        ids = _book_hardcover_ids(book)
         list_book = client.find_list_book(list_id, book_id=ids["book_id"], edition_id=ids["edition_id"])
         list_book_id = list_book.get("id") if list_book else None
     if list_book_id:
         client.delete_list_book(list_book_id)
+        if selected_list_books is not None and list_book in selected_list_books:
+            selected_list_books.remove(list_book)
         log.info("Hardcover state sync: removed Hardcover list_book %s because CWA tag %s was removed.",
                  list_book_id, getattr(book, "title", ""))
         return True
@@ -368,7 +388,9 @@ def _read_cleanup(user, client, book, selected_list_books=None):
     if list_id and client:
         row = _sync_row(user.id, book.id, SYNC_KEY_LIST_TAG)
         try:
-            removed_list = _remove_hardcover_list_entry(client, row, list_id, book)
+            removed_list = _remove_hardcover_list_entry(client, row, list_id, book, selected_list_books)
+            if removed_list:
+                _update_sync_row(row, book=book, cwa_value="0", hardcover_value="0", source="cwa")
         except Exception as e:
             row.last_error = str(e)
             log.error("Hardcover state sync: failed read cleanup list removal for CWA book %s: %s", book.id, e)
@@ -544,11 +566,13 @@ def sync_user(user, source="manual"):
         selected_list_books = client.get_list_books(list_id)
 
     seen_books = set()
+    unmatched_hc_books = 0
     for hc_book in user_books:
         local_book = _match_local_book(hc_book, by_hc_book, by_hc_edition)
         if not local_book:
-            log.info("Hardcover state sync: skipped HC book %s, no matching CWA book found.",
-                     hc_book.get("book_id"))
+            unmatched_hc_books += 1
+            log.debug("Hardcover state sync: skipped HC book %s, no matching CWA book found.",
+                      hc_book.get("book_id"))
             continue
         seen_books.add(local_book.id)
         status_id = _as_int(hc_book.get("status_id"))
@@ -560,7 +584,7 @@ def sync_user(user, source="manual"):
                 log.info("Hardcover state sync: marked CWA book %s as read from Hardcover.", local_book.id)
             if shelf and _remove_from_shelf(shelf, local_book.id):
                 changed += 1
-            _read_cleanup(user, client, local_book)
+            _read_cleanup(user, client, local_book, selected_list_books)
 
         if shelf and getattr(user, "hardcover_state_pull_currently_reading", True):
             is_reading = status_id == hardcover.STATUS_READING
@@ -590,11 +614,13 @@ def sync_user(user, source="manual"):
 
     if getattr(user, "hardcover_list_tag_sync_enabled", False) and list_id:
         current_hc_members = {}
+        unmatched_hc_list_books = 0
         for list_book in selected_list_books:
             local_book = _match_local_book(list_book, by_hc_book, by_hc_edition)
             if not local_book:
-                log.info("Hardcover state sync: skipped HC list book %s, no matching CWA book found.",
-                         list_book.get("book_id"))
+                unmatched_hc_list_books += 1
+                log.debug("Hardcover state sync: skipped HC list book %s, no matching CWA book found.",
+                          list_book.get("book_id"))
                 continue
             current_hc_members[local_book.id] = list_book
             row = _sync_row(user.id, local_book.id, SYNC_KEY_LIST_TAG)
@@ -623,7 +649,8 @@ def sync_user(user, source="manual"):
                                                                _truth(hc_has_tag),
                                                                row.hardcover_changed_at):
                     if not local_has_tag:
-                        if _remove_hardcover_list_entry(client, row, list_id, local_book):
+                        if _remove_hardcover_list_entry(client, row, list_id, local_book,
+                                                       selected_list_books, hc_list_book):
                             _update_sync_row(row, book=local_book, cwa_value="0", hardcover_value="0", source=source)
                             changed += 1
                     else:
@@ -661,6 +688,13 @@ def sync_user(user, source="manual"):
                 changed += 1
                 log.info("Hardcover state sync: added CWA book %s to Hardcover list %s from CWA tag %s.",
                          local_book.id, list_id, tag_name)
+        if unmatched_hc_list_books:
+            log.info("Hardcover state sync: skipped %s Hardcover list books with no matching CWA book.",
+                     unmatched_hc_list_books)
+
+    if unmatched_hc_books:
+        log.info("Hardcover state sync: skipped %s Hardcover books with no matching CWA book.",
+                 unmatched_hc_books)
 
     user.hardcover_state_last_sync = _now()
     ub.session.merge(user)
