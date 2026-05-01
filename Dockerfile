@@ -37,7 +37,7 @@ RUN \
   echo "**** add deadsnakes PPA for Python 3.13 ****" && \
   apt-get update && \
   apt-get install -y --no-install-recommends ca-certificates && \
-  echo "deb [trusted=yes] https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble main" > /etc/apt/sources.list.d/deadsnakes.list && \
+  echo "deb [trusted=yes] http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble main" > /etc/apt/sources.list.d/deadsnakes.list && \
   apt-get update && \
   echo "**** install build packages ****" && \
   apt-get install -y --no-install-recommends \
@@ -193,7 +193,7 @@ RUN \
   echo "**** add deadsnakes PPA for Python 3.13 runtime ****" && \
   apt-get update && \
   apt-get install -y --no-install-recommends ca-certificates && \
-  echo "deb [trusted=yes] https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble main" > /etc/apt/sources.list.d/deadsnakes.list && \
+  echo "deb [trusted=yes] http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble main" > /etc/apt/sources.list.d/deadsnakes.list && \
   apt-get update && \
   echo "**** install runtime packages ****" && \
   apt-get install -y --no-install-recommends \
