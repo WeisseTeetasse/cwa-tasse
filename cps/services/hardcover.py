@@ -249,6 +249,20 @@ class HardcoverClient:
         response = self.execute(query)
         return (response.get("me") or [{}])[0].get("lists", [])
 
+    def get_list(self, list_id):
+        """Fetch one Hardcover list including its updated timestamp."""
+        query = """
+            query ($listId: Int!) {
+                lists(where: {id: {_eq: $listId}}, limit: 1) {
+                    id
+                    name
+                    slug
+                    updated_at
+                }
+            }"""
+        response = self.execute(query, {"listId": int(list_id)})
+        return next(iter(response.get("lists", [])), None)
+
     def get_list_books(self, list_id):
         """Fetch books on a Hardcover list, including the list_books row id."""
         query = """

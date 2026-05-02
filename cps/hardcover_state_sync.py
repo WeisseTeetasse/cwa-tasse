@@ -23,6 +23,11 @@ DEFAULT_CURRENTLY_READING_SHELF = "Currently Reading"
 DEFAULT_LIST_TAG = "Up Next"
 SKIP_SOURCE_USER_BOOK = "user_book"
 SKIP_SOURCE_LIST_BOOK = "list_book"
+LIST_TAG_ACTION_NONE = "none"
+LIST_TAG_ACTION_PULL_ADD = "pull_add"
+LIST_TAG_ACTION_PULL_REMOVE = "pull_remove"
+LIST_TAG_ACTION_PUSH_ADD = "push_add"
+LIST_TAG_ACTION_PUSH_REMOVE = "push_remove"
 
 
 def _now():
@@ -272,6 +277,23 @@ def _prefer_cwa(row, cwa_value, hardcover_value, hardcover_changed_at):
     if not row.cwa_changed_at or not hardcover_changed_at:
         return False
     return row.cwa_changed_at > hardcover_changed_at
+
+
+def _is_initial_sync_row(row):
+    return bool(row and row.cwa_value is None and row.hardcover_value is None and row.last_synced_at is None)
+
+
+def _list_tag_action(row, local_has_tag, hc_has_tag, hardcover_changed_at,
+                     push_enabled=True, pull_enabled=True):
+    if local_has_tag == hc_has_tag:
+        return LIST_TAG_ACTION_NONE
+    if _is_initial_sync_row(row) and local_has_tag and not hc_has_tag:
+        return LIST_TAG_ACTION_PUSH_ADD if push_enabled else LIST_TAG_ACTION_NONE
+    if push_enabled and _prefer_cwa(row, _truth(local_has_tag), _truth(hc_has_tag), hardcover_changed_at):
+        return LIST_TAG_ACTION_PUSH_ADD if local_has_tag else LIST_TAG_ACTION_PUSH_REMOVE
+    if pull_enabled:
+        return LIST_TAG_ACTION_PULL_ADD if hc_has_tag else LIST_TAG_ACTION_PULL_REMOVE
+    return LIST_TAG_ACTION_NONE
 
 
 def _is_book_read(user_id, book_id):
@@ -607,10 +629,13 @@ def sync_user(user, source="manual"):
         user_books = client.get_user_books()
 
     selected_list_books = []
+    selected_list_updated_at = None
     list_id = _as_int(getattr(user, "hardcover_list_sync_list_id", None))
     tag_name = (getattr(user, "hardcover_list_sync_tag", None) or DEFAULT_LIST_TAG).strip()
     if getattr(user, "hardcover_list_tag_sync_enabled", False) and list_id:
         _clear_skipped_books(user.id, SKIP_SOURCE_LIST_BOOK)
+        selected_list = client.get_list(list_id)
+        selected_list_updated_at = _hc_timestamp(selected_list) if selected_list else _now()
         selected_list_books = client.get_list_books(list_id)
 
     seen_books = set()
@@ -688,38 +713,62 @@ def sync_user(user, source="manual"):
             _update_sync_row(row, book=local_book, list_book=list_book, cwa_value=_truth(_has_tag(local_book, tag_name)),
                              hardcover_value="1", source=source)
 
-        if getattr(user, "hardcover_list_push_enabled", True):
+        if (getattr(user, "hardcover_list_push_enabled", True) or
+                getattr(user, "hardcover_list_pull_enabled", True)):
             for local_book in local_books:
                 local_has_tag = _has_tag(local_book, tag_name)
                 hc_list_book = current_hc_members.get(local_book.id)
                 hc_has_tag = bool(hc_list_book)
                 row = _sync_row(user.id, local_book.id, SYNC_KEY_LIST_TAG)
-                row.hardcover_changed_at = _hc_timestamp(hc_list_book) if hc_list_book else row.hardcover_changed_at
-                if local_has_tag != hc_has_tag and _prefer_cwa(row, _truth(local_has_tag),
-                                                               _truth(hc_has_tag),
-                                                               row.hardcover_changed_at):
-                    if not local_has_tag:
-                        if _remove_hardcover_list_entry(client, row, list_id, local_book,
-                                                       selected_list_books, hc_list_book):
-                            _update_sync_row(row, book=local_book, cwa_value="0", hardcover_value="0", source=source)
-                            changed += 1
-                    else:
-                        ids = _book_hardcover_ids(local_book)
-                        if not ids["book_id"]:
-                            log.warning("Hardcover state sync: skipped CWA book %s, no Hardcover identifier found.",
-                                        local_book.id)
-                            continue
-                        list_book = client.add_book_to_list(list_id, ids["book_id"], ids["edition_id"])
-                        _update_sync_row(row, book=local_book, list_book=list_book, cwa_value="1",
-                                         hardcover_value="1", source=source)
+                hc_changed_at = _hc_timestamp(hc_list_book) if hc_list_book else row.hardcover_changed_at
+                if not hc_list_book and row.hardcover_value == "1":
+                    hc_changed_at = selected_list_updated_at or _now()
+                row.hardcover_changed_at = hc_changed_at
+                action = _list_tag_action(
+                    row,
+                    local_has_tag,
+                    hc_has_tag,
+                    hc_changed_at,
+                    push_enabled=getattr(user, "hardcover_list_push_enabled", True),
+                    pull_enabled=getattr(user, "hardcover_list_pull_enabled", True),
+                )
+                if action == LIST_TAG_ACTION_PUSH_REMOVE:
+                    if _remove_hardcover_list_entry(client, row, list_id, local_book,
+                                                   selected_list_books, hc_list_book):
+                        _update_sync_row(row, book=local_book, cwa_value="0", hardcover_value="0", source=source)
                         changed += 1
                     continue
+                if action == LIST_TAG_ACTION_PUSH_ADD:
+                    ids = _book_hardcover_ids(local_book)
+                    if not ids["book_id"]:
+                        log.warning("Hardcover state sync: skipped CWA book %s, no Hardcover identifier found.",
+                                    local_book.id)
+                        continue
+                    list_book = client.add_book_to_list(list_id, ids["book_id"], ids["edition_id"])
+                    current_hc_members[local_book.id] = list_book
+                    _update_sync_row(row, book=local_book, list_book=list_book, cwa_value="1",
+                                     hardcover_value="1", source=source)
+                    changed += 1
+                    log.info("Hardcover state sync: added CWA book %s to Hardcover list %s from CWA tag %s.",
+                             local_book.id, list_id, tag_name)
+                    continue
+                if action == LIST_TAG_ACTION_PULL_ADD:
+                    if not _is_book_read(user.id, local_book.id) and _add_tag(local_book, tag_name):
+                        changed += 1
+                        log.info("Hardcover state sync: added tag %s to CWA book %s from Hardcover list %s.",
+                                 tag_name, local_book.id, list_id)
+                    _update_sync_row(row, book=local_book, list_book=hc_list_book, cwa_value="1",
+                                     hardcover_value="1", source=source)
+                    continue
+                if action == LIST_TAG_ACTION_PULL_REMOVE:
+                    if _remove_tag(local_book, tag_name):
+                        changed += 1
+                        log.info("Hardcover state sync: removed tag %s from CWA book %s because it was removed from Hardcover list %s.",
+                                 tag_name, local_book.id, list_id)
+                    row.hardcover_list_book_id = None
+                    _update_sync_row(row, book=local_book, cwa_value="0", hardcover_value="0", source=source)
+                    continue
                 if not local_has_tag:
-                    if hc_has_tag and getattr(user, "hardcover_list_pull_enabled", True):
-                        if _remove_tag(local_book, tag_name):
-                            changed += 1
-                            _update_sync_row(row, book=local_book, list_book=hc_list_book, cwa_value="0",
-                                             hardcover_value="0", source=source)
                     continue
                 if _is_book_read(user.id, local_book.id) and getattr(user, "hardcover_state_read_cleanup_enabled", True):
                     _read_cleanup(user, client, local_book, selected_list_books)
@@ -727,17 +776,6 @@ def sync_user(user, source="manual"):
                     continue
                 if hc_has_tag:
                     continue
-                ids = _book_hardcover_ids(local_book)
-                if not ids["book_id"]:
-                    log.warning("Hardcover state sync: skipped CWA book %s, no Hardcover identifier found.",
-                                local_book.id)
-                    continue
-                list_book = client.add_book_to_list(list_id, ids["book_id"], ids["edition_id"])
-                _update_sync_row(row, book=local_book, list_book=list_book, cwa_value="1",
-                                 hardcover_value="1", source=source)
-                changed += 1
-                log.info("Hardcover state sync: added CWA book %s to Hardcover list %s from CWA tag %s.",
-                         local_book.id, list_id, tag_name)
         if unmatched_hc_list_books:
             log.info("Hardcover state sync: skipped %s Hardcover list books with no matching CWA book.",
                      unmatched_hc_list_books)
