@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-05-01 20:04+0000\n"
+"POT-Creation-Date: 2026-05-02 07:50+0000\n"
 "PO-Revision-Date: 2019-04-06 23:36+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -788,113 +788,113 @@ msgid ""
 "data was reset."
 msgstr ""
 
-#: cps/constants.py:207
+#: cps/constants.py:208
 msgid "Czech"
 msgstr "Cseh"
 
-#: cps/constants.py:208
+#: cps/constants.py:209
 msgid "German"
 msgstr "Német"
 
-#: cps/constants.py:209
+#: cps/constants.py:210
 msgid "Greek"
 msgstr "Görög"
 
-#: cps/constants.py:210
+#: cps/constants.py:211
 msgid "Spanish"
 msgstr "Spanyol"
 
-#: cps/constants.py:211
+#: cps/constants.py:212
 #, fuzzy
 msgid "Finnish"
 msgstr "Finn"
 
-#: cps/constants.py:212
+#: cps/constants.py:213
 msgid "French"
 msgstr "Francia"
 
-#: cps/constants.py:213
+#: cps/constants.py:214
 msgid "Galician"
 msgstr "Galego"
 
-#: cps/constants.py:214
+#: cps/constants.py:215
 msgid "Hungarian"
 msgstr "Magyar"
 
-#: cps/constants.py:215
+#: cps/constants.py:216
 msgid "Indonesian"
 msgstr "Indonéz"
 
-#: cps/constants.py:216
+#: cps/constants.py:217
 msgid "Italian"
 msgstr "Olasz"
 
-#: cps/constants.py:217
+#: cps/constants.py:218
 msgid "Japanese"
 msgstr "Japán"
 
-#: cps/constants.py:218
+#: cps/constants.py:219
 msgid "Khmer"
 msgstr "Kmer"
 
-#: cps/constants.py:219
+#: cps/constants.py:220
 msgid "Korean"
 msgstr "Koreai"
 
-#: cps/constants.py:220
+#: cps/constants.py:221
 msgid "Dutch"
 msgstr "Holland"
 
-#: cps/constants.py:221
+#: cps/constants.py:222
 msgid "Norwegian"
 msgstr "Norvég"
 
-#: cps/constants.py:222
+#: cps/constants.py:223
 #, fuzzy
 msgid "Polish"
 msgstr "Lengyel"
 
-#: cps/constants.py:223
+#: cps/constants.py:224
 msgid "Portuguese"
 msgstr "Portugál"
 
-#: cps/constants.py:224
+#: cps/constants.py:225
 msgid "Portuguese (Brazil)"
 msgstr "Portugál (Brazil)"
 
-#: cps/constants.py:225
+#: cps/constants.py:226
 msgid "Russian"
 msgstr "Orosz"
 
-#: cps/constants.py:226
+#: cps/constants.py:227
 msgid "Slovak"
 msgstr "Szlovák"
 
-#: cps/constants.py:227
+#: cps/constants.py:228
 msgid "Slovenian"
 msgstr "Szlovén"
 
-#: cps/constants.py:228
+#: cps/constants.py:229
 msgid "Swedish"
 msgstr "Svéd"
 
-#: cps/constants.py:229
+#: cps/constants.py:230
 msgid "Turkish"
 msgstr "Török"
 
-#: cps/constants.py:230
+#: cps/constants.py:231
 msgid "Ukrainian"
 msgstr "Ukrán"
 
-#: cps/constants.py:231
+#: cps/constants.py:232
 msgid "Vietnamese"
 msgstr "Vietnámi"
 
-#: cps/constants.py:232
+#: cps/constants.py:233
 msgid "Chinese (Simplified, China)"
 msgstr "Kínai (egyszerűsített, Kína)"
 
-#: cps/constants.py:233
+#: cps/constants.py:234
 msgid "Chinese (Traditional, Taiwan)"
 msgstr "Kínai (Hagyományos, Tajvan)"
 
@@ -1925,7 +1925,7 @@ msgstr "Ismétlődő könyvek"
 msgid "Show Duplicate Books"
 msgstr "Ismétlődő könyvek megjelenítése"
 
-#: cps/render_template.py:183
+#: cps/render_template.py:188
 msgid ""
 "ℹ️ Your theme has been updated to caliBlur (Dark). Theme switching is "
 "temporarily disabled while we develop a new frontend for v5.0.0."

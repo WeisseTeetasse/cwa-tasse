@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version:  Calibre-Web Automated\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-05-01 20:04+0000\n"
+"POT-Creation-Date: 2026-05-02 07:50+0000\n"
 "PO-Revision-Date: 2018-02-07 02:20-0500\n"
 "Last-Translator: subdiox <subdiox@gmail.com>\n"
 "Language-Team: ja <LL@li.org>\n"
@@ -751,111 +751,111 @@ msgid ""
 "data was reset."
 msgstr ""
 
-#: cps/constants.py:207
+#: cps/constants.py:208
 msgid "Czech"
 msgstr "チェコ語"
 
-#: cps/constants.py:208
+#: cps/constants.py:209
 msgid "German"
 msgstr "ドイツ語"
 
-#: cps/constants.py:209
+#: cps/constants.py:210
 msgid "Greek"
 msgstr "ギリシャ語"
 
-#: cps/constants.py:210
+#: cps/constants.py:211
 msgid "Spanish"
 msgstr "スペイン語"
 
-#: cps/constants.py:211
+#: cps/constants.py:212
 msgid "Finnish"
 msgstr "フィンランド語"
 
-#: cps/constants.py:212
+#: cps/constants.py:213
 msgid "French"
 msgstr "フランス語"
 
-#: cps/constants.py:213
+#: cps/constants.py:214
 msgid "Galician"
 msgstr "ガリシア語"
 
-#: cps/constants.py:214
+#: cps/constants.py:215
 msgid "Hungarian"
 msgstr "ハンガリー語"
 
-#: cps/constants.py:215
+#: cps/constants.py:216
 msgid "Indonesian"
 msgstr "インドネシア語"
 
-#: cps/constants.py:216
+#: cps/constants.py:217
 msgid "Italian"
 msgstr "イタリア語"
 
-#: cps/constants.py:217
+#: cps/constants.py:218
 msgid "Japanese"
 msgstr "日本語"
 
-#: cps/constants.py:218
+#: cps/constants.py:219
 msgid "Khmer"
 msgstr "クメール語"
 
-#: cps/constants.py:219
+#: cps/constants.py:220
 msgid "Korean"
 msgstr "韓国語"
 
-#: cps/constants.py:220
+#: cps/constants.py:221
 msgid "Dutch"
 msgstr "オランダ語"
 
-#: cps/constants.py:221
+#: cps/constants.py:222
 msgid "Norwegian"
 msgstr "ノルウェー語"
 
-#: cps/constants.py:222
+#: cps/constants.py:223
 msgid "Polish"
 msgstr "ポーランド語"
 
-#: cps/constants.py:223
+#: cps/constants.py:224
 msgid "Portuguese"
 msgstr "ポルトガル語"
 
-#: cps/constants.py:224
+#: cps/constants.py:225
 msgid "Portuguese (Brazil)"
 msgstr "ポルトガル語（ブラジル）"
 
-#: cps/constants.py:225
+#: cps/constants.py:226
 msgid "Russian"
 msgstr "ロシア語"
 
-#: cps/constants.py:226
+#: cps/constants.py:227
 msgid "Slovak"
 msgstr "スロバキア語"
 
-#: cps/constants.py:227
+#: cps/constants.py:228
 msgid "Slovenian"
 msgstr "スロベニア語"
 
-#: cps/constants.py:228
+#: cps/constants.py:229
 msgid "Swedish"
 msgstr "スウェーデン語"
 
-#: cps/constants.py:229
+#: cps/constants.py:230
 msgid "Turkish"
 msgstr "トルコ語"
 
-#: cps/constants.py:230
+#: cps/constants.py:231
 msgid "Ukrainian"
 msgstr "ウクライナ語"
 
-#: cps/constants.py:231
+#: cps/constants.py:232
 msgid "Vietnamese"
 msgstr "ベトナム語"
 
-#: cps/constants.py:232
+#: cps/constants.py:233
 msgid "Chinese (Simplified, China)"
 msgstr "中国語（簡体字、中国）"
 
-#: cps/constants.py:233
+#: cps/constants.py:234
 msgid "Chinese (Traditional, Taiwan)"
 msgstr "中国語（繁体字、台湾）"
 
@@ -1865,7 +1865,7 @@ msgstr "重複"
 msgid "Show Duplicate Books"
 msgstr "重複する書籍を表示"
 
-#: cps/render_template.py:183
+#: cps/render_template.py:188
 msgid ""
 "ℹ️ Your theme has been updated to caliBlur (Dark). Theme switching is "
 "temporarily disabled while we develop a new frontend for v5.0.0."

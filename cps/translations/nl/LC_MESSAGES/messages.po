@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Calibre-Web (GPLV3)\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-05-01 20:04+0000\n"
+"POT-Creation-Date: 2026-05-02 07:50+0000\n"
 "PO-Revision-Date: 2023-12-20 22:00+0100\n"
 "Last-Translator: Michiel Cornelissen <michiel.cornelissen+gitbhun at proton."
 "me>\n"
@@ -791,113 +791,113 @@ msgid ""
 "data was reset."
 msgstr ""
 
-#: cps/constants.py:207
+#: cps/constants.py:208
 msgid "Czech"
 msgstr "Tsjechisch"
 
-#: cps/constants.py:208
+#: cps/constants.py:209
 msgid "German"
 msgstr "Duits"
 
-#: cps/constants.py:209
+#: cps/constants.py:210
 msgid "Greek"
 msgstr "Grieks"
 
-#: cps/constants.py:210
+#: cps/constants.py:211
 msgid "Spanish"
 msgstr "Spaans"
 
-#: cps/constants.py:211
+#: cps/constants.py:212
 #, fuzzy
 msgid "Finnish"
 msgstr "Voltooid"
 
-#: cps/constants.py:212
+#: cps/constants.py:213
 msgid "French"
 msgstr "Frans"
 
-#: cps/constants.py:213
+#: cps/constants.py:214
 msgid "Galician"
 msgstr "Galicisch"
 
-#: cps/constants.py:214
+#: cps/constants.py:215
 msgid "Hungarian"
 msgstr "Hongaars"
 
-#: cps/constants.py:215
+#: cps/constants.py:216
 msgid "Indonesian"
 msgstr "Indonesisch"
 
-#: cps/constants.py:216
+#: cps/constants.py:217
 msgid "Italian"
 msgstr "Italiaans"
 
-#: cps/constants.py:217
+#: cps/constants.py:218
 msgid "Japanese"
 msgstr "Japans"
 
-#: cps/constants.py:218
+#: cps/constants.py:219
 msgid "Khmer"
 msgstr "Khmer"
 
-#: cps/constants.py:219
+#: cps/constants.py:220
 msgid "Korean"
 msgstr "Koreaans"
 
-#: cps/constants.py:220
+#: cps/constants.py:221
 msgid "Dutch"
 msgstr "Nederlands"
 
-#: cps/constants.py:221
+#: cps/constants.py:222
 msgid "Norwegian"
 msgstr "Noors"
 
-#: cps/constants.py:222
+#: cps/constants.py:223
 #, fuzzy
 msgid "Polish"
 msgstr "Uitgever"
 
-#: cps/constants.py:223
+#: cps/constants.py:224
 msgid "Portuguese"
 msgstr "Portugees"
 
-#: cps/constants.py:224
+#: cps/constants.py:225
 msgid "Portuguese (Brazil)"
 msgstr "Portugees (Brazilië)"
 
-#: cps/constants.py:225
+#: cps/constants.py:226
 msgid "Russian"
 msgstr "Russisch"
 
-#: cps/constants.py:226
+#: cps/constants.py:227
 msgid "Slovak"
 msgstr "Slowaaks"
 
-#: cps/constants.py:227
+#: cps/constants.py:228
 msgid "Slovenian"
 msgstr "Sloveens"
 
-#: cps/constants.py:228
+#: cps/constants.py:229
 msgid "Swedish"
 msgstr "Zweeds"
 
-#: cps/constants.py:229
+#: cps/constants.py:230
 msgid "Turkish"
 msgstr "Turks"
 
-#: cps/constants.py:230
+#: cps/constants.py:231
 msgid "Ukrainian"
 msgstr "Oekraïens"
 
-#: cps/constants.py:231
+#: cps/constants.py:232
 msgid "Vietnamese"
 msgstr "Vietnamees"
 
-#: cps/constants.py:232
+#: cps/constants.py:233
 msgid "Chinese (Simplified, China)"
 msgstr "Chinees (Vereenvoudigd, China)"
 
-#: cps/constants.py:233
+#: cps/constants.py:234
 msgid "Chinese (Traditional, Taiwan)"
 msgstr "Chinees (Traditioneel, Taiwan)"
 
@@ -1934,7 +1934,7 @@ msgstr "Duplicaten"
 msgid "Show Duplicate Books"
 msgstr "Best beoordeelde boeken tonen"
 
-#: cps/render_template.py:183
+#: cps/render_template.py:188
 msgid ""
 "ℹ️ Your theme has been updated to caliBlur (Dark). Theme switching is "
 "temporarily disabled while we develop a new frontend for v5.0.0."
