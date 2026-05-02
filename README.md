@@ -16,7 +16,6 @@ This fork currently carries these local changes on top of upstream CWA:
    - Includes a local sync-state table, user settings UI, manual sync, and scheduled polling.
    - Matches by reliable Hardcover identifiers, including Hardcover slug when book/edition IDs do not match.
    - Shows skipped Hardcover books in the profile UI so unmatched books can be inspected and fixed.
-   - Reduces unnecessary Hardcover API calls for read cleanup and list/tag sync.
 
 2. Hardcover sync is progress-only.
    - Does not change Hardcover shelves/lists.
