@@ -114,7 +114,7 @@ else:
     limiter = None
 
 
-def create_app():
+def create_app(start_background=True):
     if csrf:
         csrf.init_app(app)
 
@@ -174,7 +174,8 @@ def create_app():
     if cli_param.dry_run:
         updater_thread.dry_run()
         sys.exit(0)
-    updater_thread.start()
+    if start_background:
+        updater_thread.start()
     requirements = dependency_check()
     for res in requirements:
         if res['found'] == "not installed":
@@ -244,7 +245,7 @@ def create_app():
     # Ensure a valid calibre_db session exists before handling each request
     @app.before_request
     def _cwa_ensure_db_session():
-        from flask import g, request
+        from flask import g, jsonify, request
         from .cw_login import current_user
         from sqlalchemy import or_
         import time
@@ -265,6 +266,60 @@ def create_app():
             else:
                 # Explicitly set to None to indicate we checked but found nothing
                 g.flask_httpauth_user = None
+
+        try:
+            from .services import job_queue
+            busy_states = job_queue.get_library_busy("library")
+        except Exception:
+            busy_states = []
+        g.cwa_library_busy = busy_states
+
+        if busy_states and request.method == "GET":
+            endpoint = request.endpoint or ""
+            allowed_prefixes = (
+                "static",
+                "tasks.",
+                "cwa_logs.",
+                "cwa_settings.",
+                "cwa_stats.",
+                "about.",
+                "admi.",
+            )
+            allowed_endpoints = {
+                "web.get_email_status_json",
+                "web.health",
+                "web.login",
+                "web.logout",
+                "web.profile",
+                "web.register",
+            }
+            library_prefixes = (
+                "web.",
+                "search.",
+                "shelf.",
+                "editbook.",
+                "duplicates.",
+                "meta.",
+                "opds.",
+                "kobo.",
+            )
+            if (endpoint not in allowed_endpoints and
+                    not endpoint.startswith(allowed_prefixes) and
+                    endpoint.startswith(library_prefixes)):
+                if request.path.startswith("/ajax/") or request.accept_mimetypes.best == "application/json":
+                    return jsonify({
+                        "success": False,
+                        "busy": True,
+                        "message": "The Calibre library is busy with a background job.",
+                        "busy_states": busy_states,
+                    }), 503
+                from .render_template import render_title_template
+                return render_title_template(
+                    "library_busy.html",
+                    title="Library Busy",
+                    page="library_busy",
+                    busy_states=busy_states,
+                ), 503
 
         if current_user.is_authenticated:
             try:
@@ -381,9 +436,9 @@ def create_app():
         if calibre_db.session_factory:
             calibre_db.session_factory.remove()
 
-    from .schedule import register_scheduled_tasks, register_startup_tasks
-    register_scheduled_tasks(config.schedule_reconnect)
-    register_startup_tasks()
+    if start_background:
+        from .schedule import register_scheduled_tasks, register_startup_tasks
+        register_scheduled_tasks(config.schedule_reconnect)
+        register_startup_tasks()
 
     return app
-

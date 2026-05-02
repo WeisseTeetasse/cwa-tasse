@@ -1,0 +1,8 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+export CALIBRE_DBPATH=/config
+export CWA_DURABLE_QUEUE=1
+
+cd /app/calibre-web-automated || exit 1
+exec s6-setuidgid abc python3 /app/calibre-web-automated/cps_worker.py

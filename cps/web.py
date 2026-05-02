@@ -31,6 +31,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import constants, logger, isoLanguages, services, helper
 from . import db, ub, config, app, hardcover_state_sync
+from .services import job_queue
 from . import calibre_db, kobo_sync_status
 from .search import render_search_results, render_adv_search_results
 from .gdriveutils import getFileFromEbooksFolder, do_gdrive_download
@@ -203,7 +204,7 @@ def viewer_required(f):
 @web.route("/ajax/emailstat")
 @user_login_required
 def get_email_status_json():
-    tasks = WorkerThread.get_instance().tasks
+    tasks = job_queue.list_queued_tasks() + WorkerThread.existing_tasks()
     return jsonify(render_task_status(tasks))
 
 
@@ -2724,17 +2725,21 @@ def change_profile(kobo_support, hardcover_support, local_oauth_check, oauth_sta
         ub.session.commit()
         if to_save.get("hardcover_state_sync_now") == "1":
             try:
-                result = hardcover_state_sync.sync_user(current_user, source="manual")
-                if result.get("errors"):
-                    flash(_("Hardcover state sync finished with errors. Check the log."), category="warning")
+                from .tasks.hardcover_state_sync import TaskHardcoverStateSync
+                job_id = job_queue.enqueue_task(
+                    current_user.name,
+                    TaskHardcoverStateSync(current_user.id, source="manual"),
+                    hidden=False,
+                )
+                if job_id:
+                    flash(_("Hardcover state sync queued. Check Tasks for progress."), category="success")
                 else:
-                    flash(_("Hardcover state sync complete. %(count)s change(s) applied.", count=result.get("changed", 0)),
-                          category="success")
+                    flash(_("Hardcover state sync could not be queued."), category="error")
             except Exception as e:
                 ub.session.rollback()
                 calibre_db.session.rollback()
-                log.error("Hardcover state sync: manual sync failed for user %s: %s", current_user.id, e)
-                flash(_("Hardcover state sync failed: %(error)s", error=e), category="error")
+                log.error("Hardcover state sync: manual sync queue failed for user %s: %s", current_user.id, e)
+                flash(_("Hardcover state sync queue failed: %(error)s", error=e), category="error")
         flash(_("Success! Profile Updated"), category="success")
         log.debug("Profile updated")
         # Redirect to refresh sidebar with updated shelf visibility

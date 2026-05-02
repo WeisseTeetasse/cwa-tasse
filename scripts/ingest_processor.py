@@ -18,6 +18,7 @@ import threading
 from pathlib import Path
 
 from cwa_db import CWA_DB
+from cwa_busy_state import busy_state
 from kindle_epub_fixer import EPUBFixer
 import audiobook
 import requests
@@ -1267,6 +1268,7 @@ def main(filepath=None):
         filepath = sys.argv[1]
 
     nbp = None
+    busy = None
     skip_delete = False
     try:
         ##############################################################################################
@@ -1296,6 +1298,13 @@ def main(filepath=None):
             return
 
         nbp = NewBookProcessor(filepath)
+        busy = busy_state(
+            "library",
+            owner=f"ingest:{os.getpid()}",
+            message=f"Importing {os.path.basename(filepath)}",
+            ttl_seconds=900,
+        )
+        busy.__enter__()
 
         # If this file is not an ignored temporary, wait briefly for stability to avoid importing a still-growing file
         ext_tmp_check = Path(nbp.filename).suffix.replace('.', '')
@@ -1442,6 +1451,11 @@ def main(filepath=None):
                 del nbp # New in Version 2.0.0, should drastically reduce memory usage with large ingests
             except Exception:
                 pass  # Ignore errors in cleanup
+        if busy:
+            try:
+                busy.__exit__(None, None, None)
+            except Exception as e:
+                print(f"[ingest-processor] Error clearing library busy state: {e}", flush=True)
 
 if __name__ == "__main__":
     main()

@@ -21,6 +21,7 @@ wiki_images
 
 # Test infrastructure (not needed in production image)
 tests/
+testing/
 pytest.ini
 requirements-dev.txt
 TEST*.md

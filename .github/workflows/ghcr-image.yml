@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
     paths:
       - Dockerfile
       - requirements.txt
@@ -13,6 +14,7 @@ on:
       - root/**
       - koreader/**
       - cps.py
+      - cps_worker.py
       - .github/workflows/ghcr-image.yml
   release:
     types:
@@ -67,6 +69,8 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=sha,prefix=dev-,format=short,enable=${{ github.ref == 'refs/heads/dev' }}
             type=ref,event=tag
             type=ref,event=branch
             type=sha,prefix=sha-,format=short

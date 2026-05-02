@@ -14,6 +14,7 @@ from babel.units import format_unit
 
 from . import logger
 from .render_template import render_title_template
+from .services import job_queue
 from .services.worker import WorkerThread, STAT_WAITING, STAT_FAIL, STAT_STARTED, STAT_FINISH_SUCCESS, STAT_ENDED, \
     STAT_CANCELLED
 from .usermanagement import user_login_required
@@ -26,7 +27,7 @@ log = logger.create()
 @tasks.route("/ajax/emailstat")
 @user_login_required
 def get_email_status_json():
-    tasks = WorkerThread.get_instance().tasks
+    tasks = job_queue.list_queued_tasks() + WorkerThread.existing_tasks()
     return jsonify(render_task_status(tasks))
 
 

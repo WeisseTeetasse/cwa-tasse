@@ -2186,8 +2186,10 @@ def import_ldap_users():
 @admin_required
 def cancel_task():
     task_id = request.get_json().get('task_id', None)
-    worker = WorkerThread.get_instance()
-    worker.end_task(task_id)
+    from .services import job_queue
+    if not job_queue.cancel(task_id):
+        worker = WorkerThread.get_instance()
+        worker.end_task(task_id)
     return ""
 
 

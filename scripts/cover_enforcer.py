@@ -19,6 +19,7 @@ from pathlib import Path
 import unicodedata
 
 from cwa_db import CWA_DB
+from cwa_busy_state import clear_busy, set_busy
 try:
     from cps.utils.filename_sanitizer import get_valid_filename_shared
 except ModuleNotFoundError:
@@ -769,6 +770,10 @@ def main():
     args = parser.parse_args()
 
     enforcer = Enforcer(args)
+    busy_owner = f"cover_enforcer:{os.getpid()}"
+    if args.all or args.dir is not None or args.log is not None:
+        set_busy("library", owner=busy_owner, message="Enforcing cover and metadata", ttl_seconds=900)
+        atexit.register(clear_busy, "library", busy_owner)
 
     if len(sys.argv) == 1:
         parser.print_help()

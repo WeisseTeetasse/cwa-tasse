@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="discover" style="padding-inline: 2rem !important;">
+  <h2>{{ _('Library Busy') }}</h2>
+  <p>{{ _('The Calibre library is being updated by a background job. Book lists and book detail pages will be available again when it finishes.') }}</p>
+  <table class="table table-no-bordered">
+    <thead>
+      <tr>
+        <th>{{ _('Job') }}</th>
+        <th>{{ _('Owner') }}</th>
+        <th>{{ _('Started') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for state in busy_states %}
+      <tr>
+        <td>{{ state.message or state.category }}</td>
+        <td>{{ state.owner or _('Background worker') }}</td>
+        <td>{{ state.started_at or '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p><a class="btn btn-default" href="{{ url_for('tasks.get_tasks_status') }}">{{ _('View Tasks') }}</a></p>
+</div>
+{% endblock %}

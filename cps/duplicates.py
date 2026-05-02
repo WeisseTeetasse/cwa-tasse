@@ -1314,9 +1314,12 @@ def trigger_scan():
 def scan_progress(task_id):
     """Get progress for a queued duplicate scan task"""
     try:
-        worker = WorkerThread.get_instance()
         task = None
-        for __, __, __, queued_task, __ in worker.tasks:
+        from cps.services import job_queue
+        queued = job_queue.get_queued_task(task_id)
+        if queued:
+            task = queued.task
+        for __, __, __, queued_task, __ in ([] if task else WorkerThread.existing_tasks()):
             if str(queued_task.id) == str(task_id):
                 task = queued_task
                 break
@@ -1356,8 +1359,10 @@ def scan_progress(task_id):
 def cancel_scan(task_id):
     """Cancel a running or queued duplicate scan task."""
     try:
-        worker = WorkerThread.get_instance()
-        worker.end_task(task_id)
+        from cps.services import job_queue
+        if not job_queue.cancel(task_id):
+            worker = WorkerThread.get_instance()
+            worker.end_task(task_id)
         return jsonify({'success': True, 'message': 'Scan cancelled'})
     except Exception as e:
         log.error("[cwa-duplicates] Error cancelling scan: %s", str(e))

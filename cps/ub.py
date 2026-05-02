@@ -781,6 +781,66 @@ class HardcoverStateSyncSkip(Base):
         return f'<HardcoverStateSyncSkip user={self.user_id} source={self.source} book={self.hardcover_book_id}>'
 
 
+class CWAJobQueue(Base):
+    """Durable cross-process background job queue."""
+    __tablename__ = 'cwa_job_queue'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    job_type = Column(String, nullable=False)
+    payload = Column(JSON, nullable=True)
+    user_id = Column(Integer, nullable=True)
+    user_label = Column(String, nullable=True)
+    name = Column(String, nullable=False)
+    message = Column(String, nullable=True)
+    status = Column(String, nullable=False, default='queued')
+    progress = Column(Float, nullable=False, default=0.0)
+    hidden = Column(Boolean, nullable=False, default=False)
+    cancellable = Column(Boolean, nullable=False, default=False)
+    cancel_requested = Column(Boolean, nullable=False, default=False)
+    dedupe_key = Column(String, nullable=True)
+    lock_category = Column(String, nullable=True)
+    run_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    started_at = Column(DateTime, nullable=True)
+    heartbeat_at = Column(DateTime, nullable=True)
+    finished_at = Column(DateTime, nullable=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    max_attempts = Column(Integer, nullable=False, default=1)
+    worker_id = Column(String, nullable=True)
+    error = Column(String, nullable=True)
+
+    __table_args__ = (
+        Index('ix_cwa_job_queue_status_run_at', 'status', 'run_at'),
+        Index('ix_cwa_job_queue_dedupe_status', 'dedupe_key', 'status'),
+        Index('ix_cwa_job_queue_user_status', 'user_id', 'status'),
+        Index('ix_cwa_job_queue_worker_status', 'worker_id', 'status'),
+    )
+
+    def __repr__(self):
+        return f'<CWAJobQueue id={self.id} type={self.job_type} status={self.status}>'
+
+
+class CWALibraryBusyState(Base):
+    """Cross-process marker for Calibre library write-heavy work."""
+    __tablename__ = 'cwa_library_busy_state'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    category = Column(String, nullable=False, unique=True)
+    owner = Column(String, nullable=True)
+    message = Column(String, nullable=True)
+    job_id = Column(Integer, nullable=True)
+    started_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    heartbeat_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    expires_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index('ix_cwa_library_busy_state_category_expires', 'category', 'expires_at'),
+    )
+
+    def __repr__(self):
+        return f'<CWALibraryBusyState category={self.category} owner={self.owner}>'
+
+
 # Updates the last_modified timestamp in the KoboReadingState table if any of its children tables are modified.
 @event.listens_for(Session, 'before_flush')
 def receive_before_flush(session, flush_context, instances):
@@ -910,6 +970,10 @@ def add_missing_tables(engine, _session):
         HardcoverStateSync.__table__.create(bind=engine, checkfirst=True)
     if not engine.dialect.has_table(engine.connect(), "hardcover_state_sync_skip"):
         HardcoverStateSyncSkip.__table__.create(bind=engine, checkfirst=True)
+    if not engine.dialect.has_table(engine.connect(), "cwa_job_queue"):
+        CWAJobQueue.__table__.create(bind=engine, checkfirst=True)
+    if not engine.dialect.has_table(engine.connect(), "cwa_library_busy_state"):
+        CWALibraryBusyState.__table__.create(bind=engine, checkfirst=True)
 
 
 # migrate all settings missing in registration table

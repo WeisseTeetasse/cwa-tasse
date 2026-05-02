@@ -9,6 +9,7 @@ import threading
 import abc
 import uuid
 import time
+import os
 
 try:
     import queue
@@ -74,6 +75,16 @@ class WorkerThread(threading.Thread):
 
     @classmethod
     def add(cls, user, task, hidden=False):
+        if os.environ.get("CWA_FORCE_LEGACY_WORKER", "0").strip().lower() not in ("1", "true", "yes", "on"):
+            try:
+                from cps.services import job_queue
+                job_id = job_queue.enqueue_task(user, task, hidden=hidden)
+                if job_id:
+                    log.debug("Queued durable task %s for user %s as job %s", task, user, job_id)
+                    return
+            except Exception as ex:
+                log.warning("Durable queue unavailable for task %s, falling back to legacy worker: %s", task, ex)
+
         ins = cls.get_instance()
         ins.num += 1
         username = user if user is not None else 'System'
@@ -91,6 +102,12 @@ class WorkerThread(threading.Thread):
         with self.doLock:
             tasks = self.queue.to_list() + self.dequeued
             return sorted(tasks, key=lambda x: x.num)
+
+    @classmethod
+    def existing_tasks(cls):
+        if cls._instance is None:
+            return []
+        return cls._instance.tasks
 
     def cleanup_tasks(self):
         with self.doLock:

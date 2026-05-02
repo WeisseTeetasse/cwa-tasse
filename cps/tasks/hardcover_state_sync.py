@@ -11,10 +11,11 @@ from cps.services.worker import CalibreTask
 
 
 class TaskHardcoverStateSync(CalibreTask):
-    def __init__(self, user_id, task_message=N_('Hardcover state sync')):
+    def __init__(self, user_id, task_message=N_('Hardcover state sync'), source="scheduled"):
         super(TaskHardcoverStateSync, self).__init__(task_message)
         self.log = logger.create()
         self.user_id = user_id
+        self.source = source
         self.progress = 0
 
     @property
@@ -32,7 +33,7 @@ class TaskHardcoverStateSync(CalibreTask):
                 self._handleError(f"User {self.user_id} not found")
                 return
             self.progress = 0.2
-            result = hardcover_state_sync.sync_user(user, source="scheduled")
+            result = hardcover_state_sync.sync_user(user, source=self.source or "scheduled")
             self.progress = 1.0
             if result.get("errors"):
                 self._handleError("; ".join(result.get("errors")))
