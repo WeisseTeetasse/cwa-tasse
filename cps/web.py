@@ -77,6 +77,11 @@ def _hardcover_state_profile_context(user):
         normal_shelves = hardcover_state_sync.get_normal_shelves(user)
     except Exception as e:
         log.debug("Failed to load normal shelves for Hardcover state sync settings: %s", e)
+    skipped_books = []
+    try:
+        skipped_books = hardcover_state_sync.get_skipped_books(user)
+    except Exception as e:
+        log.debug("Failed to load Hardcover state sync skipped books for user %s: %s", getattr(user, "id", None), e)
     try:
         if getattr(user, "hardcover_token", None):
             hardcover_lists = hardcover_state_sync.fetch_hardcover_lists(user)
@@ -91,6 +96,7 @@ def _hardcover_state_profile_context(user):
         "hardcover_lists": hardcover_lists,
         "hardcover_list_warning": hardcover_list_warning,
         "hardcover_poll_intervals": hardcover_state_sync.POLL_INTERVALS,
+        "hardcover_state_skipped_books": skipped_books,
     }
 
 try:

@@ -21,6 +21,8 @@ SYNC_KEY_LIST_TAG = "list_tag"
 POLL_INTERVALS = (0, 5, 15, 30, 60, 360, 1440)
 DEFAULT_CURRENTLY_READING_SHELF = "Currently Reading"
 DEFAULT_LIST_TAG = "Up Next"
+SKIP_SOURCE_USER_BOOK = "user_book"
+SKIP_SOURCE_LIST_BOOK = "list_book"
 
 
 def _now():
@@ -113,6 +115,41 @@ def fetch_hardcover_lists(user):
     if not getattr(user, "hardcover_token", None):
         return []
     return get_client(user).get_lists()
+
+
+def get_skipped_books(user, limit=100):
+    return ub.session.query(ub.HardcoverStateSyncSkip).filter(
+        ub.HardcoverStateSyncSkip.user_id == int(user.id)
+    ).order_by(
+        ub.HardcoverStateSyncSkip.last_seen_at.desc(),
+        ub.HardcoverStateSyncSkip.title.asc()
+    ).limit(limit).all()
+
+
+def _clear_skipped_books(user_id, source):
+    ub.session.query(ub.HardcoverStateSyncSkip).filter(
+        ub.HardcoverStateSyncSkip.user_id == int(user_id),
+        ub.HardcoverStateSyncSkip.source == source
+    ).delete(synchronize_session=False)
+
+
+def _record_skipped_hc_item(user, item, source, reason, list_id=None):
+    book = (item or {}).get("book") or {}
+    skip = ub.HardcoverStateSyncSkip(
+        user_id=int(user.id),
+        source=source,
+        hardcover_book_id=_as_int((item or {}).get("book_id") or book.get("id")),
+        hardcover_edition_id=_as_int((item or {}).get("edition_id")),
+        hardcover_user_book_id=_as_int((item or {}).get("id")) if source == SKIP_SOURCE_USER_BOOK else None,
+        hardcover_list_id=_as_int(list_id or (item or {}).get("list_id")),
+        hardcover_list_book_id=_as_int((item or {}).get("id")) if source == SKIP_SOURCE_LIST_BOOK else None,
+        title=book.get("title"),
+        slug=book.get("slug"),
+        status_id=_as_int((item or {}).get("status_id")),
+        reason=reason,
+        last_seen_at=_now(),
+    )
+    ub.session.add(skip)
 
 
 def _book_identifier_map(book):
@@ -566,12 +603,14 @@ def sync_user(user, source="manual"):
 
     user_books = []
     if getattr(user, "hardcover_state_sync_enabled", False):
+        _clear_skipped_books(user.id, SKIP_SOURCE_USER_BOOK)
         user_books = client.get_user_books()
 
     selected_list_books = []
     list_id = _as_int(getattr(user, "hardcover_list_sync_list_id", None))
     tag_name = (getattr(user, "hardcover_list_sync_tag", None) or DEFAULT_LIST_TAG).strip()
     if getattr(user, "hardcover_list_tag_sync_enabled", False) and list_id:
+        _clear_skipped_books(user.id, SKIP_SOURCE_LIST_BOOK)
         selected_list_books = client.get_list_books(list_id)
 
     seen_books = set()
@@ -580,6 +619,7 @@ def sync_user(user, source="manual"):
         local_book = _match_local_book(hc_book, by_hc_book, by_hc_edition, by_hc_slug)
         if not local_book:
             unmatched_hc_books += 1
+            _record_skipped_hc_item(user, hc_book, SKIP_SOURCE_USER_BOOK, "No matching CWA book found")
             log.debug("Hardcover state sync: skipped HC book %s, no matching CWA book found.",
                       hc_book.get("book_id"))
             continue
@@ -628,6 +668,7 @@ def sync_user(user, source="manual"):
             local_book = _match_local_book(list_book, by_hc_book, by_hc_edition, by_hc_slug)
             if not local_book:
                 unmatched_hc_list_books += 1
+                _record_skipped_hc_item(user, list_book, SKIP_SOURCE_LIST_BOOK, "No matching CWA book found", list_id)
                 log.debug("Hardcover state sync: skipped HC list book %s, no matching CWA book found.",
                           list_book.get("book_id"))
                 continue

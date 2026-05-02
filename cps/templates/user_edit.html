@@ -404,6 +404,43 @@
           <label for="hardcover_state_push_immediately">{{_('Push local changes immediately')}}</label>
         </div>
         <button type="submit" name="hardcover_state_sync_now" value="1" class="btn btn-primary" style="margin-top: 15px;">{{_('Sync Now')}}</button>
+
+        <h5 style="margin-top: 20px;">{{_('Skipped Hardcover Books')}}</h5>
+        {% if hardcover_state_skipped_books %}
+          <p class="cwa-settings-tip">{{_('These Hardcover books were seen during the last state sync but could not be matched to a local CWA book. Add a matching Hardcover ID, Hardcover slug, edition ID, or ISBN to the CWA book to resolve a skip.')}}</p>
+          <div class="table-responsive" style="margin-top: 10px;">
+            <table class="table table-striped" aria-label="{{_('Skipped Hardcover books')}}">
+              <thead>
+                <tr>
+                  <th scope="col">{{_('Title')}}</th>
+                  <th scope="col">{{_('Source')}}</th>
+                  <th scope="col">{{_('Hardcover ID')}}</th>
+                  <th scope="col">{{_('Edition ID')}}</th>
+                  <th scope="col">{{_('Slug')}}</th>
+                  <th scope="col">{{_('Status')}}</th>
+                  <th scope="col">{{_('Reason')}}</th>
+                  <th scope="col">{{_('Seen')}}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for skipped in hardcover_state_skipped_books %}
+                  <tr>
+                    <td>{{ skipped.title or _('Unknown') }}</td>
+                    <td>{% if skipped.source == 'list_book' %}{{_('Selected list')}}{% else %}{{_('User library')}}{% endif %}</td>
+                    <td>{{ skipped.hardcover_book_id or '' }}</td>
+                    <td>{{ skipped.hardcover_edition_id or '' }}</td>
+                    <td>{{ skipped.slug or '' }}</td>
+                    <td>{{ skipped.status_id or '' }}</td>
+                    <td>{{ skipped.reason }}</td>
+                    <td>{{ skipped.last_seen_at|formatdate }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="cwa-settings-tip">{{_('No skipped Hardcover books recorded yet. Run Sync Now to refresh this list.')}}</p>
+        {% endif %}
       </div>
       {% endif %}
       

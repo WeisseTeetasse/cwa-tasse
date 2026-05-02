@@ -753,6 +753,34 @@ class HardcoverStateSync(Base):
         return f'<HardcoverStateSync user={self.user_id} book={self.book_id} key={self.sync_key}>'
 
 
+class HardcoverStateSyncSkip(Base):
+    """Remember Hardcover books skipped during state sync so users can inspect mismatches."""
+    __tablename__ = 'hardcover_state_sync_skip'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    source = Column(String, nullable=False)
+    hardcover_book_id = Column(Integer, nullable=True)
+    hardcover_edition_id = Column(Integer, nullable=True)
+    hardcover_user_book_id = Column(Integer, nullable=True)
+    hardcover_list_id = Column(Integer, nullable=True)
+    hardcover_list_book_id = Column(Integer, nullable=True)
+    title = Column(String, nullable=True)
+    slug = Column(String, nullable=True)
+    status_id = Column(Integer, nullable=True)
+    reason = Column(String, nullable=False)
+    last_seen_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index('ix_hardcover_state_sync_skip_user_source', 'user_id', 'source'),
+        Index('ix_hardcover_state_sync_skip_user_book', 'user_id', 'hardcover_book_id'),
+        Index('ix_hardcover_state_sync_skip_user_list', 'user_id', 'hardcover_list_id'),
+    )
+
+    def __repr__(self):
+        return f'<HardcoverStateSyncSkip user={self.user_id} source={self.source} book={self.hardcover_book_id}>'
+
+
 # Updates the last_modified timestamp in the KoboReadingState table if any of its children tables are modified.
 @event.listens_for(Session, 'before_flush')
 def receive_before_flush(session, flush_context, instances):
@@ -880,6 +908,8 @@ def add_missing_tables(engine, _session):
         HiddenMagicShelfTemplate.__table__.create(bind=engine, checkfirst=True)
     if not engine.dialect.has_table(engine.connect(), "hardcover_state_sync"):
         HardcoverStateSync.__table__.create(bind=engine, checkfirst=True)
+    if not engine.dialect.has_table(engine.connect(), "hardcover_state_sync_skip"):
+        HardcoverStateSyncSkip.__table__.create(bind=engine, checkfirst=True)
 
 
 # migrate all settings missing in registration table
