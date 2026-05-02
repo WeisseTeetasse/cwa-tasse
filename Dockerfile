@@ -176,6 +176,7 @@ FROM ghcr.io/linuxserver/baseimage-ubuntu:noble
 
 ARG BUILD_DATE
 ARG VERSION
+ARG CWA_BASE_RELEASE=v0.0.0
 ARG CALIBRE_RELEASE
 ARG KEPUBIFY_RELEASE
 
@@ -290,6 +291,7 @@ RUN \
   fi && \
   # STEP 7.5 - ADD files referencing the versions of the installed main packages
   echo "$VERSION" >| /app/CWA_RELEASE && \
+  echo "$CWA_BASE_RELEASE" >| /app/CWA_BASE_RELEASE && \
   echo "$KEPUBIFY_RELEASE" >| /app/KEPUBIFY_RELEASE && \
   echo "$CALIBRE_RELEASE" > /CALIBRE_RELEASE
 

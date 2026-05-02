@@ -110,21 +110,26 @@ def get_sidebar_config(kwargs=None):
     return sidebar, simple
 
 # Checks if an update for CWA is available, returning True if yes
+def _cwa_update_available_for_versions(current_version: str, comparison_version: str, tag_name: str) -> tuple[bool, str, str]:
+    def _normalize_version(value: str) -> str:
+        return (value or "").lstrip("vV")
+
+    comparison_normalized = _normalize_version(comparison_version)
+    tag_normalized = _normalize_version(tag_name)
+
+    if comparison_normalized in ("", "0.0.0") or tag_normalized in ("", "0.0.0"):
+        return False, "0.0.0", "0.0.0"
+
+    return (tag_normalized != comparison_normalized), current_version, tag_name
+
+
 def cwa_update_available() -> tuple[bool, str, str]:
     try:
         current_version = constants.INSTALLED_VERSION
+        comparison_version = getattr(constants, "BASE_VERSION", current_version)
         tag_name = constants.STABLE_VERSION
 
-        def _normalize_version(value: str) -> str:
-            return (value or "").lstrip("vV")
-
-        current_normalized = _normalize_version(current_version)
-        tag_normalized = _normalize_version(tag_name)
-
-        if current_normalized in ("", "0.0.0") or tag_normalized in ("", "0.0.0"):
-            return False, "0.0.0", "0.0.0"
-
-        return (tag_normalized != current_normalized), current_version, tag_name
+        return _cwa_update_available_for_versions(current_version, comparison_version, tag_name)
     except Exception as e:
         print(f"[cwa-update-notification-service] Error checking for CWA updates: {e}", flush=True)
         return False, "0.0.0", "0.0.0"

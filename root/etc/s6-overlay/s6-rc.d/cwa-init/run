@@ -26,7 +26,7 @@ done
 
 # Verify essential files exist
 echo "[cwa-init] Verifying essential files..."
-for file in "/app/CWA_RELEASE" "/CALIBRE_RELEASE"; do
+for file in "/app/CWA_RELEASE" "/app/CWA_BASE_RELEASE" "/CALIBRE_RELEASE"; do
   if [[ ! -f "$file" ]]; then
     echo "[cwa-init] WARNING: Expected file $file does not exist"
   else
@@ -388,6 +388,11 @@ echo "[cwa-init] Resolving CWA versions (installed + latest stable) ..."
 export CWA_INSTALLED_VERSION="$(cat /app/CWA_RELEASE 2>/dev/null || echo 'v0.0.0')"
 echo "[cwa-init] Installed version: $CWA_INSTALLED_VERSION"
 
+# Upstream release this fork image was built on. Fork images can have build
+# identifiers like main-<sha>, so update checks compare this value instead.
+export CWA_BASE_VERSION="$(cat /app/CWA_BASE_RELEASE 2>/dev/null || echo "$CWA_INSTALLED_VERSION")"
+echo "[cwa-init] Base upstream version: $CWA_BASE_VERSION"
+
 # Latest stable release from GitHub (best-effort, fast timeout)
 echo "[cwa-init] Attempting to fetch latest stable version from GitHub..."
 CWA_STABLE_VERSION=""
@@ -427,5 +432,4 @@ else
   echo "[cwa-init] WARNING: Could not persist stable version to file"
 fi
 
-echo "[cwa-init] Versions resolved: INSTALLED=$CWA_INSTALLED_VERSION, STABLE=$CWA_STABLE_VERSION"
-
+echo "[cwa-init] Versions resolved: INSTALLED=$CWA_INSTALLED_VERSION, BASE=$CWA_BASE_VERSION, STABLE=$CWA_STABLE_VERSION"

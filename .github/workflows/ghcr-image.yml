@@ -35,11 +35,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Prepare image metadata
         run: |
           echo "IMAGE_NAME=ghcr.io/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+          echo "CWA_BASE_RELEASE=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo 'v0.0.0')" >> "$GITHUB_ENV"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -82,3 +86,4 @@ jobs:
           build-args: |
             BUILD_DATE=${{ env.BUILD_DATE }}
             VERSION=${{ github.ref_name }}-${{ github.sha }}
+            CWA_BASE_RELEASE=${{ env.CWA_BASE_RELEASE }}
