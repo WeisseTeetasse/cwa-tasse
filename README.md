@@ -14,6 +14,9 @@ This fork currently carries these local changes on top of upstream CWA:
    - Pulls Hardcover Read status into CWA read status.
    - Adds optional bidirectional sync between one selected Hardcover list and one selected CWA tag.
    - Includes a local sync-state table, user settings UI, manual sync, and scheduled polling.
+   - Matches by reliable Hardcover identifiers, including Hardcover slug when book/edition IDs do not match.
+   - Shows skipped Hardcover books in the profile UI so unmatched books can be inspected and fixed.
+   - Reduces unnecessary Hardcover API calls for read cleanup and list/tag sync.
 
 2. Hardcover sync is progress-only.
    - Does not change Hardcover shelves/lists.
@@ -41,6 +44,15 @@ This fork currently carries these local changes on top of upstream CWA:
 8. Kobo device names and sync logging.
    - Allows renaming "Kobo Device X" in the UI.
    - Logs Kobo requests and library syncs with the configured device name and token id.
+
+9. Hardcover and metadata bug fixes.
+   - Fixes Hardcover list insertion GraphQL compatibility with the current Hardcover API.
+   - Normalizes stale Calibre `author_sort` data and writes per-author EPUB `file-as` metadata correctly.
+   - Provides a repair script for existing libraries with mismatched book author sort values.
+
+10. Fork image and update handling.
+   - Builds multi-architecture GHCR images for this fork.
+   - Compares CWA update notifications against the upstream base release instead of this fork's commit hash.
 
 Deployment helper scripts, private hostnames/IP addresses, image tarballs, and personal
 runtime configuration are intentionally not part of this public branch.
