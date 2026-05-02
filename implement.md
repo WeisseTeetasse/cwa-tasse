@@ -30,7 +30,7 @@ Move long-running CWA jobs out of the web process into a dedicated worker proces
 - [x] Update GHCR workflow to build/publish `dev` and `dev-<shortsha>` from the `dev` branch.
 - [x] Run relevant tests. `/opt/homebrew/bin/pytest` was missing `requests`, so tests were run with `testing/venv/bin/pytest`.
 - [x] Build Docker locally if feasible. Built `cwa-tasse:dev-local` for `linux/arm64`.
-- [ ] Push local branch to remote `dev` and let GHCR build the dev-tagged image.
+- [x] Push local branch to remote `dev` and let GHCR build the dev-tagged image.
 
 ## Notes
 
