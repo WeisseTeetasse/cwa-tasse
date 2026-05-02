@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Calibre-Web (GPLV3)\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-05-02 07:50+0000\n"
+"POT-Creation-Date: 2026-05-02 08:12+0000\n"
 "PO-Revision-Date: 2023-12-20 22:00+0100\n"
 "Last-Translator: Michiel Cornelissen <michiel.cornelissen+gitbhun at proton."
 "me>\n"
@@ -127,7 +127,7 @@ msgstr "Basisconfiguratie"
 msgid "UI Configuration"
 msgstr "Uiterlijk aanpassen"
 
-#: cps/admin.py:620 cps/admin.py:1302 cps/db.py:967 cps/search.py:153
+#: cps/admin.py:620 cps/admin.py:1302 cps/db.py:1025 cps/search.py:153
 #: cps/web.py:857
 #, fuzzy, python-format
 msgid "Custom Column No.%(column)d does not exist in calibre database"
@@ -1134,7 +1134,7 @@ msgstr "{} gebruikers succesvol verwijderd"
 msgid "CWA Profile Picture Management (WIP)"
 msgstr "CWA Profielafbeelding Beheer (in ontwikkeling)"
 
-#: cps/db.py:1240 cps/templates/config_edit.html:294
+#: cps/db.py:1278 cps/templates/config_edit.html:294
 #: cps/templates/config_view_edit.html:79
 #: cps/templates/config_view_edit.html:90 cps/templates/email_edit.html:41
 #: cps/web.py:670 cps/web.py:704 cps/web.py:749 cps/web.py:789 cps/web.py:818
