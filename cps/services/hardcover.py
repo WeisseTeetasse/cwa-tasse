@@ -290,15 +290,7 @@ class HardcoverClient:
         mutation = """
             mutation ($object: ListBookInput!) {
                 insert_list_book(object: $object) {
-                    error
-                    list_book {
-                        id
-                        list_id
-                        book_id
-                        edition_id
-                        created_at
-                        updated_at
-                    }
+                    id
                 }
             }"""
         variables = {
@@ -309,7 +301,15 @@ class HardcoverClient:
             }
         }
         response = self.execute(query=mutation, variables=variables)
-        return response.get("insert_list_book", {}).get("list_book")
+        inserted = response.get("insert_list_book", {})
+        if not inserted:
+            return None
+        return {
+            "id": inserted.get("id"),
+            "list_id": int(list_id),
+            "book_id": int(book_id),
+            "edition_id": int(edition_id) if edition_id else None,
+        }
 
     def delete_list_book(self, list_book_id):
         """Remove a Hardcover list_books row by its own id."""

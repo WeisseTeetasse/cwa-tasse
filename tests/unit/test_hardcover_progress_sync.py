@@ -133,3 +133,39 @@ class TestHardcoverProgressOnlySync:
         assert len(execute_calls) == 1
         assert execute_calls[0]["variables"]["pages"] == 200
         assert execute_calls[0]["variables"]["finishedAt"] is None
+
+
+@pytest.mark.unit
+class TestHardcoverListSync:
+    def test_add_book_to_list_uses_list_book_input_and_id_result(self):
+        execute_calls = []
+        client = object.__new__(hardcover.HardcoverClient)
+        client.find_list_book = lambda *args, **kwargs: None
+
+        def execute(query, variables=None):
+            execute_calls.append({"query": query, "variables": variables or {}})
+            return {"insert_list_book": {"id": 999}}
+
+        client.execute = execute
+
+        result = client.add_book_to_list(381567, 1726774, 12345)
+
+        assert result == {
+            "id": 999,
+            "list_id": 381567,
+            "book_id": 1726774,
+            "edition_id": 12345,
+        }
+        query = execute_calls[0]["query"]
+        assert "ListBookInput!" in query
+        assert "insert_list_book" in query
+        assert " id" in query
+        assert "error" not in query
+        assert "list_book {" not in query
+        assert execute_calls[0]["variables"] == {
+            "object": {
+                "list_id": 381567,
+                "book_id": 1726774,
+                "edition_id": 12345,
+            }
+        }
