@@ -49,6 +49,49 @@ cc_classes = {}
 
 Base = declarative_base()
 
+
+def _author_sort_parts(author_sort):
+    return [
+        strip_whitespaces(part)
+        for part in (author_sort or "").split('&')
+        if strip_whitespaces(part)
+    ]
+
+
+def _author_sort_key(value):
+    return strip_whitespaces(value or "").casefold()
+
+
+def order_linked_authors_by_sort(authors, author_sort):
+    """Order linked authors using a book author_sort string when it matches."""
+    remaining = list(authors or [])
+    ordered = list()
+    for sort_part in _author_sort_parts(author_sort):
+        key = _author_sort_key(sort_part)
+        match_index = None
+        for index, author in enumerate(remaining):
+            if _author_sort_key(getattr(author, "sort", "")) == key:
+                match_index = index
+                break
+        if match_index is None:
+            for index, author in enumerate(remaining):
+                if _author_sort_key(getattr(author, "name", "")) == key:
+                    match_index = index
+                    break
+        if match_index is not None:
+            ordered.append(remaining.pop(match_index))
+    ordered.extend(remaining)
+    return ordered
+
+
+def canonical_author_sort_for_authors(authors, current_author_sort=None):
+    ordered_authors = order_linked_authors_by_sort(authors, current_author_sort)
+    return " & ".join(
+        strip_whitespaces(getattr(author, "sort", "") or getattr(author, "name", ""))
+        for author in ordered_authors
+        if strip_whitespaces(getattr(author, "sort", "") or getattr(author, "name", ""))
+    )
+
 books_authors_link = Table('books_authors_link', Base.metadata,
                            Column('book', Integer, ForeignKey('books.id'), primary_key=True),
                            Column('author', Integer, ForeignKey('authors.id'), primary_key=True)
@@ -911,6 +954,21 @@ class CalibreDB:
         if not self.session.query(Metadata_Dirtied).filter(Metadata_Dirtied.book == book_id).one_or_none():
             self.session.add(Metadata_Dirtied(book_id))
 
+    def normalize_author_sort_values(self, book_ids=None, commit=True):
+        self.ensure_session()
+        query = self.session.query(Books).options(joinedload(Books.authors))
+        if book_ids is not None:
+            query = query.filter(Books.id.in_(book_ids))
+        changed = list()
+        for book in query.all():
+            canonical_sort = canonical_author_sort_for_authors(book.authors, book.author_sort)
+            if canonical_sort and _author_sort_key(book.author_sort) != _author_sort_key(canonical_sort):
+                changed.append((book.id, book.author_sort, canonical_sort))
+                book.author_sort = canonical_sort
+        if changed and commit:
+            self.session.commit()
+        return changed
+
     def delete_dirty_metadata(self, book_id):
         self.ensure_session()
         try:
@@ -1084,32 +1142,12 @@ class CalibreDB:
         self.ensure_session()
         for entry in entries:
             if combined:
-                sort_authors = entry.Books.author_sort.split('&')
-                ids = [a.id for a in entry.Books.authors]
+                authors = entry.Books.authors
 
             else:
-                sort_authors = entry.author_sort.split('&')
-                ids = [a.id for a in entry.authors]
-            authors_ordered = list()
-            # error = False
-            for auth in sort_authors:
-                auth = strip_whitespaces(auth)
-                # Skip empty author strings to prevent spurious errors
-                if not auth:
-                    continue
-                results = self.session.query(Authors).filter(Authors.sort == auth).all()
-                # ToDo: How to handle not found author name
-                if not len(results):
-                    log.error("Author '{}' not found to display name in right order".format(auth))
-                    # error = True
-                    break
-                for r in results:
-                    if r.id in ids:
-                        authors_ordered.append(r)
-                        ids.remove(r.id)
-            for author_id in ids:
-                result = self.session.query(Authors).filter(Authors.id == author_id).first()
-                authors_ordered.append(result)
+                authors = entry.authors
+            author_sort = entry.Books.author_sort if combined else entry.author_sort
+            authors_ordered = order_linked_authors_by_sort(authors, author_sort)
 
             if list_return:
                 if combined:

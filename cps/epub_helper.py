@@ -95,7 +95,7 @@ def create_new_metadata_backup(book,  custom_columns, export_language, translate
     for author in book.authors:
         creator = etree.SubElement(metadata, PURL + "creator", nsmap=NSMAP)
         creator.text = str(author.name)
-        creator.set(OPF + "file-as", book.author_sort)     # ToDo Check
+        creator.set(OPF + "file-as", author.sort or author.name)
         creator.set(OPF + "role", "aut")
     contributor = etree.SubElement(metadata, PURL + "contributor", nsmap=NSMAP)
     contributor.text = "calibre (5.7.2) [https://calibre-ebook.com]"
@@ -172,5 +172,4 @@ def replace_metadata(tree, package):
                           xml_declaration=True,
                           encoding='utf-8',
                           pretty_print=True).decode('utf-8')
-
 
