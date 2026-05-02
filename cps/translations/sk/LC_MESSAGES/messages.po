@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version:  Calibre-Web Automated\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-05-02 08:12+0000\n"
+"POT-Creation-Date: 2026-05-02 08:25+0000\n"
 "PO-Revision-Date: 2023-11-01 06:12+0100\n"
 "Last-Translator: Branislav Hanáček <brango@brango.sk>\n"
 "Language-Team: \n"
@@ -122,7 +122,7 @@ msgid "UI Configuration"
 msgstr "Konfigurácia používateľského rozhrania"
 
 #: cps/admin.py:620 cps/admin.py:1302 cps/db.py:1025 cps/search.py:153
-#: cps/web.py:857
+#: cps/web.py:863
 #, python-format
 msgid "Custom Column No.%(column)d does not exist in calibre database"
 msgstr ""
@@ -397,7 +397,7 @@ msgstr "Úspech! Gmail konto bolo verifikované."
 #: cps/admin.py:2558 cps/admin.py:2829 cps/editbooks.py:1042
 #: cps/editbooks.py:1816 cps/shelf.py:98 cps/shelf.py:158 cps/shelf.py:225
 #: cps/shelf.py:275 cps/shelf.py:312 cps/shelf.py:386 cps/shelf.py:508
-#: cps/tasks/convert.py:145 cps/web.py:2743
+#: cps/tasks/convert.py:145 cps/web.py:2749
 #, python-format
 msgid "Oops! Database Error: %(error)s."
 msgstr "Chyba databázy: %(error)s."
@@ -439,7 +439,7 @@ msgstr "Bol uvedený neplatný doba behu"
 msgid "Scheduled tasks settings updated"
 msgstr "Nastavenia naplánovaných úloh boli aktualizované"
 
-#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2825 cps/web.py:2140
+#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2825 cps/web.py:2146
 msgid "Oops! An unknown error occurred. Please try again later."
 msgstr "Vyskytla sa neočakávaná chyba. Prosím, skúste to opäť neskôr."
 
@@ -447,7 +447,7 @@ msgstr "Vyskytla sa neočakávaná chyba. Prosím, skúste to opäť neskôr."
 msgid "Settings DB is not Writeable"
 msgstr "Nie je možné zapisovať do databázy nastavení"
 
-#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2655 cps/web.py:2794
+#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2661 cps/web.py:2800
 #, fuzzy
 msgid "title"
 msgstr "Názov"
@@ -609,7 +609,7 @@ msgstr "Nastavenia databáze boli aktualizované"
 msgid "Database Configuration"
 msgstr "Konfigurácia databázy"
 
-#: cps/admin.py:2514 cps/web.py:2109
+#: cps/admin.py:2514 cps/web.py:2115
 msgid "Oops! Please complete all fields."
 msgstr "Vyplňte prosím všetky polia."
 
@@ -643,7 +643,7 @@ msgstr "Nie je možné zmazať používateľa Hosť"
 msgid "No admin user remaining, can't delete user"
 msgstr "Nezostáva žiadny používateľ, nie je možné odobrať rolu správcu"
 
-#: cps/admin.py:2780 cps/web.py:2444
+#: cps/admin.py:2780 cps/web.py:2450
 msgid "Email can't be empty and has to be a valid Email"
 msgstr "E-mailová adresa nemôže byť prázdna a musí byť platná"
 
@@ -1113,9 +1113,9 @@ msgstr ""
 #: cps/db.py:1278 cps/templates/config_edit.html:294
 #: cps/templates/config_view_edit.html:79
 #: cps/templates/config_view_edit.html:90 cps/templates/email_edit.html:41
-#: cps/web.py:670 cps/web.py:704 cps/web.py:749 cps/web.py:789 cps/web.py:818
-#: cps/web.py:1630 cps/web.py:1667 cps/web.py:1718 cps/web.py:1750
-#: cps/web.py:1789
+#: cps/web.py:676 cps/web.py:710 cps/web.py:755 cps/web.py:795 cps/web.py:824
+#: cps/web.py:1636 cps/web.py:1673 cps/web.py:1724 cps/web.py:1756
+#: cps/web.py:1795
 msgid "None"
 msgstr "Žiadne"
 
@@ -1208,8 +1208,8 @@ msgstr "Prípona súboru '%(ext)s' nemôže byť nahraná na tento server"
 msgid "File to be uploaded must have an extension"
 msgstr "Súbor ktorý sa má nahrať musí mať príponu"
 
-#: cps/editbooks.py:849 cps/editbooks.py:1431 cps/web.py:637 cps/web.py:2856
-#: cps/web.py:2947 cps/web.py:3032
+#: cps/editbooks.py:849 cps/editbooks.py:1431 cps/web.py:643 cps/web.py:2862
+#: cps/web.py:2953 cps/web.py:3038
 msgid ""
 "Oops! Selected book is unavailable. File does not exist or is not accessible"
 msgstr ""
@@ -1241,7 +1241,8 @@ msgid "Error editing book: {}"
 msgstr "Chyba pri úprave knihy: {}"
 
 #: cps/editbooks.py:1102 cps/editbooks.py:1147 cps/editbooks.py:1864
-#: cps/updater.py:618 cps/uploader.py:97 cps/uploader.py:106
+#: cps/templates/user_edit.html:428 cps/updater.py:618 cps/uploader.py:97
+#: cps/uploader.py:106
 msgid "Unknown"
 msgstr "Neznámy"
 
@@ -1730,7 +1731,7 @@ msgstr "{} Hviezdičiek"
 
 #: cps/remotelogin.py:76 cps/templates/layout.html:135
 #: cps/templates/layout.html:177 cps/templates/login.html:11
-#: cps/templates/login.html:39 cps/web.py:2218
+#: cps/templates/login.html:39 cps/web.py:2224
 msgid "Login"
 msgstr "Prihlásiť sa"
 
@@ -1771,7 +1772,7 @@ msgstr "Stiahnuté knihy"
 msgid "Show Downloaded Books"
 msgstr "Zobraziť stiahnuté knihy"
 
-#: cps/render_template.py:57 cps/web.py:527
+#: cps/render_template.py:57 cps/web.py:533
 msgid "Top Rated Books"
 msgstr "Najlepšie hodnotené knihy"
 
@@ -1779,7 +1780,7 @@ msgstr "Najlepšie hodnotené knihy"
 msgid "Show Top Rated Books"
 msgstr "Zobraziť najlepšie hodnotené knihy"
 
-#: cps/render_template.py:60 cps/web.py:876
+#: cps/render_template.py:60 cps/web.py:882
 msgid "Read Books"
 msgstr "Prečítané knihy"
 
@@ -1787,7 +1788,7 @@ msgstr "Prečítané knihy"
 msgid "Show Read and Unread"
 msgstr "Zobraziť prečítané a neprečítané"
 
-#: cps/render_template.py:64 cps/web.py:879
+#: cps/render_template.py:64 cps/web.py:885
 msgid "Unread Books"
 msgstr "Neprečítané knihy"
 
@@ -1804,7 +1805,7 @@ msgstr "Objaviť"
 msgid "Show Random Books"
 msgstr "Zobraziť náhodné knihy"
 
-#: cps/render_template.py:70 cps/templates/book_table.html:106 cps/web.py:1793
+#: cps/render_template.py:70 cps/templates/book_table.html:106 cps/web.py:1799
 msgid "Categories"
 msgstr "Kategórie"
 
@@ -1816,7 +1817,7 @@ msgstr "Zobraziť časť Kategórie"
 #: cps/templates/book_table.html:107 cps/templates/cwa_settings.html:362
 #: cps/templates/cwa_settings.html:364 cps/templates/cwa_settings.html:1103
 #: cps/templates/hardcover_review_matches.html:140
-#: cps/templates/search_form.html:70 cps/web.py:1673 cps/web.py:1685
+#: cps/templates/search_form.html:70 cps/web.py:1679 cps/web.py:1691
 msgid "Series"
 msgstr "Série"
 
@@ -1834,7 +1835,7 @@ msgstr "Autori"
 msgid "Show Author Section"
 msgstr "Zobraziť časť Autori"
 
-#: cps/render_template.py:80 cps/templates/book_table.html:111 cps/web.py:1641
+#: cps/render_template.py:80 cps/templates/book_table.html:111 cps/web.py:1647
 msgid "Publishers"
 msgstr "Vydavatelia"
 
@@ -1844,7 +1845,7 @@ msgstr "Zobraziť časť vydavatelia"
 
 #: cps/render_template.py:83 cps/templates/book_table.html:109
 #: cps/templates/detail.html:706 cps/templates/search_form.html:108
-#: cps/web.py:1765
+#: cps/web.py:1771
 msgid "Languages"
 msgstr "Jazyky"
 
@@ -1852,7 +1853,7 @@ msgstr "Jazyky"
 msgid "Show Language Section"
 msgstr "Zobraziť časť Jazyky"
 
-#: cps/render_template.py:87 cps/web.py:1725
+#: cps/render_template.py:87 cps/web.py:1731
 msgid "Ratings"
 msgstr "Hodnotenia"
 
@@ -1868,7 +1869,7 @@ msgstr "Súborové formáty"
 msgid "Show File Formats Section"
 msgstr "Zobraziť časť Súborové formáty"
 
-#: cps/render_template.py:94 cps/web.py:902
+#: cps/render_template.py:94 cps/web.py:908
 msgid "Archived Books"
 msgstr "Archivované knihy"
 
@@ -1876,7 +1877,7 @@ msgstr "Archivované knihy"
 msgid "Show Archived Books"
 msgstr "Zobraziť archivované knihy"
 
-#: cps/render_template.py:99 cps/web.py:1461
+#: cps/render_template.py:99 cps/web.py:1467
 msgid "Books List"
 msgstr "Zoznam kníh"
 
@@ -2125,253 +2126,253 @@ msgstr ""
 msgid "No release information available"
 msgstr "Nie je dostupná informácia o vydaní"
 
-#: cps/web.py:85
+#: cps/web.py:90
 msgid "The selected Hardcover list no longer exists. Choose another list."
 msgstr ""
 
-#: cps/web.py:87
+#: cps/web.py:92
 msgid "Could not fetch Hardcover lists. Check your Hardcover token."
 msgstr ""
 
-#: cps/templates/index.html:48 cps/web.py:539
+#: cps/templates/index.html:48 cps/web.py:545
 msgid "Discover (Random Books)"
 msgstr "Objaviť (Náhodné knihy)"
 
-#: cps/web.py:589
+#: cps/web.py:595
 msgid "Hot Books (Most Downloaded)"
 msgstr "Horúce knihy (Najviac sťahované)"
 
-#: cps/web.py:620
+#: cps/web.py:626
 #, python-format
 msgid "Downloaded books by %(user)s"
 msgstr "Knihy stiahnuté: %(user)s"
 
-#: cps/web.py:653
+#: cps/web.py:659
 #, python-format
 msgid "Author: %(name)s"
 msgstr "Author: %(name)s"
 
-#: cps/web.py:689
+#: cps/web.py:695
 #, python-format
 msgid "Publisher: %(name)s"
 msgstr "Vydavateľ: %(name)s"
 
-#: cps/web.py:717
+#: cps/web.py:723
 #, python-format
 msgid "Series: %(serie)s"
 msgstr "Série: %(serie)s"
 
-#: cps/web.py:731
+#: cps/web.py:737
 msgid "Rating: None"
 msgstr "Hodnotenie: Žiadne"
 
-#: cps/web.py:740
+#: cps/web.py:746
 #, python-format
 msgid "Rating: %(rating)s stars"
 msgstr "Hodnotenie: %(rating)s hviezdičiek"
 
-#: cps/web.py:771
+#: cps/web.py:777
 #, python-format
 msgid "File format: %(format)s"
 msgstr "Súborový formát: %(format)s"
 
-#: cps/web.py:808
+#: cps/web.py:814
 #, python-format
 msgid "Category: %(name)s"
 msgstr "Kategória: %(name)s"
 
-#: cps/web.py:837
+#: cps/web.py:843
 #, python-format
 msgid "Language: %(name)s"
 msgstr "Jazyk: %(name)s"
 
-#: cps/web.py:967
+#: cps/web.py:973
 #, fuzzy
 msgid "Error loading magic shelf"
 msgstr "Chyba pri mazaní police"
 
-#: cps/web.py:992
+#: cps/web.py:998
 #, python-format
 msgid "Magic Shelf&nbsp&nbsp&nbsp—&nbsp&nbsp&nbsp%(icon)s %(name)s"
 msgstr ""
 
-#: cps/web.py:1069
+#: cps/web.py:1075
 msgid "No rules provided"
 msgstr ""
 
-#: cps/web.py:1075
+#: cps/web.py:1081
 #, fuzzy
 msgid "Invalid rules format"
 msgstr "Neplatný formát poštovej adresy"
 
-#: cps/web.py:1097
+#: cps/web.py:1103
 msgid "Error processing rules"
 msgstr ""
 
-#: cps/web.py:1101
+#: cps/web.py:1107
 #, fuzzy
 msgid "Invalid request"
 msgstr "Neplatná rola"
 
-#: cps/web.py:1145
+#: cps/web.py:1151
 msgid "Name and rules are required"
 msgstr ""
 
-#: cps/web.py:1148 cps/web.py:1245
+#: cps/web.py:1154 cps/web.py:1251
 msgid "Shelf name too long (max 100 characters)"
 msgstr ""
 
-#: cps/web.py:1170
+#: cps/web.py:1176
 #, fuzzy
 msgid "Error creating shelf"
 msgstr "Chyba pri mazaní police"
 
-#: cps/templates/layout.html:314 cps/web.py:1184
+#: cps/templates/layout.html:314 cps/web.py:1190
 #, fuzzy
 msgid "Create Magic Shelf"
 msgstr "Vytvoriť policu"
 
-#: cps/web.py:1238
+#: cps/web.py:1244
 msgid "Permission denied to change public status"
 msgstr ""
 
-#: cps/web.py:1242
+#: cps/web.py:1248
 #, fuzzy
 msgid "Shelf name is required"
 msgstr "Toto pole je povinné"
 
-#: cps/web.py:1276
+#: cps/web.py:1282
 #, fuzzy
 msgid "Error updating shelf"
 msgstr "Chyba pri mazaní police"
 
-#: cps/web.py:1291
+#: cps/web.py:1297
 #, fuzzy
 msgid "Edit Magic Shelf"
 msgstr "Upraviť policu"
 
-#: cps/web.py:1304
+#: cps/web.py:1310
 #, fuzzy
 msgid "Shelf not found"
 msgstr "Používateľ sa nenašiel"
 
-#: cps/web.py:1309
+#: cps/web.py:1315
 msgid "Permission denied"
 msgstr ""
 
-#: cps/web.py:1340
+#: cps/web.py:1346
 #, fuzzy
 msgid "Shelf duplicated successfully"
 msgstr "Zmazaných {} používateľov"
 
-#: cps/web.py:1346
+#: cps/web.py:1352
 #, fuzzy
 msgid "Error duplicating shelf"
 msgstr "Chyba pri mazaní police"
 
-#: cps/templates/magic_shelf_edit.html:448 cps/web.py:1373
+#: cps/templates/magic_shelf_edit.html:448 cps/web.py:1379
 msgid ""
 "System shelves cannot be deleted. You can hide them in your user profile "
 "settings."
 msgstr ""
 
-#: cps/web.py:1390
+#: cps/web.py:1396
 #, fuzzy
 msgid "Error deleting shelf"
 msgstr "Chyba pri mazaní police"
 
-#: cps/web.py:1406
+#: cps/web.py:1412
 msgid ""
 "You cannot hide your own shelves. Delete them instead if you don't want them."
 msgstr ""
 
-#: cps/web.py:1416
+#: cps/web.py:1422
 msgid "Shelf already hidden"
 msgstr ""
 
-#: cps/web.py:1430
+#: cps/web.py:1436
 #, fuzzy
 msgid "Error hiding shelf"
 msgstr "Chyba pri mazaní police"
 
-#: cps/web.py:1444
+#: cps/web.py:1450
 msgid "Shelf was not hidden"
 msgstr ""
 
-#: cps/web.py:1453
+#: cps/web.py:1459
 #, fuzzy
 msgid "Error unhiding shelf"
 msgstr "Chyba pri mazaní police"
 
-#: cps/templates/admin.html:18 cps/web.py:1600
+#: cps/templates/admin.html:18 cps/web.py:1606
 msgid "Downloads"
 msgstr "Stiahnutia"
 
-#: cps/web.py:1752
+#: cps/web.py:1758
 msgid "File formats list"
 msgstr "Zoznam súborových formátov"
 
-#: cps/web.py:1992 cps/web.py:2030
+#: cps/web.py:1998 cps/web.py:2036
 msgid "Please configure the SMTP mail settings first..."
 msgstr "Najskôr nastavte poštový server, prosím..."
 
-#: cps/web.py:1996
+#: cps/web.py:2002
 msgid "Oops! Please update your profile with a valid eReader Email."
 msgstr "Nastavte vo vašom profile platnú e-mailovú adresu pre vašu čítačku."
 
-#: cps/web.py:2018
+#: cps/web.py:2024
 #, python-format
 msgid "Success! Book queued for sending to %(eReadermail)s"
 msgstr "Úspech! Kniha bola zaradená na odoslanie do %(eReadermail)s"
 
-#: cps/web.py:2021 cps/web.py:2079
+#: cps/web.py:2027 cps/web.py:2085
 #, python-format
 msgid "Oops! There was an error sending book: %(res)s"
 msgstr "Vyskytla sa chyba pri posielaní knihy: %(res)s"
 
-#: cps/web.py:2038 cps/web.py:2048
+#: cps/web.py:2044 cps/web.py:2054
 msgid "No email addresses selected"
 msgstr ""
 
-#: cps/web.py:2055
+#: cps/web.py:2061
 msgid "Additional email addresses are disabled for your account."
 msgstr ""
 
-#: cps/web.py:2077
+#: cps/web.py:2083
 #, fuzzy
 msgid "Success! Book queued for sending to the selected address(es)!"
 msgstr "Úspech! Kniha bola zaradená na odoslanie do %(eReadermail)s"
 
-#: cps/web.py:2096
+#: cps/web.py:2102
 msgid "Please wait one minute to register next user"
 msgstr "Počkajte, prosím minútku pred registráciou ďalšieho používateľa"
 
 #: cps/templates/layout.html:136 cps/templates/layout.html:178
-#: cps/templates/login.html:48 cps/templates/register.html:17 cps/web.py:2097
-#: cps/web.py:2101 cps/web.py:2106 cps/web.py:2110 cps/web.py:2116
-#: cps/web.py:2141 cps/web.py:2145 cps/web.py:2158 cps/web.py:2161
+#: cps/templates/login.html:48 cps/templates/register.html:17 cps/web.py:2103
+#: cps/web.py:2107 cps/web.py:2112 cps/web.py:2116 cps/web.py:2122
+#: cps/web.py:2147 cps/web.py:2151 cps/web.py:2164 cps/web.py:2167
 msgid "Register"
 msgstr "Registrovať"
 
-#: cps/web.py:2100 cps/web.py:2265
+#: cps/web.py:2106 cps/web.py:2271
 #, fuzzy
 msgid "Connection error to limiter backend, please contact your administrator"
 msgstr "Poštový server nie je nastavený, kontaktujte prosím správcu."
 
-#: cps/web.py:2105 cps/web.py:2157
+#: cps/web.py:2111 cps/web.py:2163
 msgid ""
 "Oops! Email server is not configured, please contact your administrator."
 msgstr "Poštový server nie je nastavený, kontaktujte prosím správcu."
 
-#: cps/web.py:2143
+#: cps/web.py:2149
 msgid "Oops! Your Email is not allowed."
 msgstr "Vaša e-mailová adresa nie je povolená."
 
-#: cps/web.py:2146
+#: cps/web.py:2152
 msgid "Success! Confirmation Email has been sent."
 msgstr "Úspech! Potvrdzujúci e-mail bol odoslaný."
 
-#: cps/web.py:2194
+#: cps/web.py:2200
 #, fuzzy
 msgid ""
 "Authentication loop detected. If you're experiencing login issues, please "
@@ -2379,42 +2380,42 @@ msgid ""
 msgstr ""
 "Inštancia Calibre-Web nie je nastavené, kontaktujte prosím vašeho správcu"
 
-#: cps/web.py:2239
+#: cps/web.py:2245
 #, fuzzy
 msgid ""
 "OAuth authentication is not properly configured. Please contact "
 "administrator."
 msgstr "Poštový server nie je nastavený, kontaktujte prosím správcu."
 
-#: cps/web.py:2244 cps/web.py:2271
+#: cps/web.py:2250 cps/web.py:2277
 msgid "Cannot activate LDAP authentication"
 msgstr "Nie je možné aktivovať LDAP autentifikáciu"
 
-#: cps/web.py:2253
+#: cps/web.py:2259
 msgid "Standard login is disabled."
 msgstr ""
 
-#: cps/web.py:2261
+#: cps/web.py:2267
 msgid "Please wait one minute before next login"
 msgstr "Počkajte, prosím minútku pred opätovným prihlásením"
 
-#: cps/web.py:2279
+#: cps/web.py:2285
 msgid "Username cannot be empty"
 msgstr ""
 
-#: cps/web.py:2291
+#: cps/web.py:2297
 #, python-format
 msgid "you are now logged in as: '%(nickname)s'"
 msgstr "ste prihlásený ako: '%(nickname)s'"
 
-#: cps/web.py:2310
+#: cps/web.py:2316
 #, fuzzy, python-format
 msgid ""
 "Welcome! Your account has been automatically created. You are now logged in "
 "as: '%(nickname)s'"
 msgstr "Úspech! Teraz ste prihlásený ako: %(nickname)s"
 
-#: cps/web.py:2315 cps/web.py:2318
+#: cps/web.py:2321 cps/web.py:2324
 #, fuzzy
 msgid ""
 "Authentication successful, but account creation failed. Please contact your "
@@ -2422,13 +2423,13 @@ msgid ""
 msgstr ""
 "Inštancia Calibre-Web nie je nastavené, kontaktujte prosím vašeho správcu"
 
-#: cps/web.py:2322
+#: cps/web.py:2328
 msgid ""
 "Authentication successful, but no local account found. Please contact your "
 "administrator to create your account."
 msgstr ""
 
-#: cps/web.py:2330
+#: cps/web.py:2336
 #, python-format
 msgid ""
 "Fallback Login as: '%(nickname)s', LDAP Server not reachable, or user not "
@@ -2437,55 +2438,55 @@ msgstr ""
 "Záložné prihlásenie ako: '%(nickname)s', LDAP server je nedostupný alebo "
 "používateľ je neznámy"
 
-#: cps/web.py:2336
+#: cps/web.py:2342
 #, python-format
 msgid "Could not login: %(message)s"
 msgstr "Nemôžem prihlásiť: %(message)s"
 
-#: cps/web.py:2359 cps/web.py:2360 cps/web.py:2403
+#: cps/web.py:2365 cps/web.py:2366 cps/web.py:2409
 msgid "Wrong Username or Password"
 msgstr "Nesprávne používateľské meno alebo heslo"
 
-#: cps/web.py:2368
+#: cps/web.py:2374
 msgid "New Password was sent to your email address"
 msgstr "Na vašu e-mailovú adresu bolo odoslané nové heslo"
 
-#: cps/web.py:2372
+#: cps/web.py:2378
 msgid "An unknown error occurred. Please try again later."
 msgstr "Vyskytla sa neočakávaná chyba. Prosím, skúste to opäť neskôr."
 
-#: cps/web.py:2374
+#: cps/web.py:2380
 msgid "Please enter valid username to reset password"
 msgstr "Na resetovanie hesla zadajte platné používateľské meno"
 
-#: cps/web.py:2382
+#: cps/web.py:2388
 #, python-format
 msgid "You are now logged in as: '%(nickname)s'"
 msgstr "Teraz ste prihlásený ako: '%(nickname)s'"
 
-#: cps/web.py:2723
+#: cps/web.py:2729
 msgid "Hardcover state sync finished with errors. Check the log."
 msgstr ""
 
-#: cps/web.py:2725
+#: cps/web.py:2731
 #, python-format
 msgid "Hardcover state sync complete. %(count)s change(s) applied."
 msgstr ""
 
-#: cps/web.py:2731
+#: cps/web.py:2737
 #, fuzzy, python-format
 msgid "Hardcover state sync failed: %(error)s"
 msgstr "Prevádzač e-kníh zlyhal: %(error)s"
 
-#: cps/web.py:2732
+#: cps/web.py:2738
 msgid "Success! Profile Updated"
 msgstr "Úspech! Profil bol aktualizovaný"
 
-#: cps/web.py:2738
+#: cps/web.py:2744
 msgid "Oops! An account already exists for this Email."
 msgstr "Účet s touto e-mailovou adresou už existuje."
 
-#: cps/web.py:2960
+#: cps/web.py:2966
 #, fuzzy
 msgid "Invalid book ID."
 msgstr "Neplatná rola"
@@ -2984,7 +2985,7 @@ msgstr "V poriadku"
 #: cps/templates/modal_dialogs.html:117 cps/templates/modal_dialogs.html:135
 #: cps/templates/schedule_edit.html:46 cps/templates/shelf_edit.html:27
 #: cps/templates/tasks.html:94 cps/templates/tasks.html:166
-#: cps/templates/tasks.html:173 cps/templates/user_edit.html:644
+#: cps/templates/tasks.html:173 cps/templates/user_edit.html:681
 msgid "Cancel"
 msgstr "Zrušiť"
 
@@ -3082,7 +3083,7 @@ msgstr "Nahráva sa..."
 #: cps/templates/book_table.html:342 cps/templates/duplicates.html:587
 #: cps/templates/layout.html:152 cps/templates/layout.html:361
 #: cps/templates/layout.html:426 cps/templates/modal_dialogs.html:34
-#: cps/templates/user_edit.html:662
+#: cps/templates/user_edit.html:699
 msgid "Close"
 msgstr "Zatvoriť"
 
@@ -3210,7 +3211,7 @@ msgstr "Načítať metadáta"
 #: cps/templates/email_edit.html:65
 #: cps/templates/generate_kobo_auth_url.html:33
 #: cps/templates/schedule_edit.html:45 cps/templates/shelf_edit.html:25
-#: cps/templates/shelf_order.html:41 cps/templates/user_edit.html:642
+#: cps/templates/shelf_order.html:41 cps/templates/user_edit.html:679
 msgid "Save"
 msgstr "Uložiť"
 
@@ -3238,7 +3239,7 @@ msgstr "Chyba pri vyhľadávaní!"
 msgid "No Result(s) found! Please try another keyword."
 msgstr "Nič sa nenaslo! Skúste, prosím iné kľúčové slovo."
 
-#: cps/templates/book_edit.html:374
+#: cps/templates/book_edit.html:374 cps/templates/user_edit.html:416
 msgid "Source"
 msgstr "Zdroj"
 
@@ -3310,6 +3311,7 @@ msgstr "Zadajte názov"
 #: cps/templates/cwa_settings.html:327 cps/templates/cwa_settings.html:329
 #: cps/templates/cwa_settings.html:1085 cps/templates/shelf_edit.html:8
 #: cps/templates/tasks.html:41 cps/templates/tasks.html:64
+#: cps/templates/user_edit.html:415
 msgid "Title"
 msgstr "Názov"
 
@@ -4211,35 +4213,35 @@ msgstr ""
 msgid "Permissions"
 msgstr "Verzia"
 
-#: cps/templates/config_view_edit.html:114 cps/templates/user_edit.html:494
+#: cps/templates/config_view_edit.html:114 cps/templates/user_edit.html:531
 msgid "Admin User"
 msgstr "Používateľ Správca"
 
-#: cps/templates/config_view_edit.html:119 cps/templates/user_edit.html:500
+#: cps/templates/config_view_edit.html:119 cps/templates/user_edit.html:537
 msgid "Allow Downloads"
 msgstr "Povoliť sťahovanie"
 
-#: cps/templates/config_view_edit.html:124 cps/templates/user_edit.html:505
+#: cps/templates/config_view_edit.html:124 cps/templates/user_edit.html:542
 msgid "Allow eBook Viewer"
 msgstr "Povoliť zobrazovač e-knihy"
 
-#: cps/templates/config_view_edit.html:130 cps/templates/user_edit.html:511
+#: cps/templates/config_view_edit.html:130 cps/templates/user_edit.html:548
 msgid "Allow Uploads"
 msgstr "Povoliť nahrávanie"
 
-#: cps/templates/config_view_edit.html:136 cps/templates/user_edit.html:517
+#: cps/templates/config_view_edit.html:136 cps/templates/user_edit.html:554
 msgid "Allow Edit"
 msgstr "Povoliť úpravu"
 
-#: cps/templates/config_view_edit.html:141 cps/templates/user_edit.html:522
+#: cps/templates/config_view_edit.html:141 cps/templates/user_edit.html:559
 msgid "Allow Delete Books"
 msgstr "Povoliť mazanie kníh"
 
-#: cps/templates/config_view_edit.html:146 cps/templates/user_edit.html:528
+#: cps/templates/config_view_edit.html:146 cps/templates/user_edit.html:565
 msgid "Allow Changing Password"
 msgstr "Povoliť zmenu hesla"
 
-#: cps/templates/config_view_edit.html:151 cps/templates/user_edit.html:533
+#: cps/templates/config_view_edit.html:151 cps/templates/user_edit.html:570
 msgid "Allow Editing Public Shelves"
 msgstr "Povoliť úpravu verejných políc"
 
@@ -4274,12 +4276,12 @@ msgstr "Predvolené viditeľnosti pre nových používateľov"
 msgid "Choose which sidebar sections are visible by default for new users."
 msgstr ""
 
-#: cps/templates/config_view_edit.html:194 cps/templates/user_edit.html:454
+#: cps/templates/config_view_edit.html:194 cps/templates/user_edit.html:491
 #: cps/templates/user_table.html:155
 msgid "Show Random Books in Detail View"
 msgstr "Ukázať náhodné knihy v detailnom zobrazení"
 
-#: cps/templates/config_view_edit.html:200 cps/templates/user_edit.html:460
+#: cps/templates/config_view_edit.html:200 cps/templates/user_edit.html:497
 msgid "Add Allowed/Denied Tags"
 msgstr "Pridať Povolené/Zakázané značky"
 
@@ -4628,7 +4630,7 @@ msgstr "Obálka knihy"
 
 #: cps/templates/cwa_settings.html:398 cps/templates/cwa_settings.html:419
 #: cps/templates/cwa_settings.html:526 cps/templates/cwa_settings.html:731
-#: cps/templates/user_edit.html:478 cps/templates/user_edit.html:569
+#: cps/templates/user_edit.html:515 cps/templates/user_edit.html:606
 msgid "Tip"
 msgstr ""
 
@@ -6759,7 +6761,7 @@ msgstr "Používateľ"
 msgid "Task"
 msgstr "Úloha"
 
-#: cps/templates/tasks.html:16
+#: cps/templates/tasks.html:16 cps/templates/user_edit.html:420
 msgid "Status"
 msgstr "Stav"
 
@@ -7053,153 +7055,206 @@ msgstr ""
 msgid "Sync Now"
 msgstr ""
 
-#: cps/templates/user_edit.html:413
+#: cps/templates/user_edit.html:408
+#, fuzzy
+msgid "Skipped Hardcover Books"
+msgstr "Zobraziť knihu pri ukladaní"
+
+#: cps/templates/user_edit.html:410
+msgid ""
+"These Hardcover books were seen during the last state sync but could not be "
+"matched to a local CWA book. Add a matching Hardcover ID, Hardcover slug, "
+"edition ID, or ISBN to the CWA book to resolve a skip."
+msgstr ""
+
+#: cps/templates/user_edit.html:412
+#, fuzzy
+msgid "Skipped Hardcover books"
+msgstr "Zobraziť knihu pri ukladaní"
+
+#: cps/templates/user_edit.html:417
+#, fuzzy
+msgid "Hardcover ID"
+msgstr "Povoliť synchronizáciu Kobo"
+
+#: cps/templates/user_edit.html:418
+msgid "Edition ID"
+msgstr ""
+
+#: cps/templates/user_edit.html:419
+msgid "Slug"
+msgstr ""
+
+#: cps/templates/user_edit.html:421
+msgid "Reason"
+msgstr ""
+
+#: cps/templates/user_edit.html:422
+msgid "Seen"
+msgstr ""
+
+#: cps/templates/user_edit.html:429
+#, fuzzy
+msgid "Selected list"
+msgstr "Vytvoriť policu"
+
+#: cps/templates/user_edit.html:429
+#, fuzzy
+msgid "User library"
+msgstr "Prehľadávať knižnicu"
+
+#: cps/templates/user_edit.html:442
+msgid ""
+"No skipped Hardcover books recorded yet. Run Sync Now to refresh this list."
+msgstr ""
+
+#: cps/templates/user_edit.html:450
 #, fuzzy
 msgid "Kobo Sync Devices"
 msgstr "Synchronizačný žetón Kobo"
 
-#: cps/templates/user_edit.html:415
+#: cps/templates/user_edit.html:452
 msgid "Manage Devices"
 msgstr ""
 
-#: cps/templates/user_edit.html:418
+#: cps/templates/user_edit.html:455
 #, fuzzy
 msgid "Force full kobo sync for all devices"
 msgstr "Vynútiť úplnú synchronizáciu Kobo"
 
-#: cps/templates/user_edit.html:425
+#: cps/templates/user_edit.html:462
 msgid "Sync only books in selected shelves with Kobo"
 msgstr "Synchronizovať s Kobo iba knihy vo vybraných policiach"
 
-#: cps/templates/user_edit.html:435
+#: cps/templates/user_edit.html:472
 #, fuzzy
 msgid "Sidebar Display Settings"
 msgstr "Bezpečnostné nastavenia"
 
-#: cps/templates/user_edit.html:436
+#: cps/templates/user_edit.html:473
 msgid "Choose which sections to display in your sidebar navigation."
 msgstr ""
 
-#: cps/templates/user_edit.html:461
+#: cps/templates/user_edit.html:498
 msgid "Add allowed/Denied Custom Column Values"
 msgstr "Pridať povolené/zakázané užívateľom definovaných hodnôt stĺpca"
 
-#: cps/templates/user_edit.html:469
+#: cps/templates/user_edit.html:506
 msgid "OPDS Catalog Order"
 msgstr ""
 
-#: cps/templates/user_edit.html:470
+#: cps/templates/user_edit.html:507
 msgid ""
 "Reorder the OPDS root catalog by listing entry IDs in the order you want. "
 "Unknown IDs are ignored and missing entries are appended automatically."
 msgstr ""
 
-#: cps/templates/user_edit.html:478
+#: cps/templates/user_edit.html:515
 msgid ""
 "Drag to reorder OPDS root entries. Missing entries are appended "
 "automatically."
 msgstr ""
 
-#: cps/templates/user_edit.html:487
+#: cps/templates/user_edit.html:524
 msgid "User Permissions"
 msgstr ""
 
-#: cps/templates/user_edit.html:488
+#: cps/templates/user_edit.html:525
 msgid "Configure what actions this user is allowed to perform."
 msgstr ""
 
-#: cps/templates/user_edit.html:543
+#: cps/templates/user_edit.html:580
 #, fuzzy
 msgid "Magic Shelves Order"
 msgstr "Synchronizovať vybrané police s Kobo"
 
-#: cps/templates/user_edit.html:544
+#: cps/templates/user_edit.html:581
 msgid "Choose how your magic shelves are ordered in the sidebar."
 msgstr ""
 
-#: cps/templates/user_edit.html:548
+#: cps/templates/user_edit.html:585
 msgid "Order Mode"
 msgstr ""
 
-#: cps/templates/user_edit.html:550
+#: cps/templates/user_edit.html:587
 msgid "Manual (drag to reorder)"
 msgstr ""
 
-#: cps/templates/user_edit.html:551
+#: cps/templates/user_edit.html:588
 msgid "Name (A-Z)"
 msgstr ""
 
-#: cps/templates/user_edit.html:552
+#: cps/templates/user_edit.html:589
 msgid "Name (Z-A)"
 msgstr ""
 
-#: cps/templates/user_edit.html:553
+#: cps/templates/user_edit.html:590
 msgid "Book count (high to low)"
 msgstr ""
 
-#: cps/templates/user_edit.html:554
+#: cps/templates/user_edit.html:591
 msgid "Book count (low to high)"
 msgstr ""
 
-#: cps/templates/user_edit.html:555
+#: cps/templates/user_edit.html:592
 msgid "Created (newest first)"
 msgstr ""
 
-#: cps/templates/user_edit.html:556
+#: cps/templates/user_edit.html:593
 msgid "Created (oldest first)"
 msgstr ""
 
-#: cps/templates/user_edit.html:557
+#: cps/templates/user_edit.html:594
 #, fuzzy
 msgid "Recently modified"
 msgstr "Naposledy pridané knihy"
 
-#: cps/templates/user_edit.html:558
+#: cps/templates/user_edit.html:595
 msgid "Least recently modified"
 msgstr ""
 
-#: cps/templates/user_edit.html:569
+#: cps/templates/user_edit.html:606
 msgid "Manual order is used only when the order mode is set to Manual."
 msgstr ""
 
-#: cps/templates/user_edit.html:575
+#: cps/templates/user_edit.html:612
 msgid "Magic Shelves Visibility"
 msgstr ""
 
-#: cps/templates/user_edit.html:576
+#: cps/templates/user_edit.html:613
 msgid ""
 "Uncheck shelves you want to hide from your sidebar. System shelves cannot be "
 "deleted, only hidden. Public shelves from other users can also be hidden."
 msgstr ""
 
-#: cps/templates/user_edit.html:580
+#: cps/templates/user_edit.html:617
 msgid "Default System Shelves:"
 msgstr ""
 
-#: cps/templates/user_edit.html:604
+#: cps/templates/user_edit.html:641
 #, fuzzy
 msgid "Public Shelves:"
 msgstr "Upraviť verejné police"
 
-#: cps/templates/user_edit.html:629
+#: cps/templates/user_edit.html:666
 #, python-format
 msgid "%(visible)s of %(total)s default shelves visible"
 msgstr ""
 
-#: cps/templates/user_edit.html:633
+#: cps/templates/user_edit.html:670
 #, python-format
 msgid "%(visible)s of %(total)s public shelves visible"
 msgstr ""
 
-#: cps/templates/user_edit.html:647 cps/templates/user_table.html:170
+#: cps/templates/user_edit.html:684 cps/templates/user_table.html:170
 msgid "Delete User"
 msgstr "Zmazať používateľa"
 
-#: cps/templates/user_edit.html:658
+#: cps/templates/user_edit.html:695
 msgid "Manage Kobo Devices"
 msgstr ""
 
-#: cps/templates/user_edit.html:720
+#: cps/templates/user_edit.html:757
 msgid "Visible"
 msgstr ""
 
