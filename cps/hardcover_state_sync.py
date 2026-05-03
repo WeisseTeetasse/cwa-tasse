@@ -617,7 +617,7 @@ def handle_kobo_progress_update(user, book_id, progress_percent):
         return
     if not getattr(user, "hardcover_state_push_currently_reading", True):
         return
-    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS)
+    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS); row.last_synced_at = datetime.now(timezone.utc)
     row.cwa_value = str(float(progress_percent))
     row.cwa_changed_at = _now()
     row.last_applied_source = "cwa"
@@ -884,7 +884,7 @@ def push_book_progress(user, book_id, source="kobo_state"):
         return
 
     # 2. Get local state
-    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS)
+    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS); row.last_synced_at = datetime.now(timezone.utc)
     # Check for too recent push (2 min debounce)
     if row.last_synced_at and (_now() - row.last_synced_at).total_seconds() < 120:
         log.debug("Hardcover progress push: throttled for book %s.", book_id)
