@@ -62,6 +62,7 @@ This fork currently carries these local changes on top of upstream CWA:
    - Magic Shelf sync is capped at 500 books per request (`MAGIC_SHELF_KOBO_LIMIT`) to prevent unbounded ORM hydration during Kobo sync.
    - `TaskAutoHardcoverID` now fetches only book IDs upfront, hydrates in batches of 50, and releases the SQLAlchemy identity map between batches — eliminating the multi-GB ORM balloon over a long run. The `Hardcover()` provider is instantiated once per task run instead of once per book.
    - Hardcover state sync refactor: `_local_book_maps` now uses a candidate-ID strategy (books with identifiers, current list tags, or existing sync rows) instead of a full `Books.all()` sweep. `sync_user` hydrates candidate books in chunks, commits and expires only processed objects between chunks, and fetches Hardcover API data before holding database writes. This eliminates UI hangs during sync and reduces memory contention.
+   - Bi-directional progress sync: Added support for pushing reading progress percentage from Kobo and KOReader to Hardcover. `handle_kobo_progress_update` tracks local progress changes, which are then pushed during the next durable worker sync run.
    - Fixed circular import between `cps.helper` and `cps.tasks.convert` that caused `TaskConvert` to fail in the durable worker.
    - Added task deduplication for KEPUB conversions: `convert:{book_id}:{old_fmt}:{new_fmt}` ensures only one active conversion job exists per book/format pair during Kobo sync polling.
 

@@ -1016,11 +1016,11 @@ def HandleStateRequest(book_uuid):
         ub.session.merge(kobo_reading_state)
         ub.session_commit()
 
-        # Push the Hardcover sync to the durable worker. Dedupe on user_id so
-        # rapid Kobo PUTs collapse into one queued sync. Never block the
-        # request greenlet on Hardcover I/O.
+        # Update sync row for Hardcover and trigger sync
         if config.config_hardcover_sync and bool(hardcover) and getattr(current_user, "hardcover_token", None):
             try:
+                from .hardcover_state_sync import handle_kobo_progress_update, TaskHardcoverStateSync
+                handle_kobo_progress_update(current_user, book.id, kobo_reading_state.current_bookmark.progress_percent)
                 WorkerThread.add(
                     current_user.name,
                     TaskHardcoverStateSync(current_user.id, source="kobo_state"),

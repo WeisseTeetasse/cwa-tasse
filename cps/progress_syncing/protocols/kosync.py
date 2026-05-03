@@ -733,11 +733,13 @@ def update_progress():
                 log.error(f"Unexpected error updating ReadBook status for book {book_id}: {e}")
                 ub.session.rollback()
 
-            # Push the Hardcover sync to the durable worker. Dedupe on user_id
-            # so rapid KOReader updates collapse into one queued sync. Never
-            # block the request greenlet on Hardcover I/O.
+            # Update user's Hardcover sync state and push sync to the durable worker.
+            # Dedupe on user_id so rapid KOReader updates collapse into one 
+            # queued sync. Never block the request greenlet on Hardcover I/O.
             if config.config_hardcover_sync and getattr(user, "hardcover_token", None):
                 try:
+                    from ...hardcover_state_sync import handle_kobo_progress_update, TaskHardcoverStateSync
+                    handle_kobo_progress_update(user, book_id, percentage_float)
                     WorkerThread.add(
                         user.name,
                         TaskHardcoverStateSync(user.id, source="kosync_progress"),

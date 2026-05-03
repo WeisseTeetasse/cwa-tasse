@@ -20,6 +20,7 @@ log = logger.create()
 SYNC_KEY_CURRENTLY_READING = "currently_reading"
 SYNC_KEY_READ_STATUS = "read_status"
 SYNC_KEY_LIST_TAG = "list_tag"
+SYNC_KEY_PROGRESS = "progress"
 
 POLL_INTERVALS = (0, 5, 15, 30, 60, 360, 1440)
 DEFAULT_CURRENTLY_READING_SHELF = "Currently Reading"
@@ -228,17 +229,14 @@ def _local_book_maps(user, include_tagged_books: bool = False, hc_user_books: li
             for row in tag_link_rows:
                 candidate_ids.add(row.book)
 
-        # c. Books with existing sync rows for this user and SYNC_KEY_LIST_TAG
-        sync_rows = (
-            ub.session.query(ub.HardcoverStateSync.book_id)
-            .filter(
-                ub.HardcoverStateSync.user_id == int(user.id),
-                ub.HardcoverStateSync.sync_key == SYNC_KEY_LIST_TAG
-            )
-            .all()
-        )
-        for row in sync_rows:
-            candidate_ids.add(row.book_id)
+    # c. Books with any existing sync rows for this user
+    sync_rows = (
+        ub.session.query(ub.HardcoverStateSync.book_id)
+        .filter(ub.HardcoverStateSync.user_id == int(user.id))
+        .all()
+    )
+    for row in sync_rows:
+        candidate_ids.add(row.book_id)
 
     # 2. Build maps from identified books
     identified_book_ids = {row.book for row in ident_rows}
@@ -651,6 +649,22 @@ def handle_tag_change(user, book, old_tags, new_tags):
         log.error("Hardcover state sync: failed pushing tag change for CWA book %s: %s", book.id, e)
 
 
+def handle_kobo_progress_update(user, book_id, progress_percent):
+    """Mark a book's progress as changed for the next Hardcover sync."""
+    if progress_percent is None:
+        return
+    if not _enabled(user) or not getattr(user, "hardcover_state_sync_enabled", False):
+        return
+    if not getattr(user, "hardcover_state_push_currently_reading", True):
+        return
+    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS)
+    row.cwa_value = str(float(progress_percent))
+    row.cwa_changed_at = _now()
+    row.last_applied_source = "cwa"
+    ub.session.merge(row)
+    ub.session.commit()
+
+
 def handle_book_marked_read(user, book_id):
     if not _enabled(user):
         return
@@ -758,6 +772,7 @@ def sync_user(user, source="manual"):
                         changed += 1
                     _read_cleanup(user, client, local_book, selected_list_books)
 
+                pushed_status = False
                 if shelf and getattr(user, "hardcover_state_pull_currently_reading", True):
                     is_reading = status_id == hardcover.STATUS_READING
                     row = _sync_row(user.id, local_book.id, SYNC_KEY_CURRENTLY_READING)
@@ -767,16 +782,31 @@ def sync_user(user, source="manual"):
                         target_status = hardcover.STATUS_READING if local_is_reading else _determine_removed_currently_reading_status(user, local_book.id)
                         if _push_status_for_book(user, client, local_book, target_status, "CWA newer state"):
                             changed += 1
-                        continue
-                    if is_reading and _add_to_shelf(shelf, local_book.id):
-                        changed += 1
-                        log.info("Hardcover state sync: added CWA book %s to Currently Reading shelf from Hardcover.",
-                                 local_book.id)
-                    elif not is_reading and _remove_from_shelf(shelf, local_book.id):
-                        changed += 1
-                    row.hardcover_changed_at = hc_time
-                    _update_sync_row(row, book=local_book, hc_item=hc_book, cwa_value=_truth(is_reading),
-                                     hardcover_value=str(status_id), source=source)
+                            status_id = target_status
+                            pushed_status = True
+                    
+                    if not pushed_status:
+                        if is_reading and _add_to_shelf(shelf, local_book.id):
+                            changed += 1
+                            log.info("Hardcover state sync: added CWA book %s to Currently Reading shelf from Hardcover.",
+                                     local_book.id)
+                        elif not is_reading and _remove_from_shelf(shelf, local_book.id):
+                            changed += 1
+                        row.hardcover_changed_at = hc_time
+                        _update_sync_row(row, book=local_book, hc_item=hc_book, cwa_value=_truth(is_reading),
+                                         hardcover_value=str(status_id), source=source)
+
+                # Progress Sync (CWA -> Hardcover)
+                # Only if the book is in STATUS_READING on Hardcover and we are pushing.
+                if status_id == hardcover.STATUS_READING and getattr(user, "hardcover_state_push_currently_reading", True):
+                    local_progress = _local_progress_percent(user.id, local_book.id)
+                    if local_progress is not None:
+                        row_prog = _sync_row(user.id, local_book.id, SYNC_KEY_PROGRESS)
+                        if _prefer_cwa(row_prog, str(local_progress), "0", hc_time):
+                            log.info("Hardcover state sync: pushing progress %.2f%% for book %s to Hardcover.",
+                                     local_progress, local_book.id)
+                            client.update_reading_progress(_book_identifier_map(local_book), local_progress)
+                            _update_sync_row(row_prog, book=local_book, cwa_value=str(local_progress), source=source)
 
                 if status_id == hardcover.STATUS_READ:
                     row = _sync_row(user.id, local_book.id, SYNC_KEY_READ_STATUS)
