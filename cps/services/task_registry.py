@@ -51,13 +51,15 @@ def serialize_task(task):
     if cls_name == "TaskHardcoverProgressPush":
         user_id = int(getattr(task, "user_id"))
         book_id = int(getattr(task, "book_id"))
-        base["payload"] = {"user_id": user_id, "book_id": book_id, "source": getattr(task, "source", "kobo_state")}
+        base["payload"] = {
+            "user_id": user_id,
+            "book_id": book_id,
+            "task_message": _message(task),
+            "source": getattr(task, "source", "kobo_state"),
+        }
         base["dedupe_key"] = f"hardcover_progress_push:{user_id}:{book_id}"
         base["lock_category"] = "library"
         return base
-
-    if cls_name == "TaskConvertLibraryRun":
-        base["payload"] = {}
         base["dedupe_key"] = "convert_library"
         base["lock_category"] = "library"
         return base
@@ -198,12 +200,12 @@ def create_task(job_type, payload):
             source=payload.get("source", "scheduled"),
         )
 
-    if job_type == "TaskHardcoverProgressPush":
-        from cps.tasks.hardcover_progress_push import TaskHardcoverProgressPush
         return TaskHardcoverProgressPush(
             payload["user_id"],
             payload["book_id"],
+            task_message=payload.get("task_message"),
             source=payload.get("source", "kobo_state"),
+        )
         )
 
     if job_type == "TaskConvertLibraryRun":
