@@ -234,11 +234,15 @@ def create_app(start_background=True):
         app.config.update(RATELIMIT_STORAGE_URI=config.config_limiter_uri)
         if config.config_limiter_options != "":
             app.config.update(RATELIMIT_STORAGE_OPTIONS=config.config_limiter_options)
+    else:
+        # Explicitly opt into the in-memory backend to suppress Flask-Limiter's
+        # "no storage was explicitly specified" UserWarning on startup.
+        app.config.setdefault("RATELIMIT_STORAGE_URI", "memory://")
     try:
         limiter.init_app(app)
     except Exception as e:
         log.error('Wrong Flask Limiter configuration, falling back to default: {}'.format(e))
-        app.config.update(RATELIMIT_STORAGE_URI=None)
+        app.config.update(RATELIMIT_STORAGE_URI="memory://")
         limiter.init_app(app)
 
     # Register scheduled tasks
