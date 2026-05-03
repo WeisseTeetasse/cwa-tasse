@@ -53,6 +53,17 @@ This fork currently carries these local changes on top of upstream CWA:
    - Builds multi-architecture GHCR images for this fork.
    - Compares CWA update notifications against the upstream base release instead of this fork's commit hash.
 
+11. Kobo/KOReader resource-exhaustion fixes.
+   - `HardcoverClient.__init__` no longer makes a network call; `get_privacy()` is now lazy-cached so constructing a client is free.
+   - All `requests.post` calls to the Hardcover API now carry a `(3.05 s, 10 s)` connect/read timeout, preventing hung OS threads.
+   - Kobo state PUT (`HandleStateRequest`) and KOReader progress PUT (`update_progress`) no longer call Hardcover inline; both now enqueue a `TaskHardcoverStateSync` on the durable worker. Rapid page-turns deduplicate to a single queued sync per user via `dedupe_key`.
+   - `HandleSyncRequest` skips books that need KEPUB conversion and enqueues the conversion in the background instead of blocking the sync response; the Kobo retries on the next poll once the KEPUB is ready.
+   - `HandleSyncRequest` now materialises the `changed_entries` and `changed_reading_states` result-sets exactly once (`.limit(SYNC_ITEM_LIMIT + 1).all()`), replacing three separate DB round-trips per Kobo sync.
+   - Magic Shelf sync is capped at 500 books per request (`MAGIC_SHELF_KOBO_LIMIT`) to prevent unbounded ORM hydration during Kobo sync.
+   - `TaskAutoHardcoverID` now fetches only book IDs upfront, hydrates in batches of 50, and releases the SQLAlchemy identity map between batches — eliminating the multi-GB ORM balloon over a long run. The `Hardcover()` provider is instantiated once per task run instead of once per book.
+   - `hardcover_state_sync._local_book_maps` now queries only `Identifiers` rows and hydrates only the matched books (with eager `joinedload`), replacing a full `Books.all()` sweep. `sync_user` commits and `expire_all`s in chunks of 50 books.
+   - `TaskHardcoverStateSync` is now tagged `lock_category = "library"` in the task registry so the durable worker serialises it against other library writers (`TaskConvert`, `TaskAutoHardcoverID`, etc.).
+
 Deployment helper scripts, private hostnames/IP addresses, image tarballs, and personal
 runtime configuration are intentionally not part of this public branch.
 
