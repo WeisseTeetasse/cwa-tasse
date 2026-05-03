@@ -194,7 +194,7 @@ def _local_book_maps(user, include_tagged_books: bool = False, hc_user_books: li
     """Build hardcover-id lookup maps efficiently.
 
     Returns:
-        (by_hc_book, by_hc_edition, by_hc_slug, candidate_books)
+        (by_hc_book, by_hc_edition, by_hc_slug, candidate_ids)
     """
     by_hc_book = {}
     by_hc_edition = {}
@@ -215,6 +215,13 @@ def _local_book_maps(user, include_tagged_books: bool = False, hc_user_books: li
     )
     for row in ident_rows:
         candidate_ids.add(row.book)
+        key = (row.type or '').lower()
+        if key == 'hardcover-id':
+            by_hc_book[str(row.val)] = row.book
+        elif key == 'hardcover-edition':
+            by_hc_edition[str(row.val)] = row.book
+        elif key == 'hardcover-slug':
+            by_hc_slug[str(row.val).casefold()] = row.book
 
     if include_tagged_books:
         tag_name = (getattr(user, "hardcover_list_sync_tag", None) or DEFAULT_LIST_TAG).strip()
@@ -238,33 +245,10 @@ def _local_book_maps(user, include_tagged_books: bool = False, hc_user_books: li
     for row in sync_rows:
         candidate_ids.add(row.book_id)
 
-    # 2. Build maps from identified books
-    identified_book_ids = {row.book for row in ident_rows}
-    if identified_book_ids:
-        identified_books = (
-            calibre_db.session.query(db.Books)
-            .options(joinedload(db.Books.identifiers))
-            .filter(db.Books.id.in_(identified_book_ids))
-            .all()
-        )
-        hydrated_map = {b.id: b for b in identified_books}
-        for row in ident_rows:
-            book = hydrated_map.get(row.book)
-            if not book:
-                continue
-            key = (row.type or '').lower()
-            if key == 'hardcover-id':
-                by_hc_book[str(row.val)] = book
-            elif key == 'hardcover-edition':
-                by_hc_edition[str(row.val)] = book
-            elif key == 'hardcover-slug':
-                by_hc_slug[str(row.val).casefold()] = book
-
     return by_hc_book, by_hc_edition, by_hc_slug, sorted(list(candidate_ids))
 
 
-
-def _match_local_book(hc_item, by_hc_book, by_hc_edition, by_hc_slug):
+def _match_local_book_id(hc_item, by_hc_book, by_hc_edition, by_hc_slug):
     edition_id = hc_item.get("edition_id")
     if not edition_id and hc_item.get("edition"):
         edition_id = hc_item.get("edition", {}).get("id")
@@ -690,6 +674,14 @@ def handle_book_marked_read(user, book_id):
 def sync_user(user, source="manual"):
     if not _enabled(user):
         return {"changed": 0, "errors": ["Hardcover state sync is disabled."]}
+    
+    # 15 minute throttle for scheduled/automatic syncs
+    if source != "manual":
+        last_sync = getattr(user, "hardcover_state_last_sync", None)
+        if last_sync and (_now() - last_sync).total_seconds() < 900:
+            log.info("Hardcover state sync: throttled for user %s.", user.id)
+            return {"changed": 0, "errors": ["Sync throttled."]}
+
     client = get_client(user)
     changed = 0
     errors = []
@@ -731,16 +723,16 @@ def sync_user(user, source="manual"):
     current_hc_members = {}
     # Optimization: pre-calculate current_hc_members for the candidate list
     for list_book in selected_list_books:
-        matched = _match_local_book(list_book, by_hc_book, by_hc_edition, by_hc_slug)
-        if matched:
-            current_hc_members[matched.id] = list_book
+        matched_id = _match_local_book_id(list_book, by_hc_book, by_hc_edition, by_hc_slug)
+        if matched_id:
+            current_hc_members[matched_id] = list_book
 
     # Build user_books map for efficient lookup by book id
     user_books_map = {}
     for hc_book in user_books:
-        matched = _match_local_book(hc_book, by_hc_book, by_hc_edition, by_hc_slug)
-        if matched:
-            user_books_map[matched.id] = hc_book
+        matched_id = _match_local_book_id(hc_book, by_hc_book, by_hc_edition, by_hc_slug)
+        if matched_id:
+            user_books_map[matched_id] = hc_book
 
     for i in range(0, total_candidates, CHUNK_SIZE):
         chunk_ids = candidate_ids[i:i + CHUNK_SIZE]
@@ -877,17 +869,17 @@ def sync_user(user, source="manual"):
             errors.append(str(exc))
             log.error("Hardcover state sync chunk commit failed for user %s: %s", user.id, exc)
 
-        # Expire only what we touched to keep web UI browsing stable
-        for b in candidate_books:
-            calibre_db.session.expire(b)
+        # Expire ALL objects in both sessions to clear memory and prevent stale reads in other threads
+        ub.session.expire_all()
+        calibre_db.session.expire_all()
 
     # 4. Record skips for HC books that didn't match any local book
-    seen_hc_user_books = {hc_book.get("book_id") for hc_book in user_books if _match_local_book(hc_book, by_hc_book, by_hc_edition, by_hc_slug)}
+    seen_hc_user_books = {hc_book.get("book_id") for hc_book in user_books if _match_local_book_id(hc_book, by_hc_book, by_hc_edition, by_hc_slug)}
     for hc_book in user_books:
         if hc_book.get("book_id") not in seen_hc_user_books:
             _record_skipped_hc_item(user, hc_book, SKIP_SOURCE_USER_BOOK, "No matching CWA book found")
 
-    seen_hc_list_books = {lb.get("book_id") for lb in selected_list_books if _match_local_book(lb, by_hc_book, by_hc_edition, by_hc_slug)}
+    seen_hc_list_books = {lb.get("book_id") for lb in selected_list_books if _match_local_book_id(lb, by_hc_book, by_hc_edition, by_hc_slug)}
     for list_book in selected_list_books:
         if list_book.get("book_id") not in seen_hc_list_books:
             _record_skipped_hc_item(user, list_book, SKIP_SOURCE_LIST_BOOK, "No matching CWA book found", list_id)
@@ -903,3 +895,40 @@ def sync_user(user, source="manual"):
         errors.append(str(e))
         log.error("Hardcover state sync: database error during %s sync for user %s: %s", source, user.id, e)
     return {"changed": changed, "errors": errors}
+
+def push_book_progress(user, book_id, source="kobo_state"):
+    """Push Hardcover progress/state for one local book only."""
+    if not _enabled(user) or not getattr(user, "hardcover_state_push_currently_reading", True):
+        return
+
+    # 1. Load book
+    book = calibre_db.session.query(db.Books).filter(db.Books.id == int(book_id)).first()
+    if not book:
+        log.warning("Hardcover progress push: book %s not found.", book_id)
+        return
+
+    # 2. Get local state
+    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS)
+    # Check for too recent push (2 min debounce)
+    if row.last_synced_at and (_now() - row.last_synced_at).total_seconds() < 120:
+        log.debug("Hardcover progress push: throttled for book %s.", book_id)
+        return
+
+    local_progress = _local_progress_percent(user.id, book_id)
+    if local_progress is None:
+        log.debug("Hardcover progress push: no local progress for book %s.", book_id)
+        return
+
+    # 3. Resolve identifiers
+    client = get_client(user)
+    try:
+        log.info("Hardcover progress push: pushing progress %.2f%% for book %s.",
+                 local_progress, book_id)
+        client.update_reading_progress(_book_identifier_map(book), local_progress)
+        _update_sync_row(row, book=book, cwa_value=str(local_progress), source=source)
+        ub.session.commit()
+    except Exception as e:
+        log.error("Hardcover progress push: failed for book %s: %s", book_id, e)
+        ub.session.rollback()
+    finally:
+        calibre_db.session.expire(book)

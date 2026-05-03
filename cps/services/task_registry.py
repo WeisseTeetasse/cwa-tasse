@@ -43,8 +43,17 @@ def serialize_task(task):
         source = getattr(task, "source", "scheduled")
         base["payload"] = {"user_id": user_id, "source": source, "task_message": _message(task)}
         base["dedupe_key"] = f"hardcover_state_sync:{user_id}"
-        # No lock_category: the sync writes only ub rows + Identifiers, safe
-        # to run while users browse. A "library" lock would block the web UI.
+        # Lock "library" category to serialize against other library writers.
+        # The sync is now optimized and chunked to minimize UI blocking.
+        base["lock_category"] = "library"
+        return base
+
+    if cls_name == "TaskHardcoverProgressPush":
+        user_id = int(getattr(task, "user_id"))
+        book_id = int(getattr(task, "book_id"))
+        base["payload"] = {"user_id": user_id, "book_id": book_id, "source": getattr(task, "source", "kobo_state")}
+        base["dedupe_key"] = f"hardcover_progress_push:{user_id}:{book_id}"
+        base["lock_category"] = "library"
         return base
 
     if cls_name == "TaskConvertLibraryRun":

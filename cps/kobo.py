@@ -1019,15 +1019,20 @@ def HandleStateRequest(book_uuid):
         # Update sync row for Hardcover and trigger sync
         if config.config_hardcover_sync and bool(hardcover) and getattr(current_user, "hardcover_token", None):
             try:
-                from .hardcover_state_sync import handle_kobo_progress_update, TaskHardcoverStateSync
-                handle_kobo_progress_update(current_user, book.id, kobo_reading_state.current_bookmark.progress_percent)
+                from .hardcover_state_sync import handle_kobo_progress_update
+                from .tasks.hardcover_progress_push import TaskHardcoverProgressPush
+                handle_kobo_progress_update(
+                    current_user,
+                    book.id,
+                    kobo_reading_state.current_bookmark.progress_percent,
+                )
                 WorkerThread.add(
                     current_user.name,
-                    TaskHardcoverStateSync(current_user.id, source="kobo_state"),
+                    TaskHardcoverProgressPush(current_user.id, book.id, source="kobo_state"),
                     hidden=True,
                 )
             except Exception as ex:
-                log.warning("Could not enqueue Hardcover state sync after Kobo state PUT: %s", ex)
+                log.warning("Could not enqueue Hardcover progress push after Kobo state PUT: %s", ex)
 
         return jsonify({
             "RequestResult": "Success",
