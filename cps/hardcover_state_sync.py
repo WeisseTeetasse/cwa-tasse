@@ -617,7 +617,7 @@ def handle_kobo_progress_update(user, book_id, progress_percent):
         return
     if not getattr(user, "hardcover_state_push_currently_reading", True):
         return
-    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS); row.last_synced_at = datetime.now(timezone.utc)
+    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS); 
     row.cwa_value = str(float(progress_percent))
     row.cwa_changed_at = _now()
     row.last_applied_source = "cwa"
