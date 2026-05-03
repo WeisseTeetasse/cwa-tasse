@@ -43,7 +43,6 @@ except ImportError as e:
 
 from . import calibre_db, cli_param
 from .string_helper import strip_whitespaces
-from .tasks.convert import TaskConvert
 from . import logger, config, db, ub, fs
 from . import gdriveutils as gd
 from .constants import (STATIC_DIR as _STATIC_DIR, CACHE_TYPE_THUMBNAILS, THUMBNAIL_TYPE_COVER, THUMBNAIL_TYPE_SERIES,
@@ -78,6 +77,7 @@ except (ImportError, RuntimeError) as e:
 
 # Convert existing book entry to new format
 def convert_book_format(book_id, calibre_path, old_book_format, new_book_format, user_id, ereader_mail=None, subject=None):
+    from .tasks.convert import TaskConvert
     book = calibre_db.get_book(book_id)
     data = calibre_db.get_book_format(book.id, old_book_format)
     if not data:

@@ -26,7 +26,7 @@ from cps.ub import init_db_thread
 from cps.file_helper import get_temp_dir
 
 from cps.tasks.mail import TaskEmail
-from cps import gdriveutils, helper
+from cps import gdriveutils
 from cps.constants import SUPPORTED_CALIBRE_BINARIES
 from cps.string_helper import strip_whitespaces
 
@@ -205,6 +205,7 @@ class TaskConvert(CalibreTask):
 
     def _convert_kepubify(self, file_path, format_old_ext, format_new_ext):
         if config.config_embed_metadata and config.config_binariesdir:
+            from cps import helper
             tmp_dir, temp_file_name = helper.do_calibre_export(self.book_id, format_old_ext[1:])
             filename = os.path.join(tmp_dir, temp_file_name + format_old_ext)
             temp_file_path = tmp_dir

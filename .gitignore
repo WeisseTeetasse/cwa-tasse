@@ -27,7 +27,10 @@ docs/
 test_venv
 cwa.code-workspace
 
+# temporary priv tokens
 
+temp/
+gemini/
 
 # Test Scripts
 DEV

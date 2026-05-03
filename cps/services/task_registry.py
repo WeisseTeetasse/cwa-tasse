@@ -158,14 +158,19 @@ def serialize_task(task):
         return base
 
     if cls_name == "TaskConvert":
+        book_id = int(getattr(task, "book_id"))
+        settings = getattr(task, "settings", {}) or {}
+        old_fmt = (settings.get("old_book_format") or "unknown").lower()
+        new_fmt = (settings.get("new_book_format") or "unknown").lower()
         base["payload"] = {
             "file_path": getattr(task, "file_path", None),
-            "book_id": int(getattr(task, "book_id")),
+            "book_id": book_id,
             "task_message": _message(task),
-            "settings": getattr(task, "settings", None),
+            "settings": settings,
             "ereader_mail": getattr(task, "ereader_mail", None),
             "user": getattr(task, "user", None),
         }
+        base["dedupe_key"] = f"convert:{book_id}:{old_fmt}:{new_fmt}"
         base["lock_category"] = "library"
         return base
 

@@ -189,20 +189,20 @@ def _safe_write_identifiers(book):
     return result
 
 
-def _local_book_maps(include_tagged_books: bool = False):
-    """Build hardcover-id lookup maps without hydrating every Book.
+def _local_book_maps(user, include_tagged_books: bool = False, hc_user_books: list = None, hc_list_books: list = None):
+    """Build hardcover-id lookup maps efficiently.
 
-    Hydrates only the books that actually carry a hardcover identifier — that
-    is the only set the matching loop needs. When include_tagged_books=True
-    we additionally return a fully-hydrated list (with tags + identifiers
-    eagerly joined) for the list-tag sync path, which is the only consumer
-    that needs to walk every book.
+    Returns:
+        (by_hc_book, by_hc_edition, by_hc_slug, candidate_books)
     """
     by_hc_book = {}
     by_hc_edition = {}
     by_hc_slug = {}
 
-    # Lightweight identifier sweep — three columns, no Books rows hydrated.
+    # 1. Collect candidate book IDs from multiple sources
+    candidate_ids = set()
+
+    # a. Books with hardcover identifiers
     ident_rows = (
         calibre_db.session.query(
             db.Identifiers.book, db.Identifiers.type, db.Identifiers.val
@@ -212,40 +212,58 @@ def _local_book_maps(include_tagged_books: bool = False):
         ))
         .all()
     )
-    matched_book_ids = {row.book for row in ident_rows}
-    hydrated = {}
-    if matched_book_ids:
-        hydrated = {
-            b.id: b for b in (
-                calibre_db.session.query(db.Books)
-                .options(joinedload(db.Books.identifiers))
-                .filter(db.Books.id.in_(matched_book_ids))
+    for row in ident_rows:
+        candidate_ids.add(row.book)
+
+    if include_tagged_books:
+        tag_name = (getattr(user, "hardcover_list_sync_tag", None) or DEFAULT_LIST_TAG).strip()
+        # b. Books with the selected local list tag
+        tag_id = calibre_db.session.query(db.Tags.id).filter(db.Tags.name == tag_name).scalar()
+        if tag_id:
+            tag_link_rows = (
+                calibre_db.session.query(db.books_tags_link.c.book)
+                .filter(db.books_tags_link.c.tag == tag_id)
                 .all()
             )
-        }
-    for row in ident_rows:
-        book = hydrated.get(row.book)
-        if not book:
-            continue
-        key = (row.type or '').lower()
-        if key == 'hardcover-id':
-            by_hc_book[str(row.val)] = book
-        elif key == 'hardcover-edition':
-            by_hc_edition[str(row.val)] = book
-        elif key == 'hardcover-slug':
-            by_hc_slug[str(row.val).casefold()] = book
+            for row in tag_link_rows:
+                candidate_ids.add(row.book)
 
-    tagged_books = []
-    if include_tagged_books:
-        tagged_books = (
-            calibre_db.session.query(db.Books)
-            .options(
-                joinedload(db.Books.tags),
-                joinedload(db.Books.identifiers),
+        # c. Books with existing sync rows for this user and SYNC_KEY_LIST_TAG
+        sync_rows = (
+            ub.session.query(ub.HardcoverStateSync.book_id)
+            .filter(
+                ub.HardcoverStateSync.user_id == int(user.id),
+                ub.HardcoverStateSync.sync_key == SYNC_KEY_LIST_TAG
             )
             .all()
         )
-    return by_hc_book, by_hc_edition, by_hc_slug, tagged_books
+        for row in sync_rows:
+            candidate_ids.add(row.book_id)
+
+    # 2. Build maps from identified books
+    identified_book_ids = {row.book for row in ident_rows}
+    if identified_book_ids:
+        identified_books = (
+            calibre_db.session.query(db.Books)
+            .options(joinedload(db.Books.identifiers))
+            .filter(db.Books.id.in_(identified_book_ids))
+            .all()
+        )
+        hydrated_map = {b.id: b for b in identified_books}
+        for row in ident_rows:
+            book = hydrated_map.get(row.book)
+            if not book:
+                continue
+            key = (row.type or '').lower()
+            if key == 'hardcover-id':
+                by_hc_book[str(row.val)] = book
+            elif key == 'hardcover-edition':
+                by_hc_edition[str(row.val)] = book
+            elif key == 'hardcover-slug':
+                by_hc_slug[str(row.val).casefold()] = book
+
+    return by_hc_book, by_hc_edition, by_hc_slug, sorted(list(candidate_ids))
+
 
 
 def _match_local_book(hc_item, by_hc_book, by_hc_edition, by_hc_slug):
@@ -668,32 +686,7 @@ def sync_user(user, source="manual"):
         getattr(user, "hardcover_list_tag_sync_enabled", False) and list_id
     )
 
-    by_hc_book, by_hc_edition, by_hc_slug, local_books = _local_book_maps(
-        include_tagged_books=list_tag_enabled,
-    )
-
-    # Chunked-commit helper. Commits both sessions, expires the identity
-    # maps, and limits rollback radius if SQLAlchemy raises mid-sync. Used
-    # by all per-book loops below.
-    def _flush_chunk():
-        try:
-            ub.session.commit()
-            calibre_db.session.commit()
-        except SQLAlchemyError as exc:
-            ub.session.rollback()
-            calibre_db.session.rollback()
-            errors.append(str(exc))
-            log.error(
-                "Hardcover state sync chunk commit failed for user %s: %s",
-                user.id, exc,
-            )
-        ub.session.expire_all()
-        calibre_db.session.expire_all()
-
-    shelf = None
-    if getattr(user, "hardcover_state_sync_enabled", False):
-        shelf = ensure_currently_reading_shelf(user)
-
+    # 1. Fetch Hardcover API data first, without holding DB locks
     user_books = []
     if getattr(user, "hardcover_state_sync_enabled", False):
         _clear_skipped_books(user.id, SKIP_SOURCE_USER_BOOK)
@@ -707,99 +700,92 @@ def sync_user(user, source="manual"):
         selected_list_updated_at = _hc_timestamp(selected_list) if selected_list else _now()
         selected_list_books = client.get_list_books(list_id)
 
-    seen_books = set()
-    unmatched_hc_books = 0
-    chunk_count = 0
+    # 2. Build local maps and identify candidate IDs
+    by_hc_book, by_hc_edition, by_hc_slug, candidate_ids = _local_book_maps(
+        user,
+        include_tagged_books=list_tag_enabled,
+        hc_user_books=user_books,
+        hc_list_books=selected_list_books
+    )
+
+    # 3. Process candidate books in chunks
+    total_candidates = len(candidate_ids)
+    shelf = None
+    if getattr(user, "hardcover_state_sync_enabled", False):
+        shelf = ensure_currently_reading_shelf(user)
+
+    current_hc_members = {}
+    # Optimization: pre-calculate current_hc_members for the candidate list
+    for list_book in selected_list_books:
+        matched = _match_local_book(list_book, by_hc_book, by_hc_edition, by_hc_slug)
+        if matched:
+            current_hc_members[matched.id] = list_book
+
+    # Build user_books map for efficient lookup by book id
+    user_books_map = {}
     for hc_book in user_books:
-        chunk_count += 1
-        if chunk_count >= CHUNK_SIZE:
-            _flush_chunk()
-            chunk_count = 0
-        local_book = _match_local_book(hc_book, by_hc_book, by_hc_edition, by_hc_slug)
-        if not local_book:
-            unmatched_hc_books += 1
-            _record_skipped_hc_item(user, hc_book, SKIP_SOURCE_USER_BOOK, "No matching CWA book found")
-            log.debug("Hardcover state sync: skipped HC book %s, no matching CWA book found.",
-                      hc_book.get("book_id"))
-            continue
-        seen_books.add(local_book.id)
-        status_id = _as_int(hc_book.get("status_id"))
-        hc_time = _hc_timestamp(hc_book)
+        matched = _match_local_book(hc_book, by_hc_book, by_hc_edition, by_hc_slug)
+        if matched:
+            user_books_map[matched.id] = hc_book
 
-        if getattr(user, "hardcover_state_pull_read_status", True) and status_id == hardcover.STATUS_READ:
-            if _set_book_read(user.id, local_book.id):
-                changed += 1
-                log.info("Hardcover state sync: marked CWA book %s as read from Hardcover.", local_book.id)
-            if shelf and _remove_from_shelf(shelf, local_book.id):
-                changed += 1
-            _read_cleanup(user, client, local_book, selected_list_books)
+    for i in range(0, total_candidates, CHUNK_SIZE):
+        chunk_ids = candidate_ids[i:i + CHUNK_SIZE]
+        log.info("Hardcover state sync: processing candidate books %d to %d of %d",
+                 i + 1, min(i + CHUNK_SIZE, total_candidates), total_candidates)
 
-        if shelf and getattr(user, "hardcover_state_pull_currently_reading", True):
-            is_reading = status_id == hardcover.STATUS_READING
-            row = _sync_row(user.id, local_book.id, SYNC_KEY_CURRENTLY_READING)
-            local_is_reading = bool(_book_in_shelf(shelf.id, local_book.id))
-            if (getattr(user, "hardcover_state_push_currently_reading", True) and
-                    _prefer_cwa(row, _truth(local_is_reading), str(status_id), hc_time)):
-                target_status = hardcover.STATUS_READING if local_is_reading else _determine_removed_currently_reading_status(user, local_book.id)
-                if _push_status_for_book(user, client, local_book, target_status, "CWA newer state"):
-                    changed += 1
-                continue
-            if is_reading and _add_to_shelf(shelf, local_book.id):
-                changed += 1
-                log.info("Hardcover state sync: added CWA book %s to Currently Reading shelf from Hardcover.",
-                         local_book.id)
-            elif not is_reading and _remove_from_shelf(shelf, local_book.id):
-                changed += 1
-            row.hardcover_changed_at = hc_time
-            _update_sync_row(row, book=local_book, hc_item=hc_book, cwa_value=_truth(is_reading),
-                             hardcover_value=str(status_id), source=source)
+        # Hydrate candidate books for this chunk
+        candidate_books = (
+            calibre_db.session.query(db.Books)
+            .options(
+                joinedload(db.Books.tags),
+                joinedload(db.Books.identifiers),
+            )
+            .filter(db.Books.id.in_(chunk_ids))
+            .all()
+        )
 
-        if status_id == hardcover.STATUS_READ:
-            row = _sync_row(user.id, local_book.id, SYNC_KEY_READ_STATUS)
-            row.hardcover_changed_at = hc_time
-            _update_sync_row(row, book=local_book, hc_item=hc_book, cwa_value="1",
-                             hardcover_value="1", source=source)
+        for local_book in candidate_books:
+            hc_book = user_books_map.get(local_book.id)
+            if hc_book:
+                status_id = _as_int(hc_book.get("status_id"))
+                hc_time = _hc_timestamp(hc_book)
 
-    if list_tag_enabled:
-        current_hc_members = {}
-        unmatched_hc_list_books = 0
-        chunk_count = 0
-        for list_book in selected_list_books:
-            chunk_count += 1
-            if chunk_count >= CHUNK_SIZE:
-                _flush_chunk()
-                chunk_count = 0
-            local_book = _match_local_book(list_book, by_hc_book, by_hc_edition, by_hc_slug)
-            if not local_book:
-                unmatched_hc_list_books += 1
-                _record_skipped_hc_item(user, list_book, SKIP_SOURCE_LIST_BOOK, "No matching CWA book found", list_id)
-                log.debug("Hardcover state sync: skipped HC list book %s, no matching CWA book found.",
-                          list_book.get("book_id"))
-                continue
-            current_hc_members[local_book.id] = list_book
-            row = _sync_row(user.id, local_book.id, SYNC_KEY_LIST_TAG)
-            hc_list_time = _hc_timestamp(list_book)
-            local_has_tag = _has_tag(local_book, tag_name)
-            if (_prefer_cwa(row, _truth(local_has_tag), "1", hc_list_time) and
-                    getattr(user, "hardcover_list_push_enabled", True)):
-                continue
-            if getattr(user, "hardcover_list_pull_enabled", True) and not _is_book_read(user.id, local_book.id):
-                if _add_tag(local_book, tag_name):
-                    changed += 1
-                    log.info("Hardcover state sync: added tag %s to CWA book %s from Hardcover list %s.",
-                             tag_name, local_book.id, list_id)
-            row.hardcover_changed_at = hc_list_time
-            _update_sync_row(row, book=local_book, list_book=list_book, cwa_value=_truth(_has_tag(local_book, tag_name)),
-                             hardcover_value="1", source=source)
+                if getattr(user, "hardcover_state_pull_read_status", True) and status_id == hardcover.STATUS_READ:
+                    if _set_book_read(user.id, local_book.id):
+                        changed += 1
+                        log.info("Hardcover state sync: marked CWA book %s as read from Hardcover.", local_book.id)
+                    if shelf and _remove_from_shelf(shelf, local_book.id):
+                        changed += 1
+                    _read_cleanup(user, client, local_book, selected_list_books)
 
-        if (getattr(user, "hardcover_list_push_enabled", True) or
-                getattr(user, "hardcover_list_pull_enabled", True)):
-            chunk_count = 0
-            for local_book in local_books:
-                chunk_count += 1
-                if chunk_count >= CHUNK_SIZE:
-                    _flush_chunk()
-                    chunk_count = 0
+                if shelf and getattr(user, "hardcover_state_pull_currently_reading", True):
+                    is_reading = status_id == hardcover.STATUS_READING
+                    row = _sync_row(user.id, local_book.id, SYNC_KEY_CURRENTLY_READING)
+                    local_is_reading = bool(_book_in_shelf(shelf.id, local_book.id))
+                    if (getattr(user, "hardcover_state_push_currently_reading", True) and
+                            _prefer_cwa(row, _truth(local_is_reading), str(status_id), hc_time)):
+                        target_status = hardcover.STATUS_READING if local_is_reading else _determine_removed_currently_reading_status(user, local_book.id)
+                        if _push_status_for_book(user, client, local_book, target_status, "CWA newer state"):
+                            changed += 1
+                        continue
+                    if is_reading and _add_to_shelf(shelf, local_book.id):
+                        changed += 1
+                        log.info("Hardcover state sync: added CWA book %s to Currently Reading shelf from Hardcover.",
+                                 local_book.id)
+                    elif not is_reading and _remove_from_shelf(shelf, local_book.id):
+                        changed += 1
+                    row.hardcover_changed_at = hc_time
+                    _update_sync_row(row, book=local_book, hc_item=hc_book, cwa_value=_truth(is_reading),
+                                     hardcover_value=str(status_id), source=source)
+
+                if status_id == hardcover.STATUS_READ:
+                    row = _sync_row(user.id, local_book.id, SYNC_KEY_READ_STATUS)
+                    row.hardcover_changed_at = hc_time
+                    _update_sync_row(row, book=local_book, hc_item=hc_book, cwa_value="1",
+                                     hardcover_value="1", source=source)
+
+            # Process List Tag Sync
+            if list_tag_enabled:
                 local_has_tag = _has_tag(local_book, tag_name)
                 hc_list_book = current_hc_members.get(local_book.id)
                 hc_has_tag = bool(hc_list_book)
@@ -808,6 +794,7 @@ def sync_user(user, source="manual"):
                 if not hc_list_book and row.hardcover_value == "1":
                     hc_changed_at = selected_list_updated_at or _now()
                 row.hardcover_changed_at = hc_changed_at
+
                 action = _list_tag_action(
                     row,
                     local_has_tag,
@@ -821,52 +808,59 @@ def sync_user(user, source="manual"):
                                                    selected_list_books, hc_list_book):
                         _update_sync_row(row, book=local_book, cwa_value="0", hardcover_value="0", source=source)
                         changed += 1
-                    continue
-                if action == LIST_TAG_ACTION_PUSH_ADD:
+                elif action == LIST_TAG_ACTION_PUSH_ADD:
                     ids = _book_hardcover_ids(local_book)
                     if not ids["book_id"]:
                         log.warning("Hardcover state sync: skipped CWA book %s, no Hardcover identifier found.",
                                     local_book.id)
                         continue
                     list_book = client.add_book_to_list(list_id, ids["book_id"], ids["edition_id"])
-                    current_hc_members[local_book.id] = list_book
-                    _update_sync_row(row, book=local_book, list_book=list_book, cwa_value="1",
-                                     hardcover_value="1", source=source)
-                    changed += 1
-                    log.info("Hardcover state sync: added CWA book %s to Hardcover list %s from CWA tag %s.",
-                             local_book.id, list_id, tag_name)
-                    continue
-                if action == LIST_TAG_ACTION_PULL_ADD:
+                    if list_book:
+                        current_hc_members[local_book.id] = list_book
+                        changed += 1
+                        _update_sync_row(row, book=local_book, list_book=list_book, cwa_value="1",
+                                         hardcover_value="1", source=source)
+                        log.info("Hardcover state sync: added CWA book %s to Hardcover list %s from CWA tag %s.",
+                                 local_book.id, list_id, tag_name)
+                elif action == LIST_TAG_ACTION_PULL_ADD:
                     if not _is_book_read(user.id, local_book.id) and _add_tag(local_book, tag_name):
                         changed += 1
                         log.info("Hardcover state sync: added tag %s to CWA book %s from Hardcover list %s.",
                                  tag_name, local_book.id, list_id)
                     _update_sync_row(row, book=local_book, list_book=hc_list_book, cwa_value="1",
                                      hardcover_value="1", source=source)
-                    continue
-                if action == LIST_TAG_ACTION_PULL_REMOVE:
+                elif action == LIST_TAG_ACTION_PULL_REMOVE:
                     if _remove_tag(local_book, tag_name):
                         changed += 1
                         log.info("Hardcover state sync: removed tag %s from CWA book %s because it was removed from Hardcover list %s.",
                                  tag_name, local_book.id, list_id)
                     row.hardcover_list_book_id = None
                     _update_sync_row(row, book=local_book, cwa_value="0", hardcover_value="0", source=source)
-                    continue
-                if not local_has_tag:
-                    continue
-                if _is_book_read(user.id, local_book.id) and getattr(user, "hardcover_state_read_cleanup_enabled", True):
-                    _read_cleanup(user, client, local_book, selected_list_books)
-                    changed += 1
-                    continue
-                if hc_has_tag:
-                    continue
-        if unmatched_hc_list_books:
-            log.info("Hardcover state sync: skipped %s Hardcover list books with no matching CWA book.",
-                     unmatched_hc_list_books)
 
-    if unmatched_hc_books:
-        log.info("Hardcover state sync: skipped %s Hardcover books with no matching CWA book.",
-                 unmatched_hc_books)
+        # Commit chunk and clear memory
+        try:
+            ub.session.commit()
+            calibre_db.session.commit()
+        except SQLAlchemyError as exc:
+            ub.session.rollback()
+            calibre_db.session.rollback()
+            errors.append(str(exc))
+            log.error("Hardcover state sync chunk commit failed for user %s: %s", user.id, exc)
+
+        # Expire only what we touched to keep web UI browsing stable
+        for b in candidate_books:
+            calibre_db.session.expire(b)
+
+    # 4. Record skips for HC books that didn't match any local book
+    seen_hc_user_books = {hc_book.get("book_id") for hc_book in user_books if _match_local_book(hc_book, by_hc_book, by_hc_edition, by_hc_slug)}
+    for hc_book in user_books:
+        if hc_book.get("book_id") not in seen_hc_user_books:
+            _record_skipped_hc_item(user, hc_book, SKIP_SOURCE_USER_BOOK, "No matching CWA book found")
+
+    seen_hc_list_books = {lb.get("book_id") for lb in selected_list_books if _match_local_book(lb, by_hc_book, by_hc_edition, by_hc_slug)}
+    for list_book in selected_list_books:
+        if list_book.get("book_id") not in seen_hc_list_books:
+            _record_skipped_hc_item(user, list_book, SKIP_SOURCE_LIST_BOOK, "No matching CWA book found", list_id)
 
     user.hardcover_state_last_sync = _now()
     ub.session.merge(user)
