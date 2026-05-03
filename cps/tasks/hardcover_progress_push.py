@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from . import logger
-from .hardcover_state_sync import push_book_progress
+from cps import logger
+from cps.hardcover_state_sync import push_book_progress
 
 log = logger.create()
 

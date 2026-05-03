@@ -191,61 +191,37 @@ def _safe_write_identifiers(book):
 
 
 def _local_book_maps(user, include_tagged_books: bool = False, hc_user_books: list = None, hc_list_books: list = None):
-    """Build hardcover-id lookup maps efficiently.
-
-    Returns:
-        (by_hc_book, by_hc_edition, by_hc_slug, candidate_ids)
-    """
+    """Build hardcover-id lookup maps efficiently using IDs."""
     by_hc_book = {}
     by_hc_edition = {}
     by_hc_slug = {}
-
-    # 1. Collect candidate book IDs from multiple sources
     candidate_ids = set()
 
-    # a. Books with hardcover identifiers
+    # 1. Collect candidate book IDs and build ID-based maps
     ident_rows = (
-        calibre_db.session.query(
-            db.Identifiers.book, db.Identifiers.type, db.Identifiers.val
-        )
-        .filter(db.Identifiers.type.in_(
-            ('hardcover-id', 'hardcover-edition', 'hardcover-slug')
-        ))
+        calibre_db.session.query(db.Identifiers.book, db.Identifiers.type, db.Identifiers.val)
+        .filter(db.Identifiers.type.in_(('hardcover-id', 'hardcover-edition', 'hardcover-slug')))
         .all()
     )
     for row in ident_rows:
         candidate_ids.add(row.book)
         key = (row.type or '').lower()
-        if key == 'hardcover-id':
-            by_hc_book[str(row.val)] = row.book
-        elif key == 'hardcover-edition':
-            by_hc_edition[str(row.val)] = row.book
-        elif key == 'hardcover-slug':
-            by_hc_slug[str(row.val).casefold()] = row.book
+        if key == 'hardcover-id': by_hc_book[str(row.val)] = row.book
+        elif key == 'hardcover-edition': by_hc_edition[str(row.val)] = row.book
+        elif key == 'hardcover-slug': by_hc_slug[str(row.val).casefold()] = row.book
 
     if include_tagged_books:
         tag_name = (getattr(user, "hardcover_list_sync_tag", None) or DEFAULT_LIST_TAG).strip()
-        # b. Books with the selected local list tag
         tag_id = calibre_db.session.query(db.Tags.id).filter(db.Tags.name == tag_name).scalar()
         if tag_id:
-            tag_link_rows = (
-                calibre_db.session.query(db.books_tags_link.c.book)
-                .filter(db.books_tags_link.c.tag == tag_id)
-                .all()
-            )
-            for row in tag_link_rows:
-                candidate_ids.add(row.book)
+            tag_link_rows = calibre_db.session.query(db.books_tags_link.c.book).filter(db.books_tags_link.c.tag == tag_id).all()
+            for row in tag_link_rows: candidate_ids.add(row.book)
 
-    # c. Books with any existing sync rows for this user
-    sync_rows = (
-        ub.session.query(ub.HardcoverStateSync.book_id)
-        .filter(ub.HardcoverStateSync.user_id == int(user.id))
-        .all()
-    )
-    for row in sync_rows:
-        candidate_ids.add(row.book_id)
+    sync_rows = ub.session.query(ub.HardcoverStateSync.book_id).filter(ub.HardcoverStateSync.user_id == int(user.id)).all()
+    for row in sync_rows: candidate_ids.add(row.book_id)
 
     return by_hc_book, by_hc_edition, by_hc_slug, sorted(list(candidate_ids))
+
 
 
 def _match_local_book_id(hc_item, by_hc_book, by_hc_edition, by_hc_slug):
