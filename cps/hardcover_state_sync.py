@@ -884,7 +884,8 @@ def push_book_progress(user, book_id, source="kobo_state"):
         return
 
     # 2. Get local state
-    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS); row.last_synced_at = datetime.now(timezone.utc)
+    row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS)
+    
     # Check for too recent push (2 min debounce)
     if row.last_synced_at and (_now() - row.last_synced_at).total_seconds() < 120:
         log.debug("Hardcover progress push: throttled for book %s.", book_id)
@@ -902,6 +903,7 @@ def push_book_progress(user, book_id, source="kobo_state"):
                  local_progress, book_id)
         client.update_reading_progress(_book_identifier_map(book), local_progress)
         _update_sync_row(row, book=book, cwa_value=str(local_progress), source=source)
+        row.last_synced_at = _now()
         ub.session.commit()
     except Exception as e:
         log.error("Hardcover progress push: failed for book %s: %s", book_id, e)
