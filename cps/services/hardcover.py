@@ -93,13 +93,13 @@ class HardcoverClient:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token}",
         }
-        try:
-            self.privacy = self.get_privacy()
-        except Exception as e:
-            log.error(f"Error fetching Hardcover account privacy setting: {e}")
-            raise
+        # Privacy is fetched lazily on first use to keep the constructor
+        # network-free. See get_privacy().
+        self._privacy = None
 
     def get_privacy(self):
+        if self._privacy is not None:
+            return self._privacy
         query = """
             {
                 me {
@@ -107,7 +107,8 @@ class HardcoverClient:
                 }
             }"""
         response = self.execute(query)
-        return (response.get("me")[0] or [{}]).get("account_privacy_setting_id", 1)
+        self._privacy = (response.get("me")[0] or [{}]).get("account_privacy_setting_id", 1)
+        return self._privacy
 
     def get_user_book(self, ids):
         ids = self.parse_identifiers(ids)
@@ -430,7 +431,7 @@ class HardcoverClient:
             "entry": journal_text,
             # quote or note in Hardcover,
             "event": "note" if note_text else "quote",
-            "privacySettingId": self.privacy,
+            "privacySettingId": self.get_privacy(),
             "editionId": int(book.get("edition", {}).get("id")) if book.get("edition") else None,
             "tags": [
                 {"tag": "CWA", "category": "general", "spoiler": False},
@@ -595,7 +596,7 @@ class HardcoverClient:
                     else None
                 ),
                 "status_id": status,
-                "privacy_setting_id": self.privacy,
+                "privacy_setting_id": self.get_privacy(),
             }
         }
         response = self.execute(query=mutation, variables=variables)
@@ -639,7 +640,12 @@ class HardcoverClient:
 
     def execute(self, query, variables=None):
         payload = {"query": query, "variables": variables or {}}
-        response = requests.post(self.endpoint, json=payload, headers=self.headers)
+        response = requests.post(
+            self.endpoint,
+            json=payload,
+            headers=self.headers,
+            timeout=(3.05, REQUEST_TIMEOUT),
+        )
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:

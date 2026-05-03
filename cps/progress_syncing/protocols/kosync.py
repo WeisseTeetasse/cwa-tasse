@@ -48,6 +48,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from ... import logger, ub, csrf, config, constants, services, usermanagement, calibre_db, db
 from ...render_template import render_title_template
+from ...services.worker import WorkerThread
+from ...tasks.hardcover_state_sync import TaskHardcoverStateSync
 from ..models import KOSyncProgress
 from ..settings import is_koreader_sync_enabled
 
@@ -431,46 +433,6 @@ def update_book_read_status(user_id: int, book_id: int, percentage: float) -> No
     ub.session.merge(book_read)
 
 
-def push_reading_progress_to_hardcover(user: ub.User, book_id: int, percentage: float) -> None:
-    """
-    Sync KOReader reading progress to Hardcover when enabled.
-
-    Hardcover failures are isolated from KOReader sync persistence so devices do
-    not retry progress forever because of a third-party API problem.
-    """
-    hardcover = services.hardcover
-    if not config.config_hardcover_sync or not bool(hardcover):
-        return
-
-    book_blacklist = ub.session.query(ub.HardcoverBookBlacklist).filter(
-        ub.HardcoverBookBlacklist.book_id == book_id
-    ).first()
-    if book_blacklist and book_blacklist.blacklist_reading_progress:
-        log.debug(f"Skipping Hardcover progress sync for book {book_id} - blacklisted")
-        return
-
-    book = calibre_db.session.query(db.Books).filter(db.Books.id == book_id).first()
-    if not book:
-        log.debug(f"Skipping Hardcover progress sync; book {book_id} not found")
-        return
-
-    try:
-        hardcover_client = hardcover.HardcoverClient(user.hardcover_token)
-    except hardcover.MissingHardcoverToken:
-        log.info(f"User {user.name} has no Hardcover token, not syncing KOReader progress to Hardcover")
-        return
-    except Exception as e:
-        log.error(f"Failed to create Hardcover client for KOReader user {user.name}: {e}")
-        return
-
-    try:
-        hardcover_client.update_reading_progress(book.identifiers, percentage)
-        log.info(f"Updated Hardcover progress from KOReader sync: user={user.id}, book={book_id}, "
-                 f"progress={percentage:.1f}%")
-    except Exception as e:
-        log.error(f"Failed to update KOReader progress for book {book_id} in Hardcover: {e}")
-
-
 ################################################################################
 # API Endpoints
 ################################################################################
@@ -771,7 +733,18 @@ def update_progress():
                 log.error(f"Unexpected error updating ReadBook status for book {book_id}: {e}")
                 ub.session.rollback()
 
-            push_reading_progress_to_hardcover(user, book_id, percentage_float)
+            # Push the Hardcover sync to the durable worker. Dedupe on user_id
+            # so rapid KOReader updates collapse into one queued sync. Never
+            # block the request greenlet on Hardcover I/O.
+            if config.config_hardcover_sync and getattr(user, "hardcover_token", None):
+                try:
+                    WorkerThread.add(
+                        user.name,
+                        TaskHardcoverStateSync(user.id, source="kosync_progress"),
+                        hidden=True,
+                    )
+                except Exception as ex:
+                    log.warning("Could not enqueue Hardcover state sync after KOSync update: %s", ex)
 
         return create_sync_response(response_data)
 

@@ -8,9 +8,12 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 
 from . import calibre_db, db, logger, ub
 from .services import hardcover
+
+CHUNK_SIZE = 50
 
 log = logger.create()
 
@@ -186,21 +189,62 @@ def _safe_write_identifiers(book):
     return result
 
 
-def _local_book_maps():
-    books = calibre_db.session.query(db.Books).all()
+def _local_book_maps(include_tagged_books: bool = False):
+    """Build hardcover-id lookup maps without hydrating every Book.
+
+    Hydrates only the books that actually carry a hardcover identifier — that
+    is the only set the matching loop needs. When include_tagged_books=True
+    we additionally return a fully-hydrated list (with tags + identifiers
+    eagerly joined) for the list-tag sync path, which is the only consumer
+    that needs to walk every book.
+    """
     by_hc_book = {}
     by_hc_edition = {}
     by_hc_slug = {}
+
+    # Lightweight identifier sweep — three columns, no Books rows hydrated.
+    ident_rows = (
+        calibre_db.session.query(
+            db.Identifiers.book, db.Identifiers.type, db.Identifiers.val
+        )
+        .filter(db.Identifiers.type.in_(
+            ('hardcover-id', 'hardcover-edition', 'hardcover-slug')
+        ))
+        .all()
+    )
+    matched_book_ids = {row.book for row in ident_rows}
+    hydrated = {}
+    if matched_book_ids:
+        hydrated = {
+            b.id: b for b in (
+                calibre_db.session.query(db.Books)
+                .options(joinedload(db.Books.identifiers))
+                .filter(db.Books.id.in_(matched_book_ids))
+                .all()
+            )
+        }
+    for row in ident_rows:
+        book = hydrated.get(row.book)
+        if not book:
+            continue
+        key = (row.type or '').lower()
+        if key == 'hardcover-id':
+            by_hc_book[str(row.val)] = book
+        elif key == 'hardcover-edition':
+            by_hc_edition[str(row.val)] = book
+        elif key == 'hardcover-slug':
+            by_hc_slug[str(row.val).casefold()] = book
+
     tagged_books = []
-    for book in books:
-        ids = _book_hardcover_ids(book)
-        if ids["book_id"]:
-            by_hc_book[str(ids["book_id"])] = book
-        if ids["edition_id"]:
-            by_hc_edition[str(ids["edition_id"])] = book
-        if ids["slug"]:
-            by_hc_slug[str(ids["slug"]).casefold()] = book
-        tagged_books.append(book)
+    if include_tagged_books:
+        tagged_books = (
+            calibre_db.session.query(db.Books)
+            .options(
+                joinedload(db.Books.tags),
+                joinedload(db.Books.identifiers),
+            )
+            .all()
+        )
     return by_hc_book, by_hc_edition, by_hc_slug, tagged_books
 
 
@@ -617,7 +661,34 @@ def sync_user(user, source="manual"):
     client = get_client(user)
     changed = 0
     errors = []
-    by_hc_book, by_hc_edition, by_hc_slug, local_books = _local_book_maps()
+
+    list_id = _as_int(getattr(user, "hardcover_list_sync_list_id", None))
+    tag_name = (getattr(user, "hardcover_list_sync_tag", None) or DEFAULT_LIST_TAG).strip()
+    list_tag_enabled = bool(
+        getattr(user, "hardcover_list_tag_sync_enabled", False) and list_id
+    )
+
+    by_hc_book, by_hc_edition, by_hc_slug, local_books = _local_book_maps(
+        include_tagged_books=list_tag_enabled,
+    )
+
+    # Chunked-commit helper. Commits both sessions, expires the identity
+    # maps, and limits rollback radius if SQLAlchemy raises mid-sync. Used
+    # by all per-book loops below.
+    def _flush_chunk():
+        try:
+            ub.session.commit()
+            calibre_db.session.commit()
+        except SQLAlchemyError as exc:
+            ub.session.rollback()
+            calibre_db.session.rollback()
+            errors.append(str(exc))
+            log.error(
+                "Hardcover state sync chunk commit failed for user %s: %s",
+                user.id, exc,
+            )
+        ub.session.expire_all()
+        calibre_db.session.expire_all()
 
     shelf = None
     if getattr(user, "hardcover_state_sync_enabled", False):
@@ -630,9 +701,7 @@ def sync_user(user, source="manual"):
 
     selected_list_books = []
     selected_list_updated_at = None
-    list_id = _as_int(getattr(user, "hardcover_list_sync_list_id", None))
-    tag_name = (getattr(user, "hardcover_list_sync_tag", None) or DEFAULT_LIST_TAG).strip()
-    if getattr(user, "hardcover_list_tag_sync_enabled", False) and list_id:
+    if list_tag_enabled:
         _clear_skipped_books(user.id, SKIP_SOURCE_LIST_BOOK)
         selected_list = client.get_list(list_id)
         selected_list_updated_at = _hc_timestamp(selected_list) if selected_list else _now()
@@ -640,7 +709,12 @@ def sync_user(user, source="manual"):
 
     seen_books = set()
     unmatched_hc_books = 0
+    chunk_count = 0
     for hc_book in user_books:
+        chunk_count += 1
+        if chunk_count >= CHUNK_SIZE:
+            _flush_chunk()
+            chunk_count = 0
         local_book = _match_local_book(hc_book, by_hc_book, by_hc_edition, by_hc_slug)
         if not local_book:
             unmatched_hc_books += 1
@@ -686,10 +760,15 @@ def sync_user(user, source="manual"):
             _update_sync_row(row, book=local_book, hc_item=hc_book, cwa_value="1",
                              hardcover_value="1", source=source)
 
-    if getattr(user, "hardcover_list_tag_sync_enabled", False) and list_id:
+    if list_tag_enabled:
         current_hc_members = {}
         unmatched_hc_list_books = 0
+        chunk_count = 0
         for list_book in selected_list_books:
+            chunk_count += 1
+            if chunk_count >= CHUNK_SIZE:
+                _flush_chunk()
+                chunk_count = 0
             local_book = _match_local_book(list_book, by_hc_book, by_hc_edition, by_hc_slug)
             if not local_book:
                 unmatched_hc_list_books += 1
@@ -715,7 +794,12 @@ def sync_user(user, source="manual"):
 
         if (getattr(user, "hardcover_list_push_enabled", True) or
                 getattr(user, "hardcover_list_pull_enabled", True)):
+            chunk_count = 0
             for local_book in local_books:
+                chunk_count += 1
+                if chunk_count >= CHUNK_SIZE:
+                    _flush_chunk()
+                    chunk_count = 0
                 local_has_tag = _has_tag(local_book, tag_name)
                 hc_list_book = current_hc_members.get(local_book.id)
                 hc_has_tag = bool(hc_list_book)

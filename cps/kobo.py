@@ -43,6 +43,8 @@ from .constants import COVER_THUMBNAIL_SMALL, COVER_THUMBNAIL_MEDIUM, COVER_THUM
 from .kobo_cover_cache import build_cover_image_id, normalize_cover_uuid
 from .helper import get_download_link
 from .services import SyncToken as SyncToken, hardcover
+from .services.worker import WorkerThread
+from .tasks.hardcover_state_sync import TaskHardcoverStateSync
 from .web import download_required
 from .kobo_auth import requires_kobo_auth, get_auth_token, get_auth_token_id, get_auth_token_name
 
@@ -51,6 +53,7 @@ KOBO_STOREAPI_URL = "https://storeapi.kobo.com"
 KOBO_IMAGEHOST_URL = "https://cdn.kobo.com/book-images"
 
 SYNC_ITEM_LIMIT = 100
+MAGIC_SHELF_KOBO_LIMIT = 500
 
 kobo = Blueprint("kobo", __name__, url_prefix="/kobo/<auth_token>")
 kobo_auth.disable_failed_auth_redirect_for_blueprint(kobo)
@@ -140,8 +143,13 @@ def get_magic_shelf_book_ids_for_kobo(user_id):
     book_ids = set()
     for shelf in magic_shelves:
         books, _ = magic_shelf.get_books_for_magic_shelf(
-            shelf.id, page=1, page_size=None
+            shelf.id, page=1, page_size=MAGIC_SHELF_KOBO_LIMIT,
         )
+        if len(books) >= MAGIC_SHELF_KOBO_LIMIT:
+            log.warning(
+                "Kobo Sync: magic shelf %s truncated to %d books for Kobo sync",
+                shelf.id, MAGIC_SHELF_KOBO_LIMIT,
+            )
         for book in books:
             book_ids.add(book.id)
 
@@ -279,15 +287,35 @@ def HandleSyncRequest():
                            .filter(db.Data.format.in_(KOBO_FORMATS))
                            .order_by(db.Books.last_modified)
                            .order_by(db.Books.id))
-    log.debug("Kobo Sync: changed entries: {}".format(changed_entries.count()))
-
     reading_states_in_new_entitlements = []
-    books = changed_entries.limit(SYNC_ITEM_LIMIT)
-    log.debug("Kobo Sync: selected to sync: {}".format(len(books.all())))
-    for book in books:
+    # Materialize once with SYNC_ITEM_LIMIT + 1 so the continuation flag falls
+    # out of the result length — avoids three round trips per Kobo sync.
+    rows = changed_entries.limit(SYNC_ITEM_LIMIT + 1).all()
+    cont_sync = len(rows) > SYNC_ITEM_LIMIT
+    rows = rows[:SYNC_ITEM_LIMIT]
+    log.debug("Kobo Sync: selected to sync: %d (cont=%s)", len(rows), cont_sync)
+    for book in rows:
         formats = [data.format for data in book.Books.data]
-        if 'KEPUB' not in formats and config.config_kepubifypath and 'EPUB' in formats:
-            helper.convert_book_format(book.Books.id, config.get_book_path(), 'EPUB', 'KEPUB', current_user.name)
+        needs_kepub = (
+            'KEPUB' not in formats
+            and config.config_kepubifypath
+            and 'EPUB' in formats
+        )
+        if needs_kepub:
+            # Enqueue conversion in the background and skip this book this round.
+            # The Kobo will see it on the next sync once a KEPUB exists. Do NOT
+            # mark it synced or include the entitlement, otherwise the device
+            # will download the EPUB and KoboSyncedBooks will hide the
+            # post-conversion KEPUB forever.
+            try:
+                helper.convert_book_format(
+                    book.Books.id, config.get_book_path(),
+                    'EPUB', 'KEPUB', current_user.name,
+                )
+            except Exception as ex:
+                log.warning("Failed to enqueue KEPUB conversion for book %s: %s",
+                            book.Books.id, ex)
+            continue
 
         kobo_reading_state = get_or_create_reading_state(book.Books.id)
         entitlement = {
@@ -322,11 +350,7 @@ def HandleSyncRequest():
 
     new_archived_last_modified = max(new_archived_last_modified, max_change)
 
-    # no. of books returned
-    book_count = changed_entries.count()
-    # last entry:
-    cont_sync = bool(book_count)
-    log.debug("Kobo Sync: remaining books to sync: {}".format(book_count))
+    # cont_sync was already set from the SYNC_ITEM_LIMIT + 1 fetch above.
     # generate reading state data
     changed_reading_states = ub.session.query(ub.KoboReadingState)
 
@@ -354,9 +378,11 @@ def HandleSyncRequest():
              ),
              ub.KoboReadingState.book_id.notin_(reading_states_in_new_entitlements)))\
         .order_by(ub.KoboReadingState.last_modified)
-    log.debug("Kobo Sync: changed states: {}".format(changed_reading_states.count()))
-    cont_sync |= bool(changed_reading_states.count() > SYNC_ITEM_LIMIT)
-    for kobo_reading_state in changed_reading_states.limit(SYNC_ITEM_LIMIT).all():
+    state_rows = changed_reading_states.limit(SYNC_ITEM_LIMIT + 1).all()
+    cont_sync |= len(state_rows) > SYNC_ITEM_LIMIT
+    state_rows = state_rows[:SYNC_ITEM_LIMIT]
+    log.debug("Kobo Sync: changed states selected: %d", len(state_rows))
+    for kobo_reading_state in state_rows:
         book = calibre_db.session.query(db.Books).filter(db.Books.id == kobo_reading_state.book_id).one_or_none()
         if book:
             sync_results.append({
@@ -987,52 +1013,26 @@ def HandleStateRequest(book_uuid):
             ub.session.rollback()
             abort(400, description="Malformed request data is missing 'ReadingStates' key")
 
-        push_reading_state_to_hardcover(book, request_bookmark)
-
         ub.session.merge(kobo_reading_state)
         ub.session_commit()
+
+        # Push the Hardcover sync to the durable worker. Dedupe on user_id so
+        # rapid Kobo PUTs collapse into one queued sync. Never block the
+        # request greenlet on Hardcover I/O.
+        if config.config_hardcover_sync and bool(hardcover) and getattr(current_user, "hardcover_token", None):
+            try:
+                WorkerThread.add(
+                    current_user.name,
+                    TaskHardcoverStateSync(current_user.id, source="kobo_state"),
+                    hidden=True,
+                )
+            except Exception as ex:
+                log.warning("Could not enqueue Hardcover state sync after Kobo state PUT: %s", ex)
+
         return jsonify({
             "RequestResult": "Success",
             "UpdateResults": [update_results_response],
         })
-
-
-def push_reading_state_to_hardcover(book: db.Books, request_bookmark: dict):
-    """
-    Sync reading progress to Hardcover if enabled for the user and book is not blacklisted.
-
-    Most exceptions are caught and logged so that issues with Hardcover do not prevent
-    the Kobo from clearing its reading state sync queue.
-
-    :param book: The book for which to sync reading progress.
-    :param request_bookmark: The bookmark data from the Kobo request.
-    :return: None
-    """
-
-    if not config.config_hardcover_sync or not bool(hardcover):
-        return
-
-    # Check if book is blacklisted from reading progress syncing
-    book_blacklist = ub.session.query(ub.HardcoverBookBlacklist).filter(
-        ub.HardcoverBookBlacklist.book_id == book.id).first()
-
-    if book_blacklist and book_blacklist.blacklist_reading_progress:
-        log.debug(f"Skipping reading progress sync for book {book.id} - blacklisted for reading progress")
-        return
-
-    try:
-        hardcoverClient = hardcover.HardcoverClient(current_user.hardcover_token)
-    except hardcover.MissingHardcoverToken:
-        log.info(f"User {current_user.name} has no Hardcover token, not syncing reading progress to Hardcover")
-        return
-    except Exception as e:
-        log.error(f"Failed to create Hardcover client for user {current_user.name}: {e}")
-        return
-
-    try:
-        hardcoverClient.update_reading_progress(book.identifiers, request_bookmark["ProgressPercent"])
-    except Exception as e:
-        log.error(f"Failed to update reading progress for book {book.id} in Hardcover: {e}")
 
 
 def get_read_status_for_kobo(ub_book_read):

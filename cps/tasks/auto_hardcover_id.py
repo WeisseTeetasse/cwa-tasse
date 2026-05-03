@@ -84,25 +84,31 @@ class TaskAutoHardcoverID(CalibreTask):
         if Hardcover is None:
             self._handleError("Hardcover provider not available")
             return
-        
+
         # Check if valid token exists
         token = self._get_hardcover_token()
         if not token:
             self._handleError("No valid Hardcover token found. Set HARDCOVER_TOKEN environment variable or configure token in settings.")
             return
-        
+
+        # Instantiate the Hardcover provider exactly once and reuse it for
+        # every book — instantiation per-book churns RAM under long runs.
+        provider = Hardcover()
+
         try:
-            # Query books without hardcover identifiers
-            books = self._get_books_without_hardcover_id()
-            total_books = len(books)
-            
+            # Pull only book IDs upfront. Books are hydrated per batch below
+            # so the SQLAlchemy identity map does not balloon over a multi-hour
+            # run holding 10k Books with 9 lazy-loaded relationships each.
+            all_ids = self._get_books_without_hardcover_id()
+            total_books = len(all_ids)
+
             if total_books == 0:
                 self.log.info("No books found without Hardcover IDs")
                 self._handleSuccess()
                 return
-            
+
             self.log.info(f"Found {total_books} books without Hardcover IDs. Processing in batches of {self.batch_size}...")
-            
+
             # Process books in batches
             batch_count = (total_books + self.batch_size - 1) // self.batch_size
             for batch_num in range(batch_count):
@@ -110,19 +116,24 @@ class TaskAutoHardcoverID(CalibreTask):
                 if self._cancel_requested():
                     self.log.info("Task cancelled by user")
                     return
-                
+
                 start_idx = batch_num * self.batch_size
                 end_idx = min(start_idx + self.batch_size, total_books)
-                batch = books[start_idx:end_idx]
-                
+                batch_ids = all_ids[start_idx:end_idx]
+                batch = (
+                    self.calibre_db.session.query(db.Books)
+                    .filter(db.Books.id.in_(batch_ids))
+                    .all()
+                )
+
                 self.log.info(f"Processing batch {batch_num + 1}/{batch_count} ({len(batch)} books)")
-                
+
                 for book in batch:
                     # Check if cancelled
                     if self._cancel_requested():
                         self.log.info("Task cancelled by user")
                         return
-                    
+
                     # Check if we've hit too many consecutive errors
                     if self.consecutive_errors >= self.max_backoff_errors:
                         error_msg = f"Exceeded maximum consecutive errors ({self.max_backoff_errors}). Stopping to protect API key."
@@ -130,34 +141,39 @@ class TaskAutoHardcoverID(CalibreTask):
                         self._save_stats()
                         self._handleError(error_msg)
                         return
-                    
+
                     try:
-                        self._process_book(book)
+                        self._process_book(book, provider)
                         self.books_processed += 1
-                        
+
                         # Reset consecutive errors on success
                         self.consecutive_errors = 0
                         self.current_delay = self.rate_limit_delay
-                        
+
                         # Update progress
                         self.progress = self.books_processed / total_books
-                        
+
                         # Rate limiting: wait between requests
                         if self.books_processed < total_books:
                             if not self._sleep_with_cancel_check(self.current_delay):
                                 return
-                            
+
                     except Exception as e:
                         self.log.error(f"Error processing book {book.id} '{book.title}': {e}")
                         self.errors += 1
                         self.consecutive_errors += 1
-                        
+
                         # Exponential backoff
                         self.current_delay = min(self.current_delay * 2, 60.0)
                         self.log.warning(f"Consecutive errors: {self.consecutive_errors}. Increasing delay to {self.current_delay}s")
                         if not self._sleep_with_cancel_check(self.current_delay):
                             return
-            
+
+                # Drop the batch's hydrated rows + relationships from the
+                # identity map so RAM does not grow across batches.
+                self.calibre_db.session.expire_all()
+                batch = None
+
             # Save final stats
             self._save_stats()
             
@@ -182,38 +198,39 @@ class TaskAutoHardcoverID(CalibreTask):
         )
         return token
 
-    def _get_books_without_hardcover_id(self) -> List[db.Books]:
+    def _get_books_without_hardcover_id(self) -> List[int]:
         """
-        Query all books that don't have any Hardcover identifiers.
-        Excludes books with hardcover-id, hardcover-slug, or hardcover-edition.
+        Return IDs of books that don't have any Hardcover identifiers.
+
+        Returns IDs only — books are hydrated per batch in run() so the
+        identity map does not pin 10k Books with their lazy relationships
+        for the entire multi-hour task duration.
         """
-        books = self.calibre_db.session.query(db.Books).filter(
+        rows = self.calibre_db.session.query(db.Books.id).filter(
             ~db.Books.identifiers.any(
                 db.Identifiers.type.in_(['hardcover-id', 'hardcover-slug', 'hardcover-edition'])
             )
         ).limit(10000).all()  # Safety limit
-        
-        return books
+        return [row.id for row in rows]
 
-    def _process_book(self, book: db.Books):
+    def _process_book(self, book: db.Books, provider):
         """
         Process a single book: search Hardcover API, calculate confidence, apply or queue.
+
+        provider is a single shared Hardcover() instance owned by run().
         """
         # Build search query from book metadata
         authors = [author.name for author in book.authors] if book.authors else []
         author_str = ", ".join(authors[:3]) if authors else ""  # Limit to first 3 authors
-        
+
         # Build search query
         if author_str:
             search_query = f"{book.title} {author_str}"
         else:
             search_query = book.title
-        
+
         self.log.debug(f"Searching Hardcover for: {search_query}")
-        
-        # Initialize Hardcover provider
-        provider = Hardcover()
-        
+
         # Search Hardcover API
         results = provider.search(search_query)
         
