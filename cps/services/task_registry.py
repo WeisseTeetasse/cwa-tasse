@@ -200,18 +200,13 @@ def create_task(job_type, payload):
             source=payload.get("source", "scheduled"),
         )
 
-        if job_type == "TaskHardcoverProgressPush":
-        from cps.tasks.hardcover_progress_push import TaskHardcoverProgressPush
-        if job_type == "TaskHardcoverProgressPush":
+    if job_type == "TaskHardcoverProgressPush":
         from cps.tasks.hardcover_progress_push import TaskHardcoverProgressPush
         return TaskHardcoverProgressPush(
             payload["user_id"],
             payload["book_id"],
             task_message=payload.get("task_message"),
             source=payload.get("source", "kobo_state"),
-        ),
-            source=payload.get("source", "kobo_state"),
-        )
         )
 
     if job_type == "TaskConvertLibraryRun":
