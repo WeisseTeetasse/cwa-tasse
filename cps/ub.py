@@ -1541,14 +1541,43 @@ def password_change(user_credentials=None):
             sys.exit(3)
 
 
+# Cache of (db_path, pid) → scoped_session so every caller in the same process
+# reuses one engine + connection pool instead of creating a new one each call.
+_session_factory_cache = {}
+
+
+@atexit.register
+def _dispose_cached_session_factories():
+    """Dispose every cached engine on process exit (registered once at import)."""
+    for factory in list(_session_factory_cache.values()):
+        try:
+            factory.remove()
+        except Exception:
+            pass
+        try:
+            factory.bind.dispose()
+        except Exception:
+            pass
+    _session_factory_cache.clear()
+
+
 def get_new_session_instance():
-    new_engine = create_engine('sqlite:///{0}'.format(app_DB_path), echo=False,
-                               connect_args={'timeout': 30})
-    new_session = scoped_session(sessionmaker())
-    new_session.configure(bind=new_engine)
-
-    atexit.register(lambda: new_session.remove() if new_session else True)
-
+    """Return a scoped_session bound to app_DB_path, creating at most one engine
+    per (path, pid).  Previous callers leaked a new Engine + QueuePool + atexit
+    closure on every invocation; with 2 calls/s in the idle worker loop that
+    produced ~37 MB/min of unrecoverable RSS growth and hundreds of open fds."""
+    key = (app_DB_path, os.getpid())
+    cached = _session_factory_cache.get(key)
+    if cached is not None:
+        return cached
+    new_engine = create_engine(
+        'sqlite:///{0}'.format(app_DB_path),
+        echo=False,
+        connect_args={'timeout': 30},
+        pool_recycle=3600,
+    )
+    new_session = scoped_session(sessionmaker(bind=new_engine))
+    _session_factory_cache[key] = new_session
     return new_session
 
 

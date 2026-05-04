@@ -63,6 +63,8 @@ def enabled():
 
 @contextmanager
 def _session_scope():
+    # get_new_session_instance() now returns a cached, process-scoped factory —
+    # never call factory.remove() here or we'd tear down other threads' sessions.
     session_factory = ub.get_new_session_instance()
     session = session_factory()
     try:
@@ -73,7 +75,6 @@ def _session_scope():
         raise
     finally:
         session.close()
-        session_factory.remove()
 
 
 def enqueue(job_type, payload=None, user=None, user_id=None, name=None, message=None, hidden=False,
@@ -143,8 +144,16 @@ def enqueue_task(user, task, hidden=False, dedupe_key=None):
     )
 
 
+_last_stale_recover_at = 0.0
+_STALE_RECOVER_INTERVAL = 60.0  # seconds; stale recovery once per minute is plenty
+
+
 def claim_next(worker_id, stale_after_seconds=DEFAULT_STALE_AFTER_SECONDS):
-    recover_stale_jobs(stale_after_seconds=stale_after_seconds)
+    global _last_stale_recover_at
+    mono = time.monotonic()
+    if mono - _last_stale_recover_at >= _STALE_RECOVER_INTERVAL:
+        recover_stale_jobs(stale_after_seconds=stale_after_seconds)
+        _last_stale_recover_at = mono
     now = _naive_utcnow()
     with _session_scope() as session:
         session.execute(text("BEGIN IMMEDIATE"))
