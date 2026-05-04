@@ -38,6 +38,20 @@ def _now():
     return datetime.now(timezone.utc)
 
 
+def _as_utc_aware(dt):
+    """Return *dt* as a timezone-aware UTC datetime.
+
+    SQLite/SQLAlchemy stores datetimes without tz info; this helper normalises
+    them so arithmetic with _now() (which is always tz-aware) doesn't raise
+    ``TypeError: can't subtract offset-naive and offset-aware datetimes``.
+    """
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def _as_int(value):
     if value in (None, ""):
         return None
@@ -886,8 +900,11 @@ def push_book_progress(user, book_id, source="kobo_state"):
     # 2. Get local state
     row = _sync_row(user.id, book_id, SYNC_KEY_PROGRESS)
     
-    # Check for too recent push (2 min debounce)
-    if row.last_synced_at and (_now() - row.last_synced_at).total_seconds() < 120:
+    # Check for too recent push (2 min debounce).
+    # SQLite returns naive datetimes; normalise before subtracting from _now().
+    last_synced_at = _as_utc_aware(row.last_synced_at)
+    now = _now()
+    if last_synced_at and (now - last_synced_at).total_seconds() < 120:
         log.debug("Hardcover progress push: throttled for book %s.", book_id)
         return
 

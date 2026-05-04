@@ -58,8 +58,11 @@ def serialize_task(task):
             "source": getattr(task, "source", "kobo_state"),
         }
         base["dedupe_key"] = f"hardcover_progress_push:{user_id}:{book_id}"
-        base["lock_category"] = "library"
+        # No lock_category: only writes ub rows, safe alongside user browsing.
         return base
+
+    if cls_name == "TaskConvertLibraryRun":
+        base["payload"] = {}
         base["dedupe_key"] = "convert_library"
         base["lock_category"] = "library"
         return base
