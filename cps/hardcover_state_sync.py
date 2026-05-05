@@ -565,16 +565,25 @@ def handle_shelf_removed(user, shelf_id, book_id):
     if not book:
         return
     status_id = _determine_removed_currently_reading_status(user, book_id)
+    if status_id == hardcover.STATUS_READ:
+        # Book is finished — Hardcover "currently reading" status is managed manually by
+        # the user on Hardcover.  Still run the local Up Next tag / list cleanup.
+        try:
+            if getattr(user, "hardcover_list_tag_sync_enabled", False):
+                _read_cleanup(user, get_client(user), book)
+            ub.session.commit()
+            calibre_db.session.commit()
+        except Exception as e:
+            ub.session.rollback()
+            calibre_db.session.rollback()
+            log.error("Hardcover state sync: read cleanup on shelf removal failed for CWA book %s: %s", book_id, e)
+        return
     try:
         client = get_client(user)
-        if _push_status_for_book(user, client, book, status_id, "CWA shelf removal"):
-            if status_id == hardcover.STATUS_READ:
-                _read_cleanup(user, client, book)
+        _push_status_for_book(user, client, book, status_id, "CWA shelf removal")
         ub.session.commit()
-        calibre_db.session.commit()
     except Exception as e:
         ub.session.rollback()
-        calibre_db.session.rollback()
         log.error("Hardcover state sync: failed pushing shelf removal for CWA book %s: %s", book_id, e)
 
 
@@ -642,23 +651,39 @@ def handle_kobo_progress_update(user, book_id, progress_percent):
 def handle_book_marked_read(user, book_id):
     if not _enabled(user):
         return
-    if not getattr(user, "hardcover_list_tag_sync_enabled", False):
-        return
-    if not getattr(user, "hardcover_state_read_cleanup_enabled", True):
-        return
     if not getattr(user, "hardcover_state_push_immediately", True):
         return
+
     book = calibre_db.session.query(db.Books).filter(db.Books.id == int(book_id)).first()
     if not book:
         return
-    try:
-        _read_cleanup(user, get_client(user), book)
-        ub.session.commit()
-        calibre_db.session.commit()
-    except Exception as e:
-        ub.session.rollback()
-        calibre_db.session.rollback()
-        log.error("Hardcover state sync: failed read cleanup for CWA book %s: %s", book_id, e)
+
+    # Remove from CWA Currently Reading shelf (local only, no Hardcover status push).
+    # Update the sync row so the periodic sync knows the shelf was intentionally cleared
+    # and doesn't try to push STATUS_READ to Hardcover or pull the book back onto the shelf.
+    if getattr(user, "hardcover_state_sync_enabled", False):
+        try:
+            shelf = ensure_currently_reading_shelf(user)
+            if shelf and _remove_from_shelf(shelf, book_id):
+                row = _sync_row(user.id, book_id, SYNC_KEY_CURRENTLY_READING)
+                _update_sync_row(row, cwa_value="0", source="cwa")
+                log.info("Hardcover state sync: removed book %s from Currently Reading shelf on read.", book_id)
+            ub.session.commit()
+        except Exception as e:
+            ub.session.rollback()
+            log.error("Hardcover state sync: shelf read cleanup failed for book %s: %s", book_id, e)
+
+    # Remove Up Next tag from CWA and the matching Hardcover list entry.
+    if (getattr(user, "hardcover_list_tag_sync_enabled", False)
+            and getattr(user, "hardcover_state_read_cleanup_enabled", True)):
+        try:
+            _read_cleanup(user, get_client(user), book)
+            ub.session.commit()
+            calibre_db.session.commit()
+        except Exception as e:
+            ub.session.rollback()
+            calibre_db.session.rollback()
+            log.error("Hardcover state sync: read cleanup failed for book %s: %s", book_id, e)
 
 
 def sync_user(user, source="manual"):
@@ -762,7 +787,14 @@ def sync_user(user, source="manual"):
                     if (getattr(user, "hardcover_state_push_currently_reading", True) and
                             _prefer_cwa(row, _truth(local_is_reading), str(status_id), hc_time)):
                         target_status = hardcover.STATUS_READING if local_is_reading else _determine_removed_currently_reading_status(user, local_book.id)
-                        if _push_status_for_book(user, client, local_book, target_status, "CWA newer state"):
+                        if target_status == hardcover.STATUS_READ:
+                            # Book is finished — don't auto-push STATUS_READ to Hardcover.
+                            # Set pushed_status so the pull path doesn't re-add the book to
+                            # the CWA Currently Reading shelf from Hardcover's STATUS_READING.
+                            _update_sync_row(row, book=local_book, hc_item=hc_book,
+                                             cwa_value="0", hardcover_value=str(status_id), source=source)
+                            pushed_status = True
+                        elif _push_status_for_book(user, client, local_book, target_status, "CWA newer state"):
                             changed += 1
                             status_id = target_status
                             pushed_status = True
