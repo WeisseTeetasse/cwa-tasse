@@ -974,6 +974,8 @@ def HandleStateRequest(book_uuid):
         return jsonify([get_kobo_reading_state_response(book, kobo_reading_state)])
     else:
         update_results_response = {"EntitlementId": book_uuid}
+        old_book_read_status = None
+        new_book_read_status = None
 
         try:
             request_data = request.json
@@ -1006,6 +1008,7 @@ def HandleStateRequest(book_uuid):
                         and new_book_read_status != book_read.read_status:
                     book_read.times_started_reading += 1
                     book_read.last_time_started_reading = datetime.now(timezone.utc)
+                old_book_read_status = book_read.read_status
                 book_read.read_status = new_book_read_status
                 update_results_response["StatusInfoResult"] = {"Result": "Success"}
         except (KeyError, TypeError, ValueError, StatementError):
@@ -1033,6 +1036,15 @@ def HandleStateRequest(book_uuid):
                 )
             except Exception as ex:
                 log.warning("Could not enqueue Hardcover progress push after Kobo state PUT: %s", ex)
+
+        if (old_book_read_status != ub.ReadBook.STATUS_FINISHED
+                and new_book_read_status == ub.ReadBook.STATUS_FINISHED):
+            try:
+                from . import hardcover_state_sync
+                hardcover_state_sync.handle_book_marked_read(current_user, book.id)
+                ub.session_commit()
+            except Exception as ex:
+                log.error("Hardcover state sync: read status hook failed for book %s: %s", book.id, ex)
 
         return jsonify({
             "RequestResult": "Success",
