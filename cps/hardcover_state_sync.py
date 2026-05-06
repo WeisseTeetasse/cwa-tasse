@@ -784,13 +784,16 @@ def sync_user(user, source="manual"):
                     is_reading = status_id == hardcover.STATUS_READING
                     row = _sync_row(user.id, local_book.id, SYNC_KEY_CURRENTLY_READING)
                     local_is_reading = bool(_book_in_shelf(shelf.id, local_book.id))
-                    if (getattr(user, "hardcover_state_push_currently_reading", True) and
+                    if _is_book_read(user.id, local_book.id):
+                        # Book is finished in CWA — keep it off the shelf regardless of Hardcover
+                        # state, and record the current state so _prefer_cwa doesn't fire next sync.
+                        _update_sync_row(row, book=local_book, hc_item=hc_book,
+                                         cwa_value="0", hardcover_value=str(status_id), source=source)
+                        pushed_status = True
+                    elif (getattr(user, "hardcover_state_push_currently_reading", True) and
                             _prefer_cwa(row, _truth(local_is_reading), str(status_id), hc_time)):
                         target_status = hardcover.STATUS_READING if local_is_reading else _determine_removed_currently_reading_status(user, local_book.id)
                         if target_status == hardcover.STATUS_READ:
-                            # Book is finished — don't auto-push STATUS_READ to Hardcover.
-                            # Set pushed_status so the pull path doesn't re-add the book to
-                            # the CWA Currently Reading shelf from Hardcover's STATUS_READING.
                             _update_sync_row(row, book=local_book, hc_item=hc_book,
                                              cwa_value="0", hardcover_value=str(status_id), source=source)
                             pushed_status = True
@@ -811,8 +814,11 @@ def sync_user(user, source="manual"):
                                          hardcover_value=str(status_id), source=source)
 
                 # Progress Sync (CWA -> Hardcover)
-                # Only if the book is in STATUS_READING on Hardcover and we are pushing.
-                if status_id == hardcover.STATUS_READING and getattr(user, "hardcover_state_push_currently_reading", True):
+                # Only if the book is in STATUS_READING on Hardcover, we are pushing, and the book
+                # is not already finished locally (100% progress would auto-complete it on Hardcover).
+                if (status_id == hardcover.STATUS_READING
+                        and getattr(user, "hardcover_state_push_currently_reading", True)
+                        and not _is_book_read(user.id, local_book.id)):
                     local_progress = _local_progress_percent(user.id, local_book.id)
                     if local_progress is not None:
                         row_prog = _sync_row(user.id, local_book.id, SYNC_KEY_PROGRESS)
@@ -938,6 +944,10 @@ def push_book_progress(user, book_id, source="kobo_state"):
     now = _now()
     if last_synced_at and (now - last_synced_at).total_seconds() < 120:
         log.debug("Hardcover progress push: throttled for book %s.", book_id)
+        return
+
+    if _is_book_read(user.id, book_id):
+        log.debug("Hardcover progress push: skipping book %s — already finished in CWA.", book_id)
         return
 
     local_progress = _local_progress_percent(user.id, book_id)
