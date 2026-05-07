@@ -445,4 +445,13 @@ def create_app(start_background=True):
         register_scheduled_tasks(config.schedule_reconnect)
         register_startup_tasks()
 
+    # Eagerly materialise the shared internal-API token so that helper
+    # scripts (e.g. ingest_processor.py) can authenticate against the
+    # /cwa-internal/* endpoints on first call.
+    try:
+        from .internal_auth import get_internal_token
+        get_internal_token()
+    except Exception as e:
+        log.error("Failed to initialise internal API token: %s", e)
+
     return app

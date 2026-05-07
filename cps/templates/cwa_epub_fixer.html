@@ -103,21 +103,20 @@
   }
 
   function scheduleEpubFixer(delayMinutes) {
-    fetch('/cwa-internal/schedule-epub-fixer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ delay_minutes: delayMinutes, username: '{{ current_user.name }}' })
+    // The /cwa-internal/* endpoints are guarded by an in-process token that
+    // the browser does not have. Go through the admin route instead, which
+    // forwards server-side with the token attached.
+    fetch('/cwa-epub-fixer/schedule/' + encodeURIComponent(delayMinutes), {
+      method: 'GET',
+      credentials: 'same-origin',
+      redirect: 'manual'
     })
     .then(r => {
-      if (!r.ok) {
-        return r.json().then(err => {
-          throw new Error(err.error || 'Failed to schedule');
-        });
+      if (r.type === 'opaqueredirect' || r.ok) {
+        showNotification('{{ _("EPUB Fixer scheduled successfully") }}', 'success');
+        return;
       }
-      return r.json();
-    })
-    .then(data => {
-      showNotification('{{ _("EPUB Fixer scheduled successfully") }}', 'success');
+      throw new Error('HTTP ' + r.status);
     })
     .catch(err => {
       showNotification('{{ _("Error scheduling EPUB Fixer") }}: ' + err.message, 'danger');

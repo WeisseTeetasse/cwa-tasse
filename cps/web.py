@@ -1477,6 +1477,10 @@ def list_books():
     search_param = request.args.get("search")
     sort_param = request.args.get("sort", "id")
     order = request.args.get("order", "").lower()
+    # Whitelist the direction value before it can ever reach a raw SQL ORDER BY
+    # via text() below; "" is allowed because some branches check it for truthiness.
+    if order not in ("asc", "desc", ""):
+        order = ""
     state = None
     join = tuple()
 
@@ -2369,17 +2373,18 @@ def login_post():
         # Use request.remote_addr (already corrected by ProxyFix) instead of raw header
         ip_address = request.remote_addr
         if form.get('forgot', "") == 'forgot':
+            # Always show the same generic message regardless of whether the
+            # username exists, to avoid leaking which accounts are valid.
+            generic_message = _(u"If that account exists, a new password has been sent to its email address.")
             if user is not None and user.name != "Guest":
                 ret, __ = reset_password(user.id)
                 if ret == 1:
-                    flash(_(u"New Password was sent to your email address"), category="info")
                     log.info('Password reset for user "%s" IP-address: %s', username, ip_address)
                 else:
-                    log.error(u"An unknown error occurred. Please try again later")
-                    flash(_(u"An unknown error occurred. Please try again later."), category="error")
+                    log.error('Password reset failed for user "%s" IP-address: %s', username, ip_address)
             else:
-                flash(_(u"Please enter valid username to reset password"), category="error")
-                log.warning('Username missing for password reset IP-address: %s', ip_address)
+                log.warning('Password reset requested for unknown user "%s" IP-address: %s', username, ip_address)
+            flash(generic_message, category="info")
         else:
             if user and check_password_hash(str(user.password), form['password']) and user.name != "Guest":
                 config.config_is_initial = False

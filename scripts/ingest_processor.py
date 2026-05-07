@@ -340,8 +340,23 @@ def get_internal_api_url(path):
 
 
 def get_internal_api_headers():
-    """Provide headers that satisfy localhost-only internal endpoint checks."""
-    return {"X-Forwarded-For": "127.0.0.1"}
+    """Return the headers required to call cwa-internal endpoints.
+
+    The web process generates a random shared token at boot and writes it to
+    ``<config_dir>/.cwa_internal_token``. We read the same file here so that
+    helper scripts can authenticate without having to import the Flask app.
+    """
+    headers = {}
+    try:
+        config_dir = os.environ.get("CALIBRE_DBPATH") or "/config"
+        token_path = os.path.join(config_dir, ".cwa_internal_token")
+        with open(token_path, "r", encoding="utf-8") as fh:
+            token = fh.read().strip()
+        if token:
+            headers["X-CWA-Internal-Token"] = token
+    except OSError as exc:
+        print(f"[ingest-processor] WARN: Could not read internal API token: {exc}", flush=True)
+    return headers
 
 class NewBookProcessor:
     def __init__(self, filepath: str):

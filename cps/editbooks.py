@@ -774,6 +774,7 @@ def _queue_duplicate_scan_after_change():
         import requests
         sys.path.insert(1, '/app/calibre-web-automated/scripts/')
         from cwa_db import CWA_DB
+        from .internal_auth import get_internal_api_headers
 
         cwa_db = CWA_DB()
         delay_seconds = int(cwa_db.cwa_settings.get('duplicate_scan_debounce_seconds', 5))
@@ -782,7 +783,7 @@ def _queue_duplicate_scan_after_change():
         requests.post(
             url,
             json={"delay_seconds": delay_seconds},
-            headers={"X-Forwarded-For": "127.0.0.1"},
+            headers=get_internal_api_headers(),
             timeout=5,
             verify=False,
         )
