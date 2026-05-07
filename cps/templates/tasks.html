@@ -175,9 +175,10 @@
   }
   function cancelScheduled(id) {
     if (!id) return;
+    const csrfToken = (document.querySelector('[name=csrf_token]') || {}).value || '';
     fetch('{{ url_for("cwa_stats.cwa_scheduled_cancel") }}', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
       body: JSON.stringify({ id: id })
     })
     .then(r => {

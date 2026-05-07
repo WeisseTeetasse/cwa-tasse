@@ -1052,7 +1052,6 @@ class NewBookProcessor:
                             json=payload,
                             headers=get_internal_api_headers(),
                             timeout=5,
-                            verify=False,
                         )
                         if resp.status_code == 200:
                             try:
@@ -1183,7 +1182,6 @@ class NewBookProcessor:
                 url,
                 headers=get_internal_api_headers(),
                 timeout=5,
-                verify=False,
             )
             if resp.status_code == 200:
                 print("[ingest-processor] Database session refresh enqueued", flush=True)
@@ -1206,7 +1204,6 @@ class NewBookProcessor:
                 url,
                 headers=get_internal_api_headers(),
                 timeout=5,
-                verify=False,
             )
             if resp.status_code == 200:
                 print("[ingest-processor] Duplicate cache invalidated", flush=True)
@@ -1241,7 +1238,6 @@ class NewBookProcessor:
                     json=payload,
                     headers=get_internal_api_headers(),
                     timeout=5,
-                    verify=False,
                 )
                 if resp.status_code == 200:
                     try:

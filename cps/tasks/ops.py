@@ -34,7 +34,7 @@ class TaskConvertLibraryRun(CalibreTask):
         try:
             import requests
             url = helper.get_internal_api_url("/cwa-convert-library-start")
-            requests.get(url, timeout=10, verify=False)
+            requests.get(url, timeout=10)
         except Exception as e:
             self._handleError(f"Failed to start Convert Library: {e}")
             return
@@ -47,7 +47,7 @@ class TaskConvertLibraryRun(CalibreTask):
                 try:
                     import requests
                     url = helper.get_internal_api_url("/convert-library-cancel")
-                    requests.get(url, timeout=5, verify=False)
+                    requests.get(url, timeout=5)
                 except Exception:
                     pass
                 # treat as clean end; UI already shows cancelled/ended state
@@ -101,7 +101,7 @@ class TaskEpubFixerRun(CalibreTask):
         try:
             import requests
             url = helper.get_internal_api_url("/cwa-epub-fixer-start")
-            requests.get(url, timeout=10, verify=False)
+            requests.get(url, timeout=10)
         except Exception as e:
             self._handleError(f"Failed to start EPUB Fixer: {e}")
             return
@@ -112,7 +112,7 @@ class TaskEpubFixerRun(CalibreTask):
                 try:
                     import requests
                     url = helper.get_internal_api_url("/epub-fixer-cancel")
-                    requests.get(url, timeout=5, verify=False)
+                    requests.get(url, timeout=5)
                 except Exception:
                     pass
                 return

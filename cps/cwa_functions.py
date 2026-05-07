@@ -535,7 +535,6 @@ def cwa_internal_reconnect_db():
         log.error(f"Internal reconnect-db failed: {e}")
         return jsonify({"error": str(e)}), 400
 
-@csrf.exempt
 @cwa_stats.route('/cwa-scheduled/cancel', methods=["POST"])
 @login_required_if_no_ano
 @admin_required
@@ -1809,7 +1808,7 @@ def schedule_convert_library(delay: int):
         username = getattr(current_user, 'name', 'System') or 'System'
         url = helper.get_internal_api_url("/cwa-internal/schedule-convert-library")
         resp = requests.post(url, json={"delay_minutes": delay, "username": username},
-                             headers=get_internal_api_headers(), timeout=10, verify=False)
+                             headers=get_internal_api_headers(), timeout=10)
         if resp.ok:
             flash(_(f"Convert Library scheduled in {delay} minute(s)."), category="success")
         else:
@@ -1962,7 +1961,7 @@ def schedule_epub_fixer(delay: int):
         username = getattr(current_user, 'name', 'System') or 'System'
         url = helper.get_internal_api_url("/cwa-internal/schedule-epub-fixer")
         resp = requests.post(url, json={"delay_minutes": delay, "username": username},
-                             headers=get_internal_api_headers(), timeout=10, verify=False)
+                             headers=get_internal_api_headers(), timeout=10)
         if resp.ok:
             flash(_(f"EPUB Fixer scheduled in {delay} minute(s)."), category="success")
         else:

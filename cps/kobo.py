@@ -1203,6 +1203,7 @@ def HandleBookDeletionRequest(book_uuid):
 @csrf.exempt
 @kobo.route("/v1/library/<dummy>", methods=["DELETE", "GET", "POST"])
 @kobo.route("/v1/library/<dummy>/preview", methods=["POST"])
+@requires_kobo_auth
 def HandleUnimplementedRequest(dummy=None):
     log.debug(f"Unimplemented Library Request received: %s (%s)",
               request.base_url,
@@ -1218,6 +1219,7 @@ def HandleUnimplementedRequest(dummy=None):
 @kobo.route("/v1/user/recommendations", methods=["GET", "POST"])
 @kobo.route("/v1/analytics/<dummy>", methods=["GET", "POST"])
 @kobo.route("/v1/assets", methods=["GET"])
+@requires_kobo_auth
 def HandleUserRequest(dummy=None):
     log.debug("Unimplemented User Request received: %s (%s)",
               request.base_url,
@@ -1227,6 +1229,7 @@ def HandleUserRequest(dummy=None):
 
 @csrf.exempt
 @kobo.route("/v1/user/loyalty/benefits", methods=["GET"])
+@requires_kobo_auth
 def handle_benefits():
     if config.config_kobo_proxy:
         return redirect_or_proxy_request()
@@ -1236,6 +1239,7 @@ def handle_benefits():
 
 @csrf.exempt
 @kobo.route("/v1/analytics/gettests", methods=["GET", "POST"])
+@requires_kobo_auth
 def handle_getests():
     if config.config_kobo_proxy:
         return redirect_or_proxy_request()
@@ -1264,6 +1268,7 @@ def handle_getests():
 @kobo.route("/v1/categories/<dummy>", methods=["GET", "POST"])
 @kobo.route("/v1/categories/<dummy>/featured", methods=["GET", "POST"])
 @kobo.route("/v1/categories/<dummy>/products")
+@requires_kobo_auth
 def HandleProductsRequest(dummy=None):
     log.debug(f"Unimplemented Products Request received: %s (%s)",
               request.base_url,

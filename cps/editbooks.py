@@ -785,7 +785,6 @@ def _queue_duplicate_scan_after_change():
             json={"delay_seconds": delay_seconds},
             headers=get_internal_api_headers(),
             timeout=5,
-            verify=False,
         )
     except Exception as e:
         log.error("Failed to queue duplicate scan after change: %s", str(e))
