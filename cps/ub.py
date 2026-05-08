@@ -302,6 +302,11 @@ class User(UserBase, Base):
     auto_send_enabled = Column(Boolean, default=False)
     # Allow entering additional email addresses on send-to-eReader
     allow_additional_ereader_emails = Column(Boolean, default=True)
+    # Password reset via one-time link (replaces emailing the new password
+    # in cleartext). Token is a URL-safe random string; expires_at is set on
+    # generation and cleared on use or expiry.
+    password_reset_token = Column(String, default=None)
+    password_reset_expires = Column(DateTime, nullable=True)
 
 
 if oauth_support:
@@ -1097,6 +1102,19 @@ def migrate_user_table(engine, _session):
     except exc.OperationalError:
         _safe_session_rollback(_session, "user.kindle_mail_subject")
         _run_ddl_with_retry(engine, "ALTER TABLE user ADD column 'kindle_mail_subject' String DEFAULT ''")
+
+    # Migration for password-reset token columns
+    password_reset_columns = (
+        (User.password_reset_token, "password_reset_token", "String DEFAULT NULL"),
+        (User.password_reset_expires, "password_reset_expires", "DateTime DEFAULT NULL"),
+    )
+    for column, name, ddl_type in password_reset_columns:
+        try:
+            _session.query(exists().where(column)).scalar()
+            _session.commit()
+        except exc.OperationalError:
+            _safe_session_rollback(_session, f"user.{name}")
+            _run_ddl_with_retry(engine, f"ALTER TABLE user ADD column '{name}' {ddl_type}")
 
     # Migration to enable duplicates sidebar for existing admin users (one-time)
     try:

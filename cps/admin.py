@@ -2776,6 +2776,11 @@ def _handle_edit_user(to_save, content, languages, translations, kobo_support):
             content.role &= ~constants.ROLE_ANONYMOUS
             if to_save.get("password", ""):
                 content.password = generate_password_hash(helper.valid_password(to_save.get("password", "")))
+                try:
+                    from .kobo_auth import revoke_kobo_tokens_for_user
+                    revoke_kobo_tokens_for_user(content.id)
+                except Exception as kobo_revoke_err:
+                    log.warning("Could not revoke Kobo tokens after admin password change: %s", kobo_revoke_err)
 
         new_email = valid_email(to_save.get("email", content.email))
         if not new_email:

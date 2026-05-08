@@ -741,6 +741,87 @@ def reset_password(user_id):
         return 0, None
 
 
+PASSWORD_RESET_TOKEN_TTL = timedelta(hours=1)
+
+
+def generate_password_reset_link(user_id, host_url):
+    """Issue a one-time password-reset link for the given user.
+
+    Replaces emailing the new cleartext password. The token is stored
+    hashed-equivalent via secrets.token_urlsafe (treated as opaque) and
+    expires after PASSWORD_RESET_TOKEN_TTL.
+
+    Returns (status, username):
+      1 = email queued, 0 = unknown error, 2 = mail server not configured.
+    """
+    import secrets
+    existing_user = ub.session.query(ub.User).filter(ub.User.id == user_id).first()
+    if not existing_user:
+        return 0, None
+    if not config.get_mail_server_configured():
+        return 2, None
+    try:
+        token = secrets.token_urlsafe(32)
+        existing_user.password_reset_token = token
+        existing_user.password_reset_expires = datetime.utcnow() + PASSWORD_RESET_TOKEN_TTL
+        ub.session.commit()
+        reset_url = "{}reset-password/{}".format(host_url, token)
+        txt = (
+            "Hi %s!\r\n"
+            "A password reset was requested for your Calibre-Web Automated account.\r\n"
+            "Click the link below within %d minutes to set a new password:\r\n\r\n"
+            "%s\r\n\r\n"
+            "If you did not request this, you can safely ignore this email — your\r\n"
+            "current password will continue to work.\r\n\r\n"
+            "Regards,\r\nCalibre-Web Automated"
+        ) % (existing_user.name, int(PASSWORD_RESET_TOKEN_TTL.total_seconds() // 60), reset_url)
+        WorkerThread.add(None, TaskEmail(
+            subject=_('Password reset for Calibre-Web Automated'),
+            filepath=None,
+            attachment=None,
+            settings=config.get_mail_settings(),
+            recipient=existing_user.email,
+            task_message=N_("Password reset email for user: %(name)s", name=existing_user.name),
+            text=txt
+        ))
+        return 1, existing_user.name
+    except Exception as e:
+        log.error("Failed to generate password reset link: %s", e)
+        ub.session.rollback()
+        return 0, None
+
+
+def consume_password_reset_token(token):
+    """Look up a password-reset token and return the User if valid, else None.
+
+    The caller is responsible for clearing the token after a successful
+    password update so it cannot be replayed. Expired tokens are cleared here.
+    """
+    if not token:
+        return None
+    user = ub.session.query(ub.User).filter(ub.User.password_reset_token == token).first()
+    if not user:
+        return None
+    if not user.password_reset_expires or datetime.utcnow() > user.password_reset_expires:
+        try:
+            user.password_reset_token = None
+            user.password_reset_expires = None
+            ub.session.commit()
+        except Exception:
+            ub.session.rollback()
+        return None
+    return user
+
+
+def clear_password_reset_token(user):
+    try:
+        user.password_reset_token = None
+        user.password_reset_expires = None
+        ub.session.commit()
+    except Exception:
+        ub.session.rollback()
+
+
 def generate_random_password(min_length):
     min_length = max(8, min_length) - 4
     random_source = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%&*()?"

@@ -5,7 +5,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # See CONTRIBUTORS for full list of authors.
 
+import threading
+from collections import defaultdict, deque
 from functools import wraps
+from time import monotonic
 
 from sqlalchemy.sql.expression import func
 from .cw_login import login_required
@@ -20,6 +23,40 @@ from . import lm, ub, config, logger, limiter, constants, services
 
 log = logger.create()
 auth = HTTPBasicAuth()
+
+# Per-IP sliding-window failure throttle for HTTP Basic auth (OPDS / API).
+# Flask-Limiter is route-decorator based, but the basic-auth check happens inside
+# verify_password and would otherwise be unprotected against attackers spreading
+# attempts across many usernames. Limit is intentionally generous so that a
+# stray password mistype on a Kobo / OPDS client does not lock anyone out.
+_BASIC_AUTH_FAIL_WINDOW = 60.0   # seconds
+_BASIC_AUTH_FAIL_LIMIT = 20      # failures per IP per window
+_basic_auth_fail_lock = threading.Lock()
+_basic_auth_failures = defaultdict(deque)
+
+
+def _basic_auth_rate_limited(ip):
+    if not ip:
+        return False
+    now = monotonic()
+    cutoff = now - _BASIC_AUTH_FAIL_WINDOW
+    with _basic_auth_fail_lock:
+        dq = _basic_auth_failures[ip]
+        while dq and dq[0] < cutoff:
+            dq.popleft()
+        return len(dq) >= _BASIC_AUTH_FAIL_LIMIT
+
+
+def _basic_auth_record_failure(ip):
+    if not ip:
+        return
+    now = monotonic()
+    cutoff = now - _BASIC_AUTH_FAIL_WINDOW
+    with _basic_auth_fail_lock:
+        dq = _basic_auth_failures[ip]
+        dq.append(now)
+        while dq and dq[0] < cutoff:
+            dq.popleft()
 
 
 def create_authenticated_user(username, email=None, auth_source="unknown"):
@@ -87,8 +124,12 @@ def create_authenticated_user(username, email=None, auth_source="unknown"):
 
 @auth.verify_password
 def verify_password(username, password):
+    ip_address = request.remote_addr
+    if _basic_auth_rate_limited(ip_address):
+        log.warning('OPDS/API basic-auth rate-limit hit for IP %s (user "%s")', ip_address, username)
+        return None
     user = ub.session.query(ub.User).filter(func.lower(ub.User.name) == username.lower()).first()
-    
+
     # Handle existing users
     if user:
         if user.name.lower() == "guest":
@@ -133,8 +174,8 @@ def verify_password(username, password):
             log.error("LDAP auto-creation error for OPDS user '%s': %s", username, ex)
     
     # Use request.remote_addr (already corrected by ProxyFix) instead of raw header
-    ip_address = request.remote_addr
     log.warning('OPDS Login failed for user "%s" IP-address: %s', username, ip_address)
+    _basic_auth_record_failure(ip_address)
     return None
 
 

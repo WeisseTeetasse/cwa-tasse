@@ -251,9 +251,41 @@ def requires_kobo_auth(f):
                     request.method,
                     request.path,
                 )
-                login_user(user)
+                # Authenticate the user for this request only: pass remember=False
+                # so we don't issue a long-lived Flask-Login remember-me cookie
+                # that could be exfiltrated alongside (or after) the auth_token
+                # to gain a full browser session. The transient Flask session
+                # cookie is still set, but the device-bound auth_token is the
+                # actual long-lived credential.
+                login_user(user, remember=False)
                 [limiter.limiter.storage.clear(k.key) for k in limiter.current_limits]
                 return f(*args, **kwargs)
         log.debug("Received Kobo request without a recognizable auth token.")
         return abort(401)
     return inner
+
+
+def revoke_kobo_tokens_for_user(user_id):
+    """Delete all Kobo device auth tokens for the given user.
+
+    Called after a password change so that previously paired devices have to
+    re-authenticate. Returns the number of tokens removed.
+    """
+    try:
+        deleted = (
+            ub.session.query(ub.RemoteAuthToken)
+            .filter(ub.RemoteAuthToken.user_id == user_id)
+            .filter(ub.RemoteAuthToken.token_type == 1)
+            .delete(synchronize_session=False)
+        )
+        ub.session_commit()
+        if deleted:
+            log.info("Revoked %d Kobo auth token(s) for user_id=%s after password change", deleted, user_id)
+        return deleted
+    except Exception as e:
+        log.warning("Failed to revoke Kobo auth tokens for user_id=%s: %s", user_id, e)
+        try:
+            ub.session.rollback()
+        except Exception:
+            pass
+        return 0

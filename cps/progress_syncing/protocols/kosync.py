@@ -46,7 +46,9 @@ from werkzeug.security import check_password_hash
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 
-from ... import logger, ub, csrf, config, constants, services, usermanagement, calibre_db, db
+from flask_limiter.util import get_remote_address
+
+from ... import logger, ub, csrf, config, constants, services, usermanagement, calibre_db, db, limiter
 from ...render_template import render_title_template
 from ...services.worker import WorkerThread
 from ...tasks.hardcover_state_sync import TaskHardcoverStateSync
@@ -461,6 +463,8 @@ def kosync_plugin_page():
 
 @csrf.exempt
 @kosync.route("/kosync/users/auth", methods=["GET"])
+@limiter.limit("100/day", key_func=get_remote_address)
+@limiter.limit("10/minute", key_func=get_remote_address)
 def auth_user():
     """
     Authenticate user endpoint (KOSync protocol).
