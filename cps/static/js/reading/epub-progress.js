@@ -45,14 +45,26 @@ function calculateProgress(){
     });
 })();
 
+// Gate localStorage writes until the initial restore step has decided where to
+// place the cursor. Otherwise the reader's own start-of-book locationchange
+// events fire BEFORE restore runs, calculateProgress() returns 0, and we
+// persist "0" to localStorage. On the next restore that "0" is truthy and
+// shadows the kosyncPercent hint forever — so a book that you have read to
+// 12 percent on a Kobo / KOReader device opens at 0 percent in the webreader.
+let restoreComplete = false;
+
 window.addEventListener('locationchange',()=>{
     let newPos=calculateProgress();
     if (progressDiv) {
         progressDiv.textContent=newPos+"%";
     }
-    // Save progress to localStorage per book
-    if (window.calibre && window.calibre.bookUrl) {
-        // Use bookUrl as a unique key, or use bookid if available
+    if (!restoreComplete) {
+        return;
+    }
+    // Save progress to localStorage per book. Don't store 0 — there's nothing
+    // to restore from "you are at the start", and persisting 0 would shadow
+    // any future kosync hint.
+    if (window.calibre && window.calibre.bookUrl && newPos > 0) {
         let bookKey = window.calibre.bookUrl;
         localStorage.setItem("calibre.reader.progress." + bookKey, newPos);
     }
@@ -64,32 +76,39 @@ let progressDiv=document.getElementById("progress");
 
 qFinished(()=>{
     if (!epub || !epub.locations) {
+        restoreComplete = true;
         return;
     }
     epub.locations.generate().then(()=> {
-        // Restore progress from localStorage if available
+        // Choose the best starting position:
+        //   1. local progress (you've read past 0% in the browser)
+        //   2. kosync hint from the device (no browser progress yet)
+        //   3. start of book
+        // CWA bookmarks (the manual bookmark icon) are still respected via
+        // window.calibre.bookmark — we just don't shadow the kosync hint with
+        // them, since users typically expect "where I left off on my device"
+        // not "where I last manually bookmarked".
         if (window.calibre && window.calibre.bookUrl && reader && reader.rendition) {
             let bookKey = window.calibre.bookUrl;
-            let savedProgress = localStorage.getItem("calibre.reader.progress." + bookKey);
+            // Treat missing / "0" / unparseable values as no local progress.
+            let savedProgress = parseInt(localStorage.getItem("calibre.reader.progress." + bookKey) || "0", 10);
             let hasBookmark = window.calibre.bookmark && window.calibre.bookmark.length > 0;
-            if (savedProgress) {
-                // Try to jump to the saved progress (percentage)
-                let percentage = parseInt(savedProgress, 10) / 100;
-                let cfi = epub.locations.cfiFromPercentage(percentage);
+            let kosyncPercent = parseFloat(window.calibre.kosyncPercent);
+            let targetPercentage = null;
+            if (savedProgress > 0) {
+                targetPercentage = savedProgress / 100;
+            } else if (!hasBookmark && !isNaN(kosyncPercent) && kosyncPercent > 0) {
+                targetPercentage = kosyncPercent / 100;
+            }
+            if (targetPercentage !== null) {
+                let cfi = epub.locations.cfiFromPercentage(targetPercentage);
                 if (cfi) {
                     reader.rendition.display(cfi);
                 }
-            } else if (!hasBookmark && window.calibre.kosyncPercent !== null && window.calibre.kosyncPercent !== undefined) {
-                let kosyncPercent = parseFloat(window.calibre.kosyncPercent);
-                if (!isNaN(kosyncPercent) && kosyncPercent > 0) {
-                    let percentage = kosyncPercent / 100;
-                    let cfi = epub.locations.cfiFromPercentage(percentage);
-                    if (cfi) {
-                        reader.rendition.display(cfi);
-                    }
-                }
             }
         }
+        // From this point on, locationchange handlers may persist new positions.
+        restoreComplete = true;
         window.dispatchEvent(new Event('locationchange'))
     });
 })
