@@ -66,6 +66,27 @@ This fork currently carries these local changes on top of upstream CWA:
    - Fixed circular import between `cps.helper` and `cps.tasks.convert` that caused `TaskConvert` to fail in the durable worker.
    - Added task deduplication for KEPUB conversions: `convert:{book_id}:{old_fmt}:{new_fmt}` ensures only one active conversion job exists per book/format pair during Kobo sync polling.
 
+12. Finished-book write-back fixes for Hardcover and CWA shelves.
+   - When Kobo / KOReader marks a book finished, the Hardcover sync no longer pushes `progress_pages = total_pages` for already-finished books — Hardcover's API auto-flips status to `STATUS_READ` on a 100% progress write, which silently moved books from "currently reading" to "read" on the device's behalf. Progress push is now skipped via `_is_book_read()`.
+   - Finished books are no longer re-added to the CWA "Currently Reading" shelf by the next Hardcover poll. `sync_user()` now treats a locally-finished row as `pushed_status=True` so the pull path doesn't re-shelf it.
+   - The configured "Up Next" Hardcover tag is removed from a book when Kobo finishes it, instead of staying attached forever.
+
+13. Memory leak fix in the durable worker.
+   - `cps_worker.py` was creating a new SQLAlchemy engine on every poll and never disposing it, leaking ~37 MB/min over multi-day runs. The worker now uses a single shared engine for the process lifetime.
+
+14. Security hardening.
+   - **`/cwa-internal/*` endpoints** (used internally by ingest, schedulers, and EPUB fixer) now require an HMAC-comparable shared token written to `<CONFIG_DIR>/.cwa_internal_token` at boot. Replaces the previous spoofable `X-Forwarded-For: 127.0.0.1` check. All in-process and out-of-process callers (`cps.editbooks`, `cps.cwa_functions`, `scripts/ingest_processor.py`) attach the token via `X-CWA-Internal-Token`.
+   - 12 previously unauthenticated admin / diagnostic routes (Convert Library, EPUB Fixer pages, log download, status JSON) are now gated by `@login_required_if_no_ano + @admin_required`.
+   - Login `forgot-password` flow no longer emails a freshly generated cleartext password. It now issues a one-time URL-safe token (1 hour TTL, `secrets.token_urlsafe(32)`) via `/reset-password/<token>`. New `password_reset_token` / `password_reset_expires` columns on `User` with idempotent migration.
+   - `/login` POST adds per-IP buckets (100/day + 10/minute) on top of the existing username-keyed limit, so an attacker cannot spread attempts across many usernames to bypass throttling. `/kosync/users/auth` gets the same per-IP bucket. HTTP Basic auth (OPDS / API) gains an in-process sliding-window throttle (20 failures per IP per 60 s) inside `verify_password`, since flask-limiter decorators don't reach the basic-auth callback.
+   - Kobo `requires_kobo_auth` now calls `login_user(user, remember=False)` so the long-lived remember-me cookie cannot be exfiltrated alongside the device-bound `auth_token`. New `revoke_kobo_tokens_for_user(user_id)` helper deletes all Kobo `RemoteAuthToken` rows for a user — hooked into self-edit, admin user-edit, and password-reset paths so a password change forces Kobo devices to re-pair.
+   - Forgot-password no longer leaks which usernames exist (single generic flash message either way). `ORDER BY` on the books listing whitelists `("asc", "desc", "")` to close a `text()`-injected SQLi vector. `get_redirect_location()` now actually calls `is_safe_url()` so a crafted post-login `?next=` cannot redirect off-host.
+   - JS-side: `/cwa-scheduled/cancel` is no longer `@csrf.exempt` — the admin tasks page sends the CSRF token as `X-CSRFToken`. The `verify=False` flag was removed from all 11 internal loopback `requests` calls. The 5 remaining unguarded Kobo stub handlers (`HandleUnimplementedRequest`, `HandleUserRequest`, `handle_benefits`, `handle_getests`, `HandleProductsRequest`) now require `@requires_kobo_auth`.
+
+15. EPUB webreader opens at the KOReader / Kobo reading position.
+   - On opening a book in the webreader, the route already pulled the latest `KoboReadingState.current_bookmark.progress_percent` (written by both the kosync KOReader protocol and native Kobo sync) and exposed it to the JS as `kosyncPercent`. The webreader now actually uses it: when there is no local browser progress and no manual CWA bookmark for the book, it jumps to the device-reported percentage. Read-only — the webreader never writes back to `KoboReadingState` or to the kosync server.
+   - Fixed the priority logic so the device hint is no longer permanently shadowed by a stale `"0"` written to `localStorage` during the reader's initial load. Local progress now has to be strictly `> 0` to win, and locationchange writes are gated on a `restoreComplete` flag so the reader's own start-of-book events can't pollute storage before the restore decision runs.
+
 Deployment helper scripts, private hostnames/IP addresses, image tarballs, and personal
 runtime configuration are intentionally not part of this public branch.
 
