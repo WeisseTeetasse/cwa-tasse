@@ -71,10 +71,7 @@ This fork currently carries these local changes on top of upstream CWA:
    - Finished books are no longer re-added to the CWA "Currently Reading" shelf by the next Hardcover poll. `sync_user()` now treats a locally-finished row as `pushed_status=True` so the pull path doesn't re-shelf it.
    - The configured "Up Next" Hardcover tag is removed from a book when Kobo finishes it, instead of staying attached forever.
 
-13. Memory leak fix in the durable worker.
-   - `cps_worker.py` was creating a new SQLAlchemy engine on every poll and never disposing it, leaking ~37 MB/min over multi-day runs. The worker now uses a single shared engine for the process lifetime.
-
-14. Security hardening.
+13. Security hardening.
    - **`/cwa-internal/*` endpoints** (used internally by ingest, schedulers, and EPUB fixer) now require an HMAC-comparable shared token written to `<CONFIG_DIR>/.cwa_internal_token` at boot. Replaces the previous spoofable `X-Forwarded-For: 127.0.0.1` check. All in-process and out-of-process callers (`cps.editbooks`, `cps.cwa_functions`, `scripts/ingest_processor.py`) attach the token via `X-CWA-Internal-Token`.
    - 12 previously unauthenticated admin / diagnostic routes (Convert Library, EPUB Fixer pages, log download, status JSON) are now gated by `@login_required_if_no_ano + @admin_required`.
    - Login `forgot-password` flow no longer emails a freshly generated cleartext password. It now issues a one-time URL-safe token (1 hour TTL, `secrets.token_urlsafe(32)`) via `/reset-password/<token>`. New `password_reset_token` / `password_reset_expires` columns on `User` with idempotent migration.
@@ -83,7 +80,7 @@ This fork currently carries these local changes on top of upstream CWA:
    - Forgot-password no longer leaks which usernames exist (single generic flash message either way). `ORDER BY` on the books listing whitelists `("asc", "desc", "")` to close a `text()`-injected SQLi vector. `get_redirect_location()` now actually calls `is_safe_url()` so a crafted post-login `?next=` cannot redirect off-host.
    - JS-side: `/cwa-scheduled/cancel` is no longer `@csrf.exempt` — the admin tasks page sends the CSRF token as `X-CSRFToken`. The `verify=False` flag was removed from all 11 internal loopback `requests` calls. The 5 remaining unguarded Kobo stub handlers (`HandleUnimplementedRequest`, `HandleUserRequest`, `handle_benefits`, `handle_getests`, `HandleProductsRequest`) now require `@requires_kobo_auth`.
 
-15. EPUB webreader opens at the KOReader / Kobo reading position.
+14. EPUB webreader opens at the KOReader / Kobo reading position.
    - On opening a book in the webreader, the route already pulled the latest `KoboReadingState.current_bookmark.progress_percent` (written by both the kosync KOReader protocol and native Kobo sync) and exposed it to the JS as `kosyncPercent`. The webreader now actually uses it: when there is no local browser progress and no manual CWA bookmark for the book, it jumps to the device-reported percentage. Read-only — the webreader never writes back to `KoboReadingState` or to the kosync server.
    - Fixed the priority logic so the device hint is no longer permanently shadowed by a stale `"0"` written to `localStorage` during the reader's initial load. Local progress now has to be strictly `> 0` to win, and locationchange writes are gated on a `restoreComplete` flag so the reader's own start-of-book events can't pollute storage before the restore decision runs.
 
