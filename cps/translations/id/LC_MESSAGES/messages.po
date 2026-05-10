@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version:  Calibre-Web Automated\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-05-02 08:25+0000\n"
+"POT-Creation-Date: 2026-05-10 09:19+0000\n"
 "PO-Revision-Date: 2023-01-21 10:00+0700\n"
 "Last-Translator: Arief Hidayat<arihid95@gmail.com>\n"
 "Language-Team: Arief Hidayat <arihid95@gmail.com>\n"
@@ -125,7 +125,7 @@ msgid "UI Configuration"
 msgstr "Pengaturan Antarmuka"
 
 #: cps/admin.py:620 cps/admin.py:1302 cps/db.py:1025 cps/search.py:153
-#: cps/web.py:863
+#: cps/web.py:865
 #, python-format
 msgid "Custom Column No.%(column)d does not exist in calibre database"
 msgstr "Kolom Kustom No.%(column)d tidak ada di basis data kaliber"
@@ -158,7 +158,7 @@ msgstr "Tampilkan semua"
 msgid "Malformed request"
 msgstr "Permintaan salah"
 
-#: cps/admin.py:785 cps/admin.py:2786
+#: cps/admin.py:785 cps/admin.py:2793
 msgid "Guest Name can't be changed"
 msgstr "Nama Tamu tidak dapat diganti"
 
@@ -166,7 +166,7 @@ msgstr "Nama Tamu tidak dapat diganti"
 msgid "Guest can't have this role"
 msgstr "Tamu tidak dapat memiliki peran ini"
 
-#: cps/admin.py:811 cps/admin.py:2611
+#: cps/admin.py:811 cps/admin.py:2613
 msgid "No admin user remaining, can't remove admin role"
 msgstr ""
 "Tidak ada pengguna admin yang tersisa, tidak dapat menghapus peran admin"
@@ -211,7 +211,7 @@ msgstr "Kolom Baca Tidak Valid"
 msgid "Invalid Restricted Column"
 msgstr "Kolom Dibatasi Tidak Valid"
 
-#: cps/admin.py:914 cps/admin.py:2459
+#: cps/admin.py:914 cps/admin.py:2461
 #, fuzzy
 msgid "Calibre-Web Automated configuration updated"
 msgstr "Pengaturan Calibre-Web telah diperbarui"
@@ -394,11 +394,11 @@ msgstr "Edit Pengaturan Server Email"
 msgid "Success! Gmail Account Verified."
 msgstr ""
 
-#: cps/admin.py:1743 cps/admin.py:1746 cps/admin.py:2232 cps/admin.py:2443
-#: cps/admin.py:2558 cps/admin.py:2829 cps/editbooks.py:1042
+#: cps/admin.py:1743 cps/admin.py:1746 cps/admin.py:2234 cps/admin.py:2445
+#: cps/admin.py:2560 cps/admin.py:2836 cps/editbooks.py:1042
 #: cps/editbooks.py:1816 cps/shelf.py:98 cps/shelf.py:158 cps/shelf.py:225
 #: cps/shelf.py:275 cps/shelf.py:312 cps/shelf.py:386 cps/shelf.py:508
-#: cps/tasks/convert.py:145 cps/web.py:2749
+#: cps/tasks/convert.py:145 cps/web.py:2812
 #, python-format
 msgid "Oops! Database Error: %(error)s."
 msgstr "Kesalahan basis data: %(error)s"
@@ -440,7 +440,7 @@ msgstr "Durasi tidak valid untuk tugas yang ditentukan"
 msgid "Scheduled tasks settings updated"
 msgstr "Pengaturan tugas terjadwal diperbarui"
 
-#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2825 cps/web.py:2146
+#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2832 cps/web.py:2152
 msgid "Oops! An unknown error occurred. Please try again later."
 msgstr "Terjadi kesalahan yang tidak diketahui. Coba lagi nanti."
 
@@ -448,12 +448,12 @@ msgstr "Terjadi kesalahan yang tidak diketahui. Coba lagi nanti."
 msgid "Settings DB is not Writeable"
 msgstr "Pengaturan DB tidak dapat ditulisi"
 
-#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2661 cps/web.py:2800
+#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2720 cps/web.py:2863
 #, fuzzy
 msgid "title"
 msgstr "Judul"
 
-#: cps/admin.py:1949 cps/admin.py:2817
+#: cps/admin.py:1949 cps/admin.py:2824
 #, python-format
 msgid "Edit User %(nick)s"
 msgstr "Edit pengguna %(nick)s"
@@ -556,216 +556,216 @@ msgstr "Setidaknya Satu Pengguna LDAP Tidak Ditemukan di Basis Data"
 msgid "{} User Successfully Imported"
 msgstr "{} Pengguna Berhasil Diimpor"
 
-#: cps/admin.py:2244
+#: cps/admin.py:2246
 msgid "Books path not valid"
 msgstr ""
 
-#: cps/admin.py:2251
+#: cps/admin.py:2253
 msgid "DB Location is not Valid, Please Enter Correct Path"
 msgstr "Lokasi Basis Data tidak Valid, Harap Masukkan Jalur yang Benar"
 
-#: cps/admin.py:2279
+#: cps/admin.py:2281
 msgid "DB is not Writeable"
 msgstr "Basis Data tidak dapat ditulisi"
 
-#: cps/admin.py:2292
+#: cps/admin.py:2294
 msgid "Keyfile Location is not Valid, Please Enter Correct Path"
 msgstr "Lokasi keyfile tidak Valid, Harap Masukkan Jalur yang Benar "
 
-#: cps/admin.py:2296
+#: cps/admin.py:2298
 msgid "Certfile Location is not Valid, Please Enter Correct Path"
 msgstr "Lokasi Sertifikat tidak Valid, Harap Masukkan Jalur yang Benar "
 
-#: cps/admin.py:2365
+#: cps/admin.py:2367
 msgid ""
 "Auto-create users cannot be enabled without enabling reverse proxy "
 "authentication"
 msgstr ""
 
-#: cps/admin.py:2368
+#: cps/admin.py:2370
 msgid "Auto-create users requires a valid reverse proxy header name"
 msgstr ""
 
-#: cps/admin.py:2387 cps/admin.py:2394
+#: cps/admin.py:2389 cps/admin.py:2396
 msgid ""
 "Invalid OAuth Redirect Host format. Please include the full URL with "
 "protocol (e.g., https://your-domain.com)"
 msgstr ""
 
-#: cps/admin.py:2391
+#: cps/admin.py:2393
 msgid ""
 "OAuth Redirect Host should not include a path. Use only the base URL (e.g., "
 "https://your-domain.com)"
 msgstr ""
 
-#: cps/admin.py:2426
+#: cps/admin.py:2428
 msgid "Password length has to be between 1 and 40"
 msgstr ""
 
-#: cps/admin.py:2486
+#: cps/admin.py:2488
 msgid "Database Settings updated"
 msgstr "Pengaturan Basis Data diperbarui"
 
-#: cps/admin.py:2494
+#: cps/admin.py:2496
 msgid "Database Configuration"
 msgstr "Pengaturan Basis Data"
 
-#: cps/admin.py:2514 cps/web.py:2115
+#: cps/admin.py:2516 cps/web.py:2121
 msgid "Oops! Please complete all fields."
 msgstr "Harap masukkan seluruh isian!"
 
-#: cps/admin.py:2523
+#: cps/admin.py:2525
 msgid "E-mail is not from valid domain"
 msgstr "Email bukan dari domain yang valid"
 
-#: cps/admin.py:2531
+#: cps/admin.py:2533
 msgid "Add new user"
 msgstr "Tambahkan pengguna baru"
 
-#: cps/admin.py:2548
+#: cps/admin.py:2550
 #, python-format
 msgid "User '%(user)s' created"
 msgstr "Pengguna '%(user)s' telah dibuat"
 
-#: cps/admin.py:2554
+#: cps/admin.py:2556
 msgid "Oops! An account already exists for this Email. or name."
 msgstr "Ditemukan akun yang ada untuk alamat email atau nama ini."
 
-#: cps/admin.py:2584
+#: cps/admin.py:2586
 #, python-format
 msgid "User '%(nick)s' deleted"
 msgstr "Pengguna '%(nick)s' telah dihapus"
 
-#: cps/admin.py:2587
+#: cps/admin.py:2589
 msgid "Can't delete Guest User"
 msgstr "Tidak dapat menghapus Pengguna Tamu"
 
-#: cps/admin.py:2590
+#: cps/admin.py:2592
 msgid "No admin user remaining, can't delete user"
 msgstr "Tidak ada pengguna admin tersisa, tidak dapat menghapus pengguna"
 
-#: cps/admin.py:2780 cps/web.py:2450
+#: cps/admin.py:2787 cps/web.py:2509
 msgid "Email can't be empty and has to be a valid Email"
 msgstr "Alamat email tidak boleh kosong dan harus berupa email yang valid"
 
-#: cps/admin.py:2821
+#: cps/admin.py:2828
 #, python-format
 msgid "User '%(nick)s' updated"
 msgstr "Pengguna '%(nick)s' diperbarui"
 
-#: cps/admin.py:2886
+#: cps/admin.py:2893
 #, python-format
 msgid ""
 "Connection successful! OIDC discovery endpoint is accessible.%(endpoints)s"
 msgstr ""
 
-#: cps/admin.py:2891
+#: cps/admin.py:2898
 msgid ""
 "Connection failed: OIDC discovery endpoint not found (404). Check if the "
 "base URL is correct."
 msgstr ""
 
-#: cps/admin.py:2893 cps/admin.py:2950
+#: cps/admin.py:2900 cps/admin.py:2957
 #, python-format
 msgid "Connection failed: Server returned status code %(code)s"
 msgstr ""
 
-#: cps/admin.py:2895
+#: cps/admin.py:2902
 msgid ""
 "Connection failed: Could not connect to server. Check the URL and network "
 "connectivity."
 msgstr ""
 
-#: cps/admin.py:2897
+#: cps/admin.py:2904
 msgid ""
 "Connection failed: Request timed out. The server may be slow or unreachable."
 msgstr ""
 
-#: cps/admin.py:2899
+#: cps/admin.py:2906
 msgid ""
 "Connection failed: Server returned invalid JSON. This may not be an OIDC "
 "endpoint."
 msgstr ""
 
-#: cps/admin.py:2902
+#: cps/admin.py:2909
 #, fuzzy, python-format
 msgid "Connection failed: %(error)s"
 msgstr "Kesalahan koneksi"
 
-#: cps/admin.py:2928
+#: cps/admin.py:2935
 #, python-format
 msgid ""
 "Metadata is missing required OIDC fields: %(fields)s. This may not be a "
 "valid OIDC metadata endpoint."
 msgstr ""
 
-#: cps/admin.py:2939
+#: cps/admin.py:2946
 #, python-format
 msgid "Metadata URL is valid! Found %(count)s OAuth endpoints."
 msgstr ""
 
-#: cps/admin.py:2941
+#: cps/admin.py:2948
 #, fuzzy
 msgid " User info endpoint is available."
 msgstr "Tidak ada informasi rilis yang tersedia"
 
-#: cps/admin.py:2943
+#: cps/admin.py:2950
 msgid ""
 " Note: User info endpoint not found - this may cause authentication issues."
 msgstr ""
 
-#: cps/admin.py:2948
+#: cps/admin.py:2955
 msgid "Metadata URL not found (404). Please check the URL is correct."
 msgstr ""
 
-#: cps/admin.py:2952
+#: cps/admin.py:2959
 msgid ""
 "Connection failed: Could not connect to metadata URL. Check the URL and "
 "network connectivity."
 msgstr ""
 
-#: cps/admin.py:2954
+#: cps/admin.py:2961
 msgid "Connection failed: Request timed out."
 msgstr ""
 
-#: cps/admin.py:2956
+#: cps/admin.py:2963
 msgid "Connection failed: Invalid JSON in response."
 msgstr ""
 
-#: cps/admin.py:2959
+#: cps/admin.py:2966
 #, fuzzy
 msgid "An unknown error occurred."
 msgstr "Terjadi kesalahan yang tidak diketahui. Coba lagi nanti."
 
-#: cps/admin.py:2971
+#: cps/admin.py:2978
 #, fuzzy
 msgid "Restore already in progress."
 msgstr "Kesalahan koneksi"
 
-#: cps/admin.py:2975
+#: cps/admin.py:2982
 msgid "Restore failed: Calibre library path is not configured."
 msgstr ""
 
-#: cps/admin.py:2980
+#: cps/admin.py:2987
 #, python-format
 msgid "Restore failed: metadata.db not found at %(path)s"
 msgstr ""
 
-#: cps/admin.py:2985
+#: cps/admin.py:2992
 #, python-format
 msgid "Restore failed: app.db not found at %(path)s"
 msgstr ""
 
-#: cps/admin.py:3057 cps/admin.py:3097
+#: cps/admin.py:3064 cps/admin.py:3104
 #, fuzzy, python-format
 msgid "Restore failed: %(err)s"
 msgstr "Kesalahan koneksi"
 
-#: cps/admin.py:3074
+#: cps/admin.py:3081
 msgid "Restore completed but app.db cleanup failed. See logs for details."
 msgstr ""
 
-#: cps/admin.py:3093
+#: cps/admin.py:3100
 #, python-format
 msgid ""
 "Restore complete. Backups and restore log saved to %(dir)s. All book-linked "
@@ -890,233 +890,233 @@ msgstr "belum dipasang"
 msgid "Execution permissions missing"
 msgstr "Izin eksekusi hilang"
 
-#: cps/cwa_functions.py:153
+#: cps/cwa_functions.py:154
 msgid "Theme switching is temporarily disabled until v5.0.0"
 msgstr ""
 
-#: cps/cwa_functions.py:252
+#: cps/cwa_functions.py:253
 msgid ""
 "Library Refresh 🔄 Checking for any books that may have been missed, please "
 "wait..."
 msgstr ""
 
-#: cps/cwa_functions.py:849
+#: cps/cwa_functions.py:833
 msgid "Invalid cron expression for duplicate scans. Changes were not saved."
 msgstr ""
 
-#: cps/cwa_functions.py:913
+#: cps/cwa_functions.py:897
 #, fuzzy
 msgid "Calibre-Web Automated User Settings"
 msgstr "Pengaturan Konverter E-Book Caliber"
 
-#: cps/cwa_functions.py:959 cps/cwa_functions.py:961 cps/cwa_functions.py:965
-#: cps/cwa_functions.py:967 cps/cwa_functions.py:970 cps/cwa_functions.py:972
+#: cps/cwa_functions.py:943 cps/cwa_functions.py:945 cps/cwa_functions.py:949
+#: cps/cwa_functions.py:951 cps/cwa_functions.py:954 cps/cwa_functions.py:956
 msgid "Timestamp"
 msgstr ""
 
-#: cps/cwa_functions.py:959 cps/cwa_functions.py:961
+#: cps/cwa_functions.py:943 cps/cwa_functions.py:945
 #: cps/templates/tasks.html:43
 #, fuzzy
 msgid "Book ID"
 msgstr "Buku"
 
-#: cps/cwa_functions.py:959 cps/templates/book_edit.html:83
+#: cps/cwa_functions.py:943 cps/templates/book_edit.html:83
 #: cps/templates/search_form.html:8
 msgid "Book Title"
 msgstr "Judul Buku"
 
-#: cps/cwa_functions.py:959
+#: cps/cwa_functions.py:943
 #, fuzzy
 msgid "Book Author"
 msgstr "Penulis"
 
-#: cps/cwa_functions.py:959
+#: cps/cwa_functions.py:943
 msgid "Trigger Type"
 msgstr ""
 
-#: cps/cwa_functions.py:961 cps/cwa_functions.py:967
+#: cps/cwa_functions.py:945 cps/cwa_functions.py:951
 #, fuzzy
 msgid "Filepath"
 msgstr "Format berkas"
 
-#: cps/cwa_functions.py:965 cps/cwa_functions.py:967 cps/cwa_functions.py:970
-#: cps/cwa_functions.py:972
+#: cps/cwa_functions.py:949 cps/cwa_functions.py:951 cps/cwa_functions.py:954
+#: cps/cwa_functions.py:956
 #, fuzzy
 msgid "Filename"
 msgstr "nama"
 
-#: cps/cwa_functions.py:965
+#: cps/cwa_functions.py:949
 msgid "Manual?"
 msgstr ""
 
-#: cps/cwa_functions.py:965
+#: cps/cwa_functions.py:949
 msgid "No. Fixes"
 msgstr ""
 
-#: cps/cwa_functions.py:965 cps/cwa_functions.py:970 cps/cwa_functions.py:972
+#: cps/cwa_functions.py:949 cps/cwa_functions.py:954 cps/cwa_functions.py:956
 msgid "Original Backed Up?"
 msgstr ""
 
-#: cps/cwa_functions.py:967
+#: cps/cwa_functions.py:951
 msgid "Fixes Applied"
 msgstr ""
 
-#: cps/cwa_functions.py:972
+#: cps/cwa_functions.py:956
 msgid "Original Format"
 msgstr ""
 
-#: cps/cwa_functions.py:972
+#: cps/cwa_functions.py:956
 #, fuzzy
 msgid "End Format"
 msgstr "Format Unggahan"
 
-#: cps/cwa_functions.py:1048 cps/cwa_functions.py:1077
+#: cps/cwa_functions.py:1032 cps/cwa_functions.py:1061
 #, fuzzy
 msgid "Unknown User"
 msgstr "Tidak diketahui"
 
-#: cps/cwa_functions.py:1185
+#: cps/cwa_functions.py:1169
 #, fuzzy
 msgid "Calibre-Web Automated Stats & Activity"
 msgstr "Email tes Calibre-Web"
 
-#: cps/cwa_functions.py:1569
+#: cps/cwa_functions.py:1553
 msgid "Calibre-Web Automated - Full Enforcement History"
 msgstr ""
 
-#: cps/cwa_functions.py:1578
+#: cps/cwa_functions.py:1562
 msgid "Calibre-Web Automated - Full Enforcement History (w/ Paths)"
 msgstr ""
 
-#: cps/cwa_functions.py:1587
+#: cps/cwa_functions.py:1571
 msgid "Calibre-Web Automated - Full Import History"
 msgstr ""
 
-#: cps/cwa_functions.py:1596
+#: cps/cwa_functions.py:1580
 msgid "Calibre-Web Automated - Full Conversion History"
 msgstr ""
 
-#: cps/cwa_functions.py:1605
+#: cps/cwa_functions.py:1589
 msgid "Calibre-Web Automated - Full EPUB Fixer History (w/out Paths & Fixes)"
 msgstr ""
 
-#: cps/cwa_functions.py:1614
+#: cps/cwa_functions.py:1598
 msgid "Calibre-Web Automated - Full EPUB Fixer History (w/ Paths & Fixes)"
 msgstr ""
 
-#: cps/cwa_functions.py:1632
+#: cps/cwa_functions.py:1616
 msgid "✅ All Monitoring Services are running as intended! 👍"
 msgstr ""
 
-#: cps/cwa_functions.py:1634
+#: cps/cwa_functions.py:1618
 msgid ""
 "🔴 The Ingest Service is running but the Metadata Change Detector is not"
 msgstr ""
 
-#: cps/cwa_functions.py:1636
+#: cps/cwa_functions.py:1620
 msgid ""
 "🔴 The Metadata Change Detector is running but the Ingest Service is not"
 msgstr ""
 
-#: cps/cwa_functions.py:1638
+#: cps/cwa_functions.py:1622
 msgid ""
 "⛔ Neither the Ingest Service or the Metadata Change Detector are running"
 msgstr ""
 
-#: cps/cwa_functions.py:1640
+#: cps/cwa_functions.py:1624
 msgid "An Error has occurred"
 msgstr ""
 
-#: cps/cwa_functions.py:1811 cps/cwa_functions.py:1837
+#: cps/cwa_functions.py:1797 cps/cwa_functions.py:1826
 msgid "Calibre-Web Automated - Convert Library"
 msgstr ""
 
-#: cps/cwa_functions.py:1953 cps/cwa_functions.py:1977
+#: cps/cwa_functions.py:1952 cps/cwa_functions.py:1979
 #, fuzzy
 msgid "Calibre-Web Automated - EPUB Fixer Service"
 msgstr "Pengaturan Konverter E-Book Caliber"
 
-#: cps/cwa_functions.py:2031
+#: cps/cwa_functions.py:2037
 msgid "Single-book EPUB Fixer is not supported with Google Drive libraries."
 msgstr ""
 
-#: cps/cwa_functions.py:2038
+#: cps/cwa_functions.py:2044
 #, fuzzy
 msgid "Invalid book selection."
 msgstr "Peran tidak valid"
 
-#: cps/cwa_functions.py:2044
+#: cps/cwa_functions.py:2050
 #, fuzzy
 msgid "Book not found."
 msgstr "Token tidak ditemukan"
 
-#: cps/cwa_functions.py:2050
+#: cps/cwa_functions.py:2056
 #, fuzzy
 msgid "Selected book has no EPUB format."
 msgstr "Gabungkan buku terpiih"
 
-#: cps/cwa_functions.py:2054
+#: cps/cwa_functions.py:2060
 #, fuzzy
 msgid "EPUB file not found on disk."
 msgstr "%(format)s format tidak ditemukan dalam disk"
 
-#: cps/cwa_functions.py:2069
+#: cps/cwa_functions.py:2075
 #, fuzzy
 msgid "EPUB Fixer started for selected book."
 msgstr "Gabungkan buku terpiih"
 
-#: cps/cwa_functions.py:2072
+#: cps/cwa_functions.py:2078
 msgid "Failed to start EPUB Fixer for selected book."
 msgstr ""
 
-#: cps/cwa_functions.py:2119
+#: cps/cwa_functions.py:2129
 msgid "You must be an admin to access this page."
 msgstr ""
 
-#: cps/cwa_functions.py:2134
+#: cps/cwa_functions.py:2144
 msgid "Both username and image data are required."
 msgstr ""
 
-#: cps/cwa_functions.py:2142
+#: cps/cwa_functions.py:2152
 msgid "Invalid image data format. Must be a valid image."
 msgstr ""
 
-#: cps/cwa_functions.py:2150
+#: cps/cwa_functions.py:2160
 msgid "Unsupported image type. Only PNG and JPEG are allowed."
 msgstr ""
 
-#: cps/cwa_functions.py:2162
+#: cps/cwa_functions.py:2172
 msgid "Image is too large. Please use an image smaller than 500KB."
 msgstr ""
 
-#: cps/cwa_functions.py:2166
+#: cps/cwa_functions.py:2176
 msgid "Invalid Base64 image data."
 msgstr ""
 
-#: cps/cwa_functions.py:2170
+#: cps/cwa_functions.py:2180
 #, fuzzy
 msgid "Invalid image data format."
 msgstr "Format alamat email tidak valid"
 
-#: cps/cwa_functions.py:2175
+#: cps/cwa_functions.py:2185
 msgid "Error validating image data."
 msgstr ""
 
-#: cps/cwa_functions.py:2193
+#: cps/cwa_functions.py:2203
 #, fuzzy
 msgid "Profile picture updated successfully."
 msgstr "{} pengguna berhasil dihapus"
 
-#: cps/cwa_functions.py:2206
+#: cps/cwa_functions.py:2216
 msgid "CWA Profile Picture Management (WIP)"
 msgstr ""
 
 #: cps/db.py:1278 cps/templates/config_edit.html:294
 #: cps/templates/config_view_edit.html:79
 #: cps/templates/config_view_edit.html:90 cps/templates/email_edit.html:41
-#: cps/web.py:676 cps/web.py:710 cps/web.py:755 cps/web.py:795 cps/web.py:824
-#: cps/web.py:1636 cps/web.py:1673 cps/web.py:1724 cps/web.py:1756
-#: cps/web.py:1795
+#: cps/web.py:678 cps/web.py:712 cps/web.py:757 cps/web.py:797 cps/web.py:826
+#: cps/web.py:1642 cps/web.py:1679 cps/web.py:1730 cps/web.py:1762
+#: cps/web.py:1801
 msgid "None"
 msgstr "Tidak ada"
 
@@ -1152,7 +1152,7 @@ msgstr "Tidak ada hasil yang ditemukan"
 msgid "Duplicate scan completed (fallback)"
 msgstr ""
 
-#: cps/duplicates.py:1424
+#: cps/duplicates.py:1429
 #, fuzzy
 msgid "Invalid resolution strategy"
 msgstr "Peran tidak valid"
@@ -1209,8 +1209,8 @@ msgstr "Ekstensi berkas '%(ext)s' tidak diizinkan untuk diunggah ke server ini"
 msgid "File to be uploaded must have an extension"
 msgstr "Berkas yang akan diunggah harus memiliki ekstensi"
 
-#: cps/editbooks.py:849 cps/editbooks.py:1431 cps/web.py:643 cps/web.py:2862
-#: cps/web.py:2953 cps/web.py:3038
+#: cps/editbooks.py:849 cps/editbooks.py:1431 cps/web.py:645 cps/web.py:2925
+#: cps/web.py:3016 cps/web.py:3101
 msgid ""
 "Oops! Selected book is unavailable. File does not exist or is not accessible"
 msgstr ""
@@ -1435,44 +1435,54 @@ msgstr ""
 msgid "Book path %(path)s not found on Google Drive"
 msgstr "Jalur buku %(path)s tidak ditemukan di Google Drive"
 
-#: cps/helper.py:782
+#: cps/helper.py:779
+#, fuzzy
+msgid "Password reset for Calibre-Web Automated"
+msgstr "Memulai dengan Calibre-Web"
+
+#: cps/helper.py:784
+#, fuzzy, python-format
+msgid "Password reset email for user: %(name)s"
+msgstr "Email pendaftaran untuk pengguna: %(name)s"
+
+#: cps/helper.py:863
 msgid "Found an existing account for this Email address"
 msgstr ""
 
-#: cps/helper.py:790
+#: cps/helper.py:871
 msgid "This username is already taken"
 msgstr "Nama pengguna ini sudah digunakan"
 
-#: cps/helper.py:804
+#: cps/helper.py:885
 #, fuzzy
 msgid "Invalid Email address format"
 msgstr "Format alamat email tidak valid"
 
-#: cps/helper.py:826
+#: cps/helper.py:907
 msgid "Password doesn't comply with password validation rules"
 msgstr ""
 
-#: cps/helper.py:1061
+#: cps/helper.py:1142
 msgid ""
 "Python module 'advocate' is not installed but is needed for cover uploads"
 msgstr ""
 "Modul 'advocate' Python tidak diinstal tetapi diperlukan untuk unggahan "
 "sampul"
 
-#: cps/helper.py:1066 cps/helper.py:1074
+#: cps/helper.py:1147 cps/helper.py:1155
 #, python-format
 msgid "Cover image exceeds maximum size of %(size)s MB"
 msgstr ""
 
-#: cps/helper.py:1085
+#: cps/helper.py:1166
 msgid "Error Downloading Cover"
 msgstr "Kesalahan Mengunduh Sampul"
 
-#: cps/helper.py:1088
+#: cps/helper.py:1169
 msgid "Cover Format Error"
 msgstr "Kesalahan Format Sampul"
 
-#: cps/helper.py:1091
+#: cps/helper.py:1172
 msgid ""
 "You are not allowed to access localhost or the local network for cover "
 "uploads"
@@ -1480,77 +1490,77 @@ msgstr ""
 "Anda tidak diizinkan mengakses localhost atau jaringan lokal untuk unggahan "
 "sampul"
 
-#: cps/helper.py:1107
+#: cps/helper.py:1188
 msgid "Failed to create path for cover"
 msgstr "Gagal membuat jalur untuk sampul"
 
-#: cps/helper.py:1123
+#: cps/helper.py:1204
 msgid "Cover-file is not a valid image file, or could not be stored"
 msgstr ""
 "Berkas sampul bukan berkas gambar yang valid, atau tidak dapat disimpan"
 
-#: cps/helper.py:1140
+#: cps/helper.py:1221
 msgid "Only jpg/jpeg/png/webp/bmp files are supported as coverfile"
 msgstr "Hanya berkas jpg/jpeg/png/webp/bmp yang didukung sebagai berkas sampul"
 
-#: cps/helper.py:1154
+#: cps/helper.py:1235
 msgid "Invalid cover file content"
 msgstr "Konten berkas sampul tidak valid"
 
-#: cps/helper.py:1158
+#: cps/helper.py:1239
 msgid "Only jpg/jpeg files are supported as coverfile"
 msgstr "Hanya berkas jpg/jpeg yang didukung sebagai berkas sampul"
 
-#: cps/helper.py:1317 cps/helper.py:1548
+#: cps/helper.py:1398 cps/helper.py:1629
 #, fuzzy
 msgid "Cover"
 msgstr "Sampul"
 
-#: cps/helper.py:1334
+#: cps/helper.py:1415
 msgid "UnRar binary file not found"
 msgstr "Berkas biner unrar tidak ditemukan"
 
-#: cps/helper.py:1345
+#: cps/helper.py:1426
 #, fuzzy
 msgid "Error executing UnRar"
 msgstr "Kesalahan saat menjalankan UnRar"
 
-#: cps/helper.py:1351
+#: cps/helper.py:1432
 #, python-format
 msgid ""
 "Unsupported architecture detected: %(arch)s. CWA is optimized for x86_64 and "
 "aarch64."
 msgstr ""
 
-#: cps/helper.py:1360
+#: cps/helper.py:1441
 msgid "Could not find the specified directory"
 msgstr ""
 
-#: cps/helper.py:1363
+#: cps/helper.py:1444
 msgid "Please specify a directory, not a file"
 msgstr ""
 
-#: cps/helper.py:1377
+#: cps/helper.py:1458
 #, fuzzy
 msgid "Calibre binaries not viable"
 msgstr "Basis Data tidak dapat ditulisi"
 
-#: cps/helper.py:1386
+#: cps/helper.py:1467
 #, python-format
 msgid "Missing calibre binaries: %(missing)s"
 msgstr ""
 
-#: cps/helper.py:1388
+#: cps/helper.py:1469
 #, fuzzy, python-format
 msgid "Missing executable permissions: %(missing)s"
 msgstr "Izin eksekusi hilang"
 
-#: cps/helper.py:1393
+#: cps/helper.py:1474
 #, fuzzy
 msgid "Error executing Calibre"
 msgstr "Kesalahan saat menjalankan UnRar"
 
-#: cps/helper.py:1550 cps/templates/admin.html:240
+#: cps/helper.py:1631 cps/templates/admin.html:240
 msgid "Queue all books for metadata backup"
 msgstr "Antrian semua buku untuk cadangan metadata"
 
@@ -1738,7 +1748,7 @@ msgstr "{}★"
 
 #: cps/remotelogin.py:76 cps/templates/layout.html:135
 #: cps/templates/layout.html:177 cps/templates/login.html:11
-#: cps/templates/login.html:39 cps/web.py:2224
+#: cps/templates/login.html:39 cps/web.py:2230
 msgid "Login"
 msgstr "Masuk"
 
@@ -1779,7 +1789,7 @@ msgstr "Buku yang Diunduh"
 msgid "Show Downloaded Books"
 msgstr "Tampilkan Buku yang Diunduh"
 
-#: cps/render_template.py:57 cps/web.py:533
+#: cps/render_template.py:57 cps/web.py:535
 msgid "Top Rated Books"
 msgstr "Buku Berperingkat Teratas"
 
@@ -1787,7 +1797,7 @@ msgstr "Buku Berperingkat Teratas"
 msgid "Show Top Rated Books"
 msgstr "Tampilkan Buku Berperingkat Teratas"
 
-#: cps/render_template.py:60 cps/web.py:882
+#: cps/render_template.py:60 cps/web.py:884
 msgid "Read Books"
 msgstr "Buku Telah Dibaca"
 
@@ -1796,7 +1806,7 @@ msgstr "Buku Telah Dibaca"
 msgid "Show Read and Unread"
 msgstr "Tampilkan sudah dibaca dan belum dibaca"
 
-#: cps/render_template.py:64 cps/web.py:885
+#: cps/render_template.py:64 cps/web.py:887
 msgid "Unread Books"
 msgstr "Buku yang Belum Dibaca"
 
@@ -1813,7 +1823,7 @@ msgstr "Temukan"
 msgid "Show Random Books"
 msgstr "Tampilkan Buku Acak"
 
-#: cps/render_template.py:70 cps/templates/book_table.html:106 cps/web.py:1799
+#: cps/render_template.py:70 cps/templates/book_table.html:106 cps/web.py:1805
 msgid "Categories"
 msgstr "Kategori"
 
@@ -1826,7 +1836,7 @@ msgstr "Tampilkan pilihan kategori"
 #: cps/templates/book_table.html:107 cps/templates/cwa_settings.html:362
 #: cps/templates/cwa_settings.html:364 cps/templates/cwa_settings.html:1103
 #: cps/templates/hardcover_review_matches.html:140
-#: cps/templates/search_form.html:70 cps/web.py:1679 cps/web.py:1691
+#: cps/templates/search_form.html:70 cps/web.py:1685 cps/web.py:1697
 msgid "Series"
 msgstr "Seri"
 
@@ -1846,7 +1856,7 @@ msgstr "Penulis"
 msgid "Show Author Section"
 msgstr "Tampilkan pilihan penulis"
 
-#: cps/render_template.py:80 cps/templates/book_table.html:111 cps/web.py:1647
+#: cps/render_template.py:80 cps/templates/book_table.html:111 cps/web.py:1653
 msgid "Publishers"
 msgstr "Penerbit"
 
@@ -1857,7 +1867,7 @@ msgstr "Tampilkan pilihan penerbit"
 
 #: cps/render_template.py:83 cps/templates/book_table.html:109
 #: cps/templates/detail.html:706 cps/templates/search_form.html:108
-#: cps/web.py:1771
+#: cps/web.py:1777
 msgid "Languages"
 msgstr "Bahasa"
 
@@ -1866,7 +1876,7 @@ msgstr "Bahasa"
 msgid "Show Language Section"
 msgstr "Tampilkan pilihan bahasa"
 
-#: cps/render_template.py:87 cps/web.py:1731
+#: cps/render_template.py:87 cps/web.py:1737
 msgid "Ratings"
 msgstr "Peringkat"
 
@@ -1884,7 +1894,7 @@ msgstr "Format berkas"
 msgid "Show File Formats Section"
 msgstr "Tampilkan pilihan format berkas"
 
-#: cps/render_template.py:94 cps/web.py:908
+#: cps/render_template.py:94 cps/web.py:910
 msgid "Archived Books"
 msgstr "Buku yang Diarsipkan"
 
@@ -1893,7 +1903,7 @@ msgstr "Buku yang Diarsipkan"
 msgid "Show Archived Books"
 msgstr "Tampilkan buku yang diarsipkan"
 
-#: cps/render_template.py:99 cps/web.py:1467
+#: cps/render_template.py:99 cps/web.py:1469
 msgid "Books List"
 msgstr "Daftar Buku"
 
@@ -2069,36 +2079,36 @@ msgid "Error opening shelf. Shelf does not exist or is not accessible"
 msgstr ""
 "Terjadi kesalahan saat membuka rak. Rak tidak ada atau tidak dapat diakses"
 
-#: cps/tasks_status.py:37 cps/templates/layout.html:163
+#: cps/tasks_status.py:38 cps/templates/layout.html:163
 #: cps/templates/tasks.html:7
 msgid "Tasks"
 msgstr "Tugas"
 
-#: cps/tasks_status.py:54
+#: cps/tasks_status.py:55
 msgid "Waiting"
 msgstr "Menunggu"
 
-#: cps/tasks_status.py:56
+#: cps/tasks_status.py:57
 msgid "Failed"
 msgstr "Gagal"
 
-#: cps/tasks_status.py:58
+#: cps/tasks_status.py:59 cps/templates/library_busy.html:11
 msgid "Started"
 msgstr "Dimulai"
 
-#: cps/tasks_status.py:60
+#: cps/tasks_status.py:61
 msgid "Finished"
 msgstr "Selesai"
 
-#: cps/tasks_status.py:62
+#: cps/tasks_status.py:63
 msgid "Ended"
 msgstr "Berakhir"
 
-#: cps/tasks_status.py:64
+#: cps/tasks_status.py:65
 msgid "Cancelled"
 msgstr "Dibatalkan"
 
-#: cps/tasks_status.py:66
+#: cps/tasks_status.py:67
 msgid "Unknown Status"
 msgstr "Status Tidak Diketahui"
 
@@ -2138,312 +2148,312 @@ msgstr ""
 msgid "No release information available"
 msgstr "Tidak ada informasi rilis yang tersedia"
 
-#: cps/web.py:90
+#: cps/web.py:92
 msgid "The selected Hardcover list no longer exists. Choose another list."
 msgstr ""
 
-#: cps/web.py:92
+#: cps/web.py:94
 msgid "Could not fetch Hardcover lists. Check your Hardcover token."
 msgstr ""
 
-#: cps/templates/index.html:48 cps/web.py:545
+#: cps/templates/index.html:48 cps/web.py:547
 msgid "Discover (Random Books)"
 msgstr "Temukan (Buku Acak)"
 
-#: cps/web.py:595
+#: cps/web.py:597
 msgid "Hot Books (Most Downloaded)"
 msgstr "Buku Populer (Paling Banyak Diunduh)"
 
-#: cps/web.py:626
+#: cps/web.py:628
 #, python-format
 msgid "Downloaded books by %(user)s"
 msgstr "Buku telah diunduh oleh %(user)s"
 
-#: cps/web.py:659
+#: cps/web.py:661
 #, python-format
 msgid "Author: %(name)s"
 msgstr "Penulis: %(name)s"
 
-#: cps/web.py:695
+#: cps/web.py:697
 #, python-format
 msgid "Publisher: %(name)s"
 msgstr "Penerbit: %(name)s"
 
-#: cps/web.py:723
+#: cps/web.py:725
 #, python-format
 msgid "Series: %(serie)s"
 msgstr "Seri: %(serie)s"
 
-#: cps/web.py:737
+#: cps/web.py:739
 msgid "Rating: None"
 msgstr "Peringkat: Tidak ada"
 
-#: cps/web.py:746
+#: cps/web.py:748
 #, python-format
 msgid "Rating: %(rating)s stars"
 msgstr "Peringkat: %(rating)s★"
 
-#: cps/web.py:777
+#: cps/web.py:779
 #, python-format
 msgid "File format: %(format)s"
 msgstr "Format berkas: %(format)s"
 
-#: cps/web.py:814
+#: cps/web.py:816
 #, python-format
 msgid "Category: %(name)s"
 msgstr "Kategori: %(name)s"
 
-#: cps/web.py:843
+#: cps/web.py:845
 #, python-format
 msgid "Language: %(name)s"
 msgstr "Bahasa: %(name)s"
 
-#: cps/web.py:973
+#: cps/web.py:975
 #, fuzzy
 msgid "Error loading magic shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/web.py:998
+#: cps/web.py:1000
 #, python-format
 msgid "Magic Shelf&nbsp&nbsp&nbsp—&nbsp&nbsp&nbsp%(icon)s %(name)s"
 msgstr ""
 
-#: cps/web.py:1075
+#: cps/web.py:1077
 msgid "No rules provided"
 msgstr ""
 
-#: cps/web.py:1081
+#: cps/web.py:1083
 #, fuzzy
 msgid "Invalid rules format"
 msgstr "Format alamat email tidak valid"
 
-#: cps/web.py:1103
+#: cps/web.py:1105
 msgid "Error processing rules"
 msgstr ""
 
-#: cps/web.py:1107
+#: cps/web.py:1109
 #, fuzzy
 msgid "Invalid request"
 msgstr "Peran tidak valid"
 
-#: cps/web.py:1151
+#: cps/web.py:1153
 msgid "Name and rules are required"
 msgstr ""
 
-#: cps/web.py:1154 cps/web.py:1251
+#: cps/web.py:1156 cps/web.py:1253
 msgid "Shelf name too long (max 100 characters)"
 msgstr ""
 
-#: cps/web.py:1176
+#: cps/web.py:1178
 #, fuzzy
 msgid "Error creating shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/templates/layout.html:314 cps/web.py:1190
+#: cps/templates/layout.html:314 cps/web.py:1192
 #, fuzzy
 msgid "Create Magic Shelf"
 msgstr "Buat Rak"
 
-#: cps/web.py:1244
+#: cps/web.py:1246
 msgid "Permission denied to change public status"
 msgstr ""
 
-#: cps/web.py:1248
+#: cps/web.py:1250
 #, fuzzy
 msgid "Shelf name is required"
 msgstr "Isian Ini Diperlukan"
 
-#: cps/web.py:1282
+#: cps/web.py:1284
 #, fuzzy
 msgid "Error updating shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/web.py:1297
+#: cps/web.py:1299
 #, fuzzy
 msgid "Edit Magic Shelf"
 msgstr "Edit Rak"
 
-#: cps/web.py:1310
+#: cps/web.py:1312
 #, fuzzy
 msgid "Shelf not found"
 msgstr "Pengguna tidak ditemukan"
 
-#: cps/web.py:1315
+#: cps/web.py:1317
 msgid "Permission denied"
 msgstr ""
 
-#: cps/web.py:1346
+#: cps/web.py:1348
 #, fuzzy
 msgid "Shelf duplicated successfully"
 msgstr "{} pengguna berhasil dihapus"
 
-#: cps/web.py:1352
+#: cps/web.py:1354
 #, fuzzy
 msgid "Error duplicating shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/templates/magic_shelf_edit.html:448 cps/web.py:1379
+#: cps/templates/magic_shelf_edit.html:448 cps/web.py:1381
 msgid ""
 "System shelves cannot be deleted. You can hide them in your user profile "
 "settings."
 msgstr ""
 
-#: cps/web.py:1396
+#: cps/web.py:1398
 #, fuzzy
 msgid "Error deleting shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/web.py:1412
+#: cps/web.py:1414
 msgid ""
 "You cannot hide your own shelves. Delete them instead if you don't want them."
 msgstr ""
 
-#: cps/web.py:1422
+#: cps/web.py:1424
 msgid "Shelf already hidden"
 msgstr ""
 
-#: cps/web.py:1436
+#: cps/web.py:1438
 #, fuzzy
 msgid "Error hiding shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/web.py:1450
+#: cps/web.py:1452
 msgid "Shelf was not hidden"
 msgstr ""
 
-#: cps/web.py:1459
+#: cps/web.py:1461
 #, fuzzy
 msgid "Error unhiding shelf"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/templates/admin.html:18 cps/web.py:1606
+#: cps/templates/admin.html:18 cps/web.py:1612
 msgid "Downloads"
 msgstr "Unduhan"
 
-#: cps/web.py:1758
+#: cps/web.py:1764
 msgid "File formats list"
 msgstr "Daftar format berkas"
 
-#: cps/web.py:1998 cps/web.py:2036
+#: cps/web.py:2004 cps/web.py:2042
 #, fuzzy
 msgid "Please configure the SMTP mail settings first..."
 msgstr "Harap atur pengaturan email SMTP terlebih dahulu..."
 
-#: cps/web.py:2002
+#: cps/web.py:2008
 #, fuzzy
 msgid "Oops! Please update your profile with a valid eReader Email."
 msgstr ""
 "Harap perbarui profil Anda dengan alamat e-mail Kirim ke Kindle yang valid."
 
-#: cps/web.py:2024
+#: cps/web.py:2030
 #, python-format
 msgid "Success! Book queued for sending to %(eReadermail)s"
 msgstr "Buku telah diantrikan untuk dikirim ke %(eReadermail)s"
 
-#: cps/web.py:2027 cps/web.py:2085
+#: cps/web.py:2033 cps/web.py:2091
 #, python-format
 msgid "Oops! There was an error sending book: %(res)s"
 msgstr "Oops! Terjadi kesalahan saat mengirim buku: %(res)s"
 
-#: cps/web.py:2044 cps/web.py:2054
+#: cps/web.py:2050 cps/web.py:2060
 msgid "No email addresses selected"
 msgstr ""
 
-#: cps/web.py:2061
+#: cps/web.py:2067
 msgid "Additional email addresses are disabled for your account."
 msgstr ""
 
-#: cps/web.py:2083
+#: cps/web.py:2089
 #, fuzzy
 msgid "Success! Book queued for sending to the selected address(es)!"
 msgstr "Buku telah diantrikan untuk dikirim ke %(eReadermail)s"
 
-#: cps/web.py:2102
+#: cps/web.py:2108
 msgid "Please wait one minute to register next user"
 msgstr ""
 
 #: cps/templates/layout.html:136 cps/templates/layout.html:178
-#: cps/templates/login.html:48 cps/templates/register.html:17 cps/web.py:2103
-#: cps/web.py:2107 cps/web.py:2112 cps/web.py:2116 cps/web.py:2122
-#: cps/web.py:2147 cps/web.py:2151 cps/web.py:2164 cps/web.py:2167
+#: cps/templates/login.html:48 cps/templates/register.html:17 cps/web.py:2109
+#: cps/web.py:2113 cps/web.py:2118 cps/web.py:2122 cps/web.py:2128
+#: cps/web.py:2153 cps/web.py:2157 cps/web.py:2170 cps/web.py:2173
 msgid "Register"
 msgstr "Daftar"
 
-#: cps/web.py:2106 cps/web.py:2271
+#: cps/web.py:2112 cps/web.py:2279
 #, fuzzy
 msgid "Connection error to limiter backend, please contact your administrator"
 msgstr "Server email belum diatur, silakan hubungi administrator!"
 
-#: cps/web.py:2111 cps/web.py:2163
+#: cps/web.py:2117 cps/web.py:2169
 msgid ""
 "Oops! Email server is not configured, please contact your administrator."
 msgstr "Server email belum diatur, silakan hubungi administrator!"
 
-#: cps/web.py:2149
+#: cps/web.py:2155
 msgid "Oops! Your Email is not allowed."
 msgstr "Alamat email Anda tidak diizinkan untuk mendaftar"
 
-#: cps/web.py:2152
+#: cps/web.py:2158
 msgid "Success! Confirmation Email has been sent."
 msgstr "E-mail konfirmasi telah dikirimkan ke alamat email Anda."
 
-#: cps/web.py:2200
+#: cps/web.py:2206
 #, fuzzy
 msgid ""
 "Authentication loop detected. If you're experiencing login issues, please "
 "contact your administrator."
 msgstr "Instans Calibre-Web belum diatur, harap hubungi administrator Anda"
 
-#: cps/web.py:2245
+#: cps/web.py:2251
 #, fuzzy
 msgid ""
 "OAuth authentication is not properly configured. Please contact "
 "administrator."
 msgstr "Server email belum diatur, silakan hubungi administrator!"
 
-#: cps/web.py:2250 cps/web.py:2277
+#: cps/web.py:2256 cps/web.py:2285
 #, fuzzy
 msgid "Cannot activate LDAP authentication"
 msgstr "Tidak dapat mengaktifkan autentikasi LDAP."
 
-#: cps/web.py:2259
+#: cps/web.py:2267
 msgid "Standard login is disabled."
 msgstr ""
 
-#: cps/web.py:2267
+#: cps/web.py:2275
 msgid "Please wait one minute before next login"
 msgstr ""
 
-#: cps/web.py:2285
+#: cps/web.py:2293
 msgid "Username cannot be empty"
 msgstr ""
 
-#: cps/web.py:2297
+#: cps/web.py:2305
 #, fuzzy, python-format
 msgid "you are now logged in as: '%(nickname)s'"
 msgstr "Anda sekarang login sebagai: %(nickname)s"
 
-#: cps/web.py:2316
+#: cps/web.py:2324
 #, fuzzy, python-format
 msgid ""
 "Welcome! Your account has been automatically created. You are now logged in "
 "as: '%(nickname)s'"
 msgstr "Anda sekarang login sebagai: %(nickname)s"
 
-#: cps/web.py:2321 cps/web.py:2324
+#: cps/web.py:2329 cps/web.py:2332
 #, fuzzy
 msgid ""
 "Authentication successful, but account creation failed. Please contact your "
 "administrator."
 msgstr "Instans Calibre-Web belum diatur, harap hubungi administrator Anda"
 
-#: cps/web.py:2328
+#: cps/web.py:2336
 msgid ""
 "Authentication successful, but no local account found. Please contact your "
 "administrator to create your account."
 msgstr ""
 
-#: cps/web.py:2336
+#: cps/web.py:2344
 #, fuzzy, python-format
 msgid ""
 "Fallback Login as: '%(nickname)s', LDAP Server not reachable, or user not "
@@ -2452,65 +2462,78 @@ msgstr ""
 "Login Pengganti sebagai: '%(nickname)s', Server LDAP tidak dapat dijangkau, "
 "atau pengguna tidak diketahui."
 
-#: cps/web.py:2342
+#: cps/web.py:2350
 #, fuzzy, python-format
 msgid "Could not login: %(message)s"
 msgstr "Tidak dapat login: %(message)s"
 
-#: cps/web.py:2365 cps/web.py:2366 cps/web.py:2409
+#: cps/web.py:2373 cps/web.py:2374 cps/web.py:2418
 #, fuzzy
 msgid "Wrong Username or Password"
 msgstr "Pengguna atau Kata Sandi salah"
 
-#: cps/web.py:2374
-#, fuzzy
-msgid "New Password was sent to your email address"
-msgstr "Kata Sandi baru telah dikirimkan ke alamat email Anda"
+#: cps/web.py:2381
+msgid ""
+"If that account exists, a password-reset link has been sent to its email "
+"address."
+msgstr ""
 
-#: cps/web.py:2378
-#, fuzzy
-msgid "An unknown error occurred. Please try again later."
-msgstr "Terjadi kesalahan yang tidak diketahui. Coba lagi nanti."
-
-#: cps/web.py:2380
-#, fuzzy
-msgid "Please enter valid username to reset password"
-msgstr "Harap masukkan pengguna valid untuk mengatur ulang kata sandi"
-
-#: cps/web.py:2388
+#: cps/web.py:2397
 #, fuzzy, python-format
 msgid "You are now logged in as: '%(nickname)s'"
 msgstr "Anda sekarang login sebagai: %(nickname)s"
 
-#: cps/web.py:2729
-msgid "Hardcover state sync finished with errors. Check the log."
+#: cps/web.py:2450 cps/web.py:2460
+msgid "This password reset link is invalid or has expired."
 msgstr ""
 
-#: cps/web.py:2731
-#, python-format
-msgid "Hardcover state sync complete. %(count)s change(s) applied."
+#: cps/web.py:2452 cps/web.py:2466 cps/web.py:2471 cps/web.py:2485
+#, fuzzy
+msgid "Reset password"
+msgstr "Atur ulang kata sandi pengguna"
+
+#: cps/web.py:2465
+msgid "Passwords do not match."
 msgstr ""
 
-#: cps/web.py:2737
-#, fuzzy, python-format
-msgid "Hardcover state sync failed: %(error)s"
+#: cps/web.py:2484
+msgid "Could not reset password, please try again."
+msgstr ""
+
+#: cps/web.py:2486
+msgid "Your password has been updated. You can now log in."
+msgstr ""
+
+#: cps/web.py:2793
+#, fuzzy
+msgid "Hardcover state sync queued. Check Tasks for progress."
 msgstr "Ebook-converter gagal: %(error)s"
 
-#: cps/web.py:2738
+#: cps/web.py:2795
+#, fuzzy
+msgid "Hardcover state sync could not be queued."
+msgstr "Aktifkan sinkronisasi Kobo"
+
+#: cps/web.py:2800
+#, fuzzy, python-format
+msgid "Hardcover state sync queue failed: %(error)s"
+msgstr "Ebook-converter gagal: %(error)s"
+
+#: cps/web.py:2801
 #, fuzzy
 msgid "Success! Profile Updated"
 msgstr "Profil diperbarui"
 
-#: cps/web.py:2744
+#: cps/web.py:2807
 msgid "Oops! An account already exists for this Email."
 msgstr "Ditemukan akun yang ada untuk alamat email ini"
 
-#: cps/web.py:2966
+#: cps/web.py:3029
 #, fuzzy
 msgid "Invalid book ID."
 msgstr "Peran tidak valid"
 
-#: cps/progress_syncing/protocols/kosync.py:494
+#: cps/progress_syncing/protocols/kosync.py:458
 msgid "KOReader Sync Plugin"
 msgstr ""
 
@@ -2568,29 +2591,29 @@ msgstr "%(format)s format tidak ditemukan dalam disk"
 msgid "Ebook converter failed with unknown error"
 msgstr "Konverter ebook gagal dengan kesalahan yang tidak diketahui."
 
-#: cps/tasks/convert.py:219
+#: cps/tasks/convert.py:220
 #, python-format
 msgid "Kepubify-converter failed: %(error)s"
 msgstr "Kebupify-converter gagal: %(error)s"
 
-#: cps/tasks/convert.py:244
+#: cps/tasks/convert.py:245
 #, python-format
 msgid "Converted file not found or more than one file in folder %(folder)s"
 msgstr ""
 "Berkas yang telah dikonversi tidak ditemukan atau terdapat duplikat dalam "
 "folder %(folder)s"
 
-#: cps/tasks/convert.py:285 cps/tasks/convert.py:336
+#: cps/tasks/convert.py:286 cps/tasks/convert.py:337
 #, python-format
 msgid "Calibre failed with error: %(error)s"
 msgstr "Calibre gagal dengan kesalahan: %(error)s"
 
-#: cps/tasks/convert.py:313
+#: cps/tasks/convert.py:314
 #, python-format
 msgid "Ebook-converter failed: %(error)s"
 msgstr "Ebook-converter gagal: %(error)s"
 
-#: cps/tasks/convert.py:341
+#: cps/tasks/convert.py:342
 msgid "Convert"
 msgstr "Konversi"
 
@@ -2626,12 +2649,22 @@ msgstr ""
 msgid "Duplicate scan completed: %(count)s new groups"
 msgstr ""
 
+#: cps/tasks/hardcover_progress_push.py:13
+#, fuzzy
+msgid "Hardcover progress push"
+msgstr "Aktifkan sinkronisasi Kobo"
+
+#: cps/tasks/hardcover_progress_push.py:23
+#, fuzzy
+msgid "Hardcover Progress Push"
+msgstr "Kemajuan"
+
 #: cps/tasks/hardcover_state_sync.py:14
 #, fuzzy
 msgid "Hardcover state sync"
 msgstr "Aktifkan sinkronisasi Kobo"
 
-#: cps/tasks/hardcover_state_sync.py:22 cps/templates/user_edit.html:321
+#: cps/tasks/hardcover_state_sync.py:23 cps/templates/user_edit.html:321
 #, fuzzy
 msgid "Hardcover State Sync"
 msgstr "Aktifkan sinkronisasi Kobo"
@@ -3005,9 +3038,10 @@ msgstr "OK"
 #: cps/templates/duplicates.html:540 cps/templates/duplicates.html:567
 #: cps/templates/modal_dialogs.html:64 cps/templates/modal_dialogs.html:99
 #: cps/templates/modal_dialogs.html:117 cps/templates/modal_dialogs.html:135
-#: cps/templates/schedule_edit.html:46 cps/templates/shelf_edit.html:27
-#: cps/templates/tasks.html:94 cps/templates/tasks.html:166
-#: cps/templates/tasks.html:173 cps/templates/user_edit.html:681
+#: cps/templates/reset_password.html:34 cps/templates/schedule_edit.html:46
+#: cps/templates/shelf_edit.html:27 cps/templates/tasks.html:94
+#: cps/templates/tasks.html:166 cps/templates/tasks.html:173
+#: cps/templates/user_edit.html:681
 msgid "Cancel"
 msgstr "Batal"
 
@@ -4341,11 +4375,11 @@ msgstr ""
 msgid "Schedule 15m"
 msgstr ""
 
-#: cps/templates/cwa_convert_library.html:100
+#: cps/templates/cwa_convert_library.html:98
 msgid "Convert Library scheduled successfully"
 msgstr ""
 
-#: cps/templates/cwa_convert_library.html:103
+#: cps/templates/cwa_convert_library.html:104
 msgid "Error scheduling Convert Library"
 msgstr ""
 
@@ -4362,42 +4396,42 @@ msgstr ""
 msgid "Run on selected book"
 msgstr "Gabungkan buku terpiih"
 
-#: cps/templates/cwa_epub_fixer.html:120
+#: cps/templates/cwa_epub_fixer.html:116
 #, fuzzy
 msgid "EPUB Fixer scheduled successfully"
 msgstr "{} pengguna berhasil dihapus"
 
-#: cps/templates/cwa_epub_fixer.html:123
+#: cps/templates/cwa_epub_fixer.html:122
 #, fuzzy
 msgid "Error scheduling EPUB Fixer"
 msgstr "Kesalahan menghapus Rak"
 
-#: cps/templates/cwa_epub_fixer.html:132
+#: cps/templates/cwa_epub_fixer.html:131
 #, fuzzy
 msgid "No matches found"
 msgstr "Tidak ada hasil yang ditemukan"
 
-#: cps/templates/cwa_epub_fixer.html:167
+#: cps/templates/cwa_epub_fixer.html:166
 #, fuzzy
 msgid "Enter a search term"
 msgstr "Masukkan Nama Pengguna"
 
-#: cps/templates/cwa_epub_fixer.html:175
+#: cps/templates/cwa_epub_fixer.html:174
 #, fuzzy
 msgid "Failed to search library"
 msgstr "Cari di Pustaka"
 
-#: cps/templates/cwa_epub_fixer.html:182
+#: cps/templates/cwa_epub_fixer.html:181
 #, fuzzy
 msgid "Select a book first"
 msgstr "Buat Rak"
 
-#: cps/templates/cwa_epub_fixer.html:195
+#: cps/templates/cwa_epub_fixer.html:194
 #, fuzzy
 msgid "EPUB Fixer started for selected book"
 msgstr "Gabungkan buku terpiih"
 
-#: cps/templates/cwa_epub_fixer.html:200
+#: cps/templates/cwa_epub_fixer.html:199
 #, fuzzy
 msgid "Error starting EPUB Fixer"
 msgstr "Kesalahan menghapus Rak"
@@ -6194,6 +6228,34 @@ msgstr ""
 msgid "View & Resolve Duplicates"
 msgstr ""
 
+#: cps/templates/library_busy.html:4
+#, fuzzy
+msgid "Library Busy"
+msgstr "Dalam Pustaka"
+
+#: cps/templates/library_busy.html:5
+msgid ""
+"The Calibre library is being updated by a background job. Book lists and "
+"book detail pages will be available again when it finishes."
+msgstr ""
+
+#: cps/templates/library_busy.html:9
+msgid "Job"
+msgstr ""
+
+#: cps/templates/library_busy.html:10
+msgid "Owner"
+msgstr ""
+
+#: cps/templates/library_busy.html:18
+msgid "Background worker"
+msgstr ""
+
+#: cps/templates/library_busy.html:24
+#, fuzzy
+msgid "View Tasks"
+msgstr "Lihat Buku"
+
 #: cps/templates/list.html:25 cps/templates/list.html:27
 msgid "Filter by initial"
 msgstr ""
@@ -6616,6 +6678,31 @@ msgstr ""
 msgid "This verification link will expire in 10 minutes."
 msgstr "Tautan verifikasi ini akan kedaluwarsa dalam 10 menit."
 
+#: cps/templates/reset_password.html:12
+#, fuzzy
+msgid "Set a new password"
+msgstr "Ubah Kata Sandi"
+
+#: cps/templates/reset_password.html:16
+#, fuzzy
+msgid "New password"
+msgstr "Kata Sandi SMTP"
+
+#: cps/templates/reset_password.html:20
+#, fuzzy
+msgid "Confirm new password"
+msgstr "Ubah Kata Sandi"
+
+#: cps/templates/reset_password.html:30
+#, fuzzy
+msgid "Show passwords"
+msgstr "Kata Sandi SMTP"
+
+#: cps/templates/reset_password.html:33
+#, fuzzy
+msgid "Update password"
+msgstr "Ubah Kata Sandi"
+
 #: cps/templates/schedule_edit.html:30
 msgid ""
 "Automatically refresh all thumbnails during scheduled maintenance. "
@@ -6856,12 +6943,12 @@ msgstr ""
 "Jika ini adalah tugas terjadwal, ini akan dijalankan ulang selama waktu "
 "terjadwal berikutnya."
 
-#: cps/templates/tasks.html:192
+#: cps/templates/tasks.html:193
 #, fuzzy
 msgid "Scheduled item cancelled successfully"
 msgstr "{} pengguna berhasil dihapus"
 
-#: cps/templates/tasks.html:197
+#: cps/templates/tasks.html:198
 msgid "Error cancelling scheduled item"
 msgstr ""
 
@@ -7389,6 +7476,18 @@ msgstr "Sinkronkan Rak yang dipilih dengan Kob"
 #, fuzzy
 msgid "Show Read/Unread Section"
 msgstr "Tampilkan pilihan baca/belum dibaca"
+
+#, fuzzy
+#~ msgid "New Password was sent to your email address"
+#~ msgstr "Kata Sandi baru telah dikirimkan ke alamat email Anda"
+
+#, fuzzy
+#~ msgid "An unknown error occurred. Please try again later."
+#~ msgstr "Terjadi kesalahan yang tidak diketahui. Coba lagi nanti."
+
+#, fuzzy
+#~ msgid "Please enter valid username to reset password"
+#~ msgstr "Harap masukkan pengguna valid untuk mengatur ulang kata sandi"
 
 #~ msgid "Kobo Token:"
 #~ msgstr "Token Kobo:"
