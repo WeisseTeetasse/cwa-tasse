@@ -31,26 +31,41 @@ class _FakeLoggerFactory:
 
 
 def _load_hardcover_module():
+    """Load cps.services.hardcover in isolation.
+
+    Snapshots sys.modules and restores it after exec, so later test
+    files that import the real cps package don't pick up our stubs.
+    The loaded module retains its own bound references to the fake
+    `requests` / `cps.logger`, which is what we want.
+    """
     root = Path(__file__).resolve().parents[2]
-    sys.modules.setdefault("cps", types.ModuleType("cps"))
-    sys.modules["cps"].logger = _FakeLoggerFactory()
-    sys.modules.setdefault("cps.services", types.ModuleType("cps.services"))
-    fake_requests = types.ModuleType("requests")
-    fake_requests.post = lambda *args, **kwargs: pytest.fail("requests.post should not be called")
-    fake_requests.exceptions = types.SimpleNamespace(
-        HTTPError=Exception,
-        RequestException=Exception,
-        Timeout=Exception,
-    )
-    sys.modules.setdefault("requests", fake_requests)
-    spec = importlib.util.spec_from_file_location(
-        "cps.services.hardcover",
-        root / "cps" / "services" / "hardcover.py",
-    )
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["cps.services.hardcover"] = module
-    spec.loader.exec_module(module)
-    return module
+    keys = ("cps", "cps.services", "cps.services.hardcover", "requests")
+    snapshot = {k: sys.modules.get(k) for k in keys}
+    try:
+        sys.modules["cps"] = types.ModuleType("cps")
+        sys.modules["cps"].logger = _FakeLoggerFactory()
+        sys.modules["cps.services"] = types.ModuleType("cps.services")
+        fake_requests = types.ModuleType("requests")
+        fake_requests.post = lambda *args, **kwargs: pytest.fail("requests.post should not be called")
+        fake_requests.exceptions = types.SimpleNamespace(
+            HTTPError=Exception,
+            RequestException=Exception,
+            Timeout=Exception,
+        )
+        sys.modules["requests"] = fake_requests
+        spec = importlib.util.spec_from_file_location(
+            "cps.services.hardcover",
+            root / "cps" / "services" / "hardcover.py",
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        for k, v in snapshot.items():
+            if v is None:
+                sys.modules.pop(k, None)
+            else:
+                sys.modules[k] = v
 
 
 hardcover = _load_hardcover_module()
