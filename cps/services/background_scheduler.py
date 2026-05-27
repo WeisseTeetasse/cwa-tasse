@@ -40,9 +40,13 @@ class BackgroundScheduler:
 
         return cls._instance
 
-    def schedule(self, func, trigger, name=None):
+    def schedule(self, func, trigger, name=None, job_id=None, replace_existing=False):
         if use_APScheduler:
-            return self.scheduler.add_job(func=func, trigger=trigger, name=name)
+            kwargs = {"func": func, "trigger": trigger, "name": name}
+            if job_id is not None:
+                kwargs["id"] = job_id
+                kwargs["replace_existing"] = replace_existing
+            return self.scheduler.add_job(**kwargs)
 
     def remove_job(self, job_id: str):
         if use_APScheduler and job_id:
@@ -53,13 +57,15 @@ class BackgroundScheduler:
                 return None
 
     # Expects a lambda expression for the task
-    def schedule_task(self, task, user=None, name=None, hidden=False, trigger=None):
+    def schedule_task(self, task, user=None, name=None, hidden=False, trigger=None,
+                      job_id=None, replace_existing=False):
         if use_APScheduler:
             def scheduled_task():
                 worker_task = task()
                 worker_task.scheduled = True
                 WorkerThread.add(user, worker_task, hidden=hidden)
-            return self.schedule(func=scheduled_task, trigger=trigger, name=name)
+            return self.schedule(func=scheduled_task, trigger=trigger, name=name,
+                                 job_id=job_id, replace_existing=replace_existing)
 
     # Expects a list of lambda expressions for the tasks
     def schedule_tasks(self, tasks, user=None, trigger=None):

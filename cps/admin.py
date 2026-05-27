@@ -2564,6 +2564,14 @@ def _delete_user(content):
     if ub.session.query(ub.User).filter(ub.User.role.op('&')(constants.ROLE_ADMIN) == constants.ROLE_ADMIN,
                                         ub.User.id != content.id).count():
         if content.name != "Guest":
+            # Stop any scheduled per-user Hardcover state sync job so it
+            # doesn't continue firing for a now-deleted user.
+            try:
+                from .schedule import unschedule_hardcover_state_sync_for_user
+                unschedule_hardcover_state_sync_for_user(content.id)
+            except Exception as e:
+                log.warning("Could not unschedule Hardcover sync for deleted user %s: %s",
+                            content.id, e)
             # Delete all books in shelfs belonging to user, all shelfs of user, downloadstat of user, read status
             # and user itself
             ub.session.query(ub.ReadBook).filter(content.id == ub.ReadBook.user_id).delete()

@@ -7,7 +7,7 @@
 
 import datetime
 
-from . import config, constants
+from . import config, constants, logger, ub
 from .services.background_scheduler import BackgroundScheduler, CronTrigger, IntervalTrigger, use_APScheduler, DateTrigger
 from .tasks.database import TaskReconnectDatabase, TaskCleanArchivedBooks
 from .tasks.clean import TaskClean
@@ -17,6 +17,12 @@ from .services.worker import WorkerThread
 from .tasks.metadata_backup import TaskBackupMetadata
 from .tasks.auto_hardcover_id import TaskAutoHardcoverID
 from .tasks.hardcover_state_sync import TaskHardcoverStateSync
+
+log = logger.create()
+
+
+def _hardcover_state_sync_job_id(user_id):
+    return f"hardcover_state_sync_user_{int(user_id)}"
 
 def get_scheduled_tasks(reconnect=True):
     tasks = list()
@@ -322,27 +328,78 @@ def _schedule_hardcover_auto_fetch(scheduler, timezone_info):
 
 
 def _schedule_hardcover_state_sync(scheduler, timezone_info):
-    """Schedule per-user Hardcover state sync jobs."""
+    """Schedule per-user Hardcover state sync jobs at app boot."""
     try:
         users = ub.session.query(ub.User).filter(
             ub.User.hardcover_token.isnot(None)
         ).all()
-        for user in users:
-            if not (getattr(user, "hardcover_state_sync_enabled", False) or
-                    getattr(user, "hardcover_list_tag_sync_enabled", False)):
-                continue
-            minutes = int(getattr(user, "hardcover_state_poll_interval", 30) or 0)
-            if minutes <= 0:
-                continue
-            trigger = IntervalTrigger(minutes=minutes, timezone=timezone_info)
-            scheduler.schedule_task(lambda uid=user.id: TaskHardcoverStateSync(uid),
-                                    user=user.name,
-                                    trigger=trigger,
-                                    name=f"hardcover state sync user {user.id}",
-                                    hidden=True)
-    except Exception:
-        # Scheduling is best-effort; never block startup
-        pass
+    except Exception as e:
+        log.warning("hardcover state sync scheduler: could not enumerate users at boot: %s", e)
+        return
+    for user in users:
+        try:
+            schedule_hardcover_state_sync_for_user(user, scheduler=scheduler, timezone_info=timezone_info)
+        except Exception as e:
+            log.warning("hardcover state sync scheduler: failed to schedule user %s: %s", getattr(user, "id", "?"), e)
+
+
+def schedule_hardcover_state_sync_for_user(user, scheduler=None, timezone_info=None):
+    """Register or re-register the per-user Hardcover state sync job.
+
+    Safe to call from app boot (with scheduler + timezone_info supplied) or from
+    a request handler after profile save (we'll construct them ourselves).
+    Always removes any existing job for this user first, then conditionally adds
+    a new one if sync is currently enabled. Returns the new job, or None if
+    sync is disabled / scheduler unavailable.
+    """
+    if scheduler is None:
+        scheduler = BackgroundScheduler()
+        if not scheduler:
+            log.debug("hardcover state sync scheduler: APScheduler unavailable")
+            return None
+    if timezone_info is None:
+        timezone_info = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+
+    if user is None or not getattr(user, "hardcover_token", None):
+        return None
+    user_id = int(user.id)
+    job_id = _hardcover_state_sync_job_id(user_id)
+
+    # Always drop any existing job so changes to the interval (or to the
+    # enabled flag) take effect immediately, without an app restart.
+    scheduler.remove_job(job_id)
+
+    sync_on = bool(getattr(user, "hardcover_state_sync_enabled", False) or
+                   getattr(user, "hardcover_list_tag_sync_enabled", False))
+    if not sync_on:
+        log.info("hardcover state sync scheduler: user %s sync disabled — no job scheduled", user_id)
+        return None
+
+    minutes = int(getattr(user, "hardcover_state_poll_interval", 30) or 0)
+    if minutes <= 0:
+        log.info("hardcover state sync scheduler: user %s interval <= 0 — no job scheduled", user_id)
+        return None
+
+    trigger = IntervalTrigger(minutes=minutes, timezone=timezone_info)
+    job = scheduler.schedule_task(
+        lambda uid=user_id: TaskHardcoverStateSync(uid),
+        user=user.name,
+        trigger=trigger,
+        name=f"hardcover state sync user {user_id}",
+        hidden=True,
+        job_id=job_id,
+        replace_existing=True,
+    )
+    log.info("hardcover state sync scheduler: scheduled user %s every %d minute(s)", user_id, minutes)
+    return job
+
+
+def unschedule_hardcover_state_sync_for_user(user_id):
+    """Remove any Hardcover state sync job for the given user."""
+    scheduler = BackgroundScheduler()
+    if not scheduler:
+        return
+    scheduler.remove_job(_hardcover_state_sync_job_id(user_id))
 
 
 def _schedule_archived_book_cleanup(scheduler, timezone_info):

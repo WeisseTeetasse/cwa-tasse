@@ -2781,6 +2781,16 @@ def change_profile(kobo_support, hardcover_support, local_oauth_check, oauth_sta
 
     try:
         ub.session.commit()
+        # Re-register the per-user Hardcover state sync APScheduler job so
+        # interval / enable changes take effect immediately, without an app
+        # restart. Without this the scheduled job is only added at boot time
+        # and any UI change is invisible until the container is restarted.
+        try:
+            from .schedule import schedule_hardcover_state_sync_for_user
+            schedule_hardcover_state_sync_for_user(current_user)
+        except Exception as e:
+            log.warning("Could not refresh Hardcover state sync schedule for user %s: %s",
+                        current_user.id, e)
         if to_save.get("hardcover_state_sync_now") == "1":
             try:
                 from .tasks.hardcover_state_sync import TaskHardcoverStateSync
