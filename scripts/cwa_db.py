@@ -19,7 +19,16 @@ class CWA_DB:
         self.verbose = verbose
 
         self.db_file = "cwa.db"
-        self.db_path = "/config/"
+        # CWA_DB_PATH lets tests redirect the DB to a tmpdir; defaults to
+        # the container path used in production.
+        db_path = os.environ.get("CWA_DB_PATH", "/config/")
+        self.db_path = db_path if db_path.endswith(os.sep) else db_path + os.sep
+        # Ensure the parent directory exists; sqlite3.connect only creates
+        # the file, not the directory.
+        try:
+            os.makedirs(self.db_path, exist_ok=True)
+        except OSError:
+            pass
         self.con, self.cur = self.connect_to_db() # type: ignore
 
         # Support both Docker and CI environments for schema path
