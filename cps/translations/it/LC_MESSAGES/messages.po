@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Calibre-Web Automated\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-05-10 09:19+0000\n"
+"POT-Creation-Date: 2026-05-27 16:18+0000\n"
 "PO-Revision-Date: 2025-11-24 17:12+0100\n"
 "Last-Translator: Massimo Pissarello <mapi68@gmail.com>\n"
 "Language-Team: Italian\n"
@@ -154,7 +154,7 @@ msgstr "Mostra tutto"
 msgid "Malformed request"
 msgstr "Richiesta non valida"
 
-#: cps/admin.py:785 cps/admin.py:2793
+#: cps/admin.py:785 cps/admin.py:2801
 msgid "Guest Name can't be changed"
 msgstr "Il nome dell'utente Guest (ospite) non può essere modificato"
 
@@ -162,7 +162,7 @@ msgstr "Il nome dell'utente Guest (ospite) non può essere modificato"
 msgid "Guest can't have this role"
 msgstr "L'utente Guest (ospite) non può avere questo ruolo"
 
-#: cps/admin.py:811 cps/admin.py:2613
+#: cps/admin.py:811 cps/admin.py:2621
 msgid "No admin user remaining, can't remove admin role"
 msgstr ""
 "Non rimarrebbe nessun utente amministratore, non è possibile rimuovere il "
@@ -398,10 +398,10 @@ msgid "Success! Gmail Account Verified."
 msgstr "Tutto OK! Account Gmail verificato."
 
 #: cps/admin.py:1743 cps/admin.py:1746 cps/admin.py:2234 cps/admin.py:2445
-#: cps/admin.py:2560 cps/admin.py:2836 cps/editbooks.py:1042
+#: cps/admin.py:2560 cps/admin.py:2844 cps/editbooks.py:1042
 #: cps/editbooks.py:1816 cps/shelf.py:98 cps/shelf.py:158 cps/shelf.py:225
 #: cps/shelf.py:275 cps/shelf.py:312 cps/shelf.py:386 cps/shelf.py:508
-#: cps/tasks/convert.py:145 cps/web.py:2812
+#: cps/tasks/convert.py:145 cps/web.py:2822
 #, python-format
 msgid "Oops! Database Error: %(error)s."
 msgstr "Errore nel database: %(error)s."
@@ -443,7 +443,7 @@ msgstr "Durata non valida per l'attività specificata"
 msgid "Scheduled tasks settings updated"
 msgstr "Impostazioni delle attività pianificate aggiornate"
 
-#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2832 cps/web.py:2152
+#: cps/admin.py:1820 cps/admin.py:1964 cps/admin.py:2840 cps/web.py:2152
 msgid "Oops! An unknown error occurred. Please try again later."
 msgstr "Si è verificato un errore sconosciuto. Per favore riprova più tardi."
 
@@ -451,12 +451,12 @@ msgstr "Si è verificato un errore sconosciuto. Per favore riprova più tardi."
 msgid "Settings DB is not Writeable"
 msgstr "Il DB delle impostazioni non è scrivibile"
 
-#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2720 cps/web.py:2863
+#: cps/admin.py:1843 cps/opds.py:199 cps/web.py:2720 cps/web.py:2873
 #, fuzzy
 msgid "title"
 msgstr "Titolo"
 
-#: cps/admin.py:1949 cps/admin.py:2824
+#: cps/admin.py:1949 cps/admin.py:2832
 #, python-format
 msgid "Edit User %(nick)s"
 msgstr "Modifica utente %(nick)s"
@@ -634,147 +634,147 @@ msgstr "L'utente '%(user)s' è stato creato"
 msgid "Oops! An account already exists for this Email. or name."
 msgstr "Esiste già un account per questa e-mail o nome."
 
-#: cps/admin.py:2586
+#: cps/admin.py:2594
 #, python-format
 msgid "User '%(nick)s' deleted"
 msgstr "L'utente '%(nick)s' è stato eliminato"
 
-#: cps/admin.py:2589
+#: cps/admin.py:2597
 msgid "Can't delete Guest User"
 msgstr "Impossibile eliminare l'utente Guest (ospite)"
 
-#: cps/admin.py:2592
+#: cps/admin.py:2600
 msgid "No admin user remaining, can't delete user"
 msgstr ""
 "Non rimarrebbe nessun utente amministratore, non è possibile eliminare "
 "l'utente"
 
-#: cps/admin.py:2787 cps/web.py:2509
+#: cps/admin.py:2795 cps/web.py:2509
 msgid "Email can't be empty and has to be a valid Email"
 msgstr "L'e-mail non può essere vuota e deve essere un'e-mail valida"
 
-#: cps/admin.py:2828
+#: cps/admin.py:2836
 #, python-format
 msgid "User '%(nick)s' updated"
 msgstr "L'utente '%(nick)s' è stato aggiornato"
 
-#: cps/admin.py:2893
+#: cps/admin.py:2901
 #, python-format
 msgid ""
 "Connection successful! OIDC discovery endpoint is accessible.%(endpoints)s"
 msgstr ""
 
-#: cps/admin.py:2898
+#: cps/admin.py:2906
 msgid ""
 "Connection failed: OIDC discovery endpoint not found (404). Check if the "
 "base URL is correct."
 msgstr ""
 
-#: cps/admin.py:2900 cps/admin.py:2957
+#: cps/admin.py:2908 cps/admin.py:2965
 #, python-format
 msgid "Connection failed: Server returned status code %(code)s"
 msgstr ""
 "Connessione fallita: Il server ha restituito il codice di stato %(code)s"
 
-#: cps/admin.py:2902
+#: cps/admin.py:2910
 #, fuzzy
 msgid ""
 "Connection failed: Could not connect to server. Check the URL and network "
 "connectivity."
 msgstr "Connessione fallita: Impossibile connettersi al server."
 
-#: cps/admin.py:2904
+#: cps/admin.py:2912
 #, fuzzy
 msgid ""
 "Connection failed: Request timed out. The server may be slow or unreachable."
 msgstr "Connessione fallita: La richiesta è scaduta."
 
-#: cps/admin.py:2906
+#: cps/admin.py:2914
 #, fuzzy
 msgid ""
 "Connection failed: Server returned invalid JSON. This may not be an OIDC "
 "endpoint."
 msgstr "Connessione fallita: JSON non valido nella risposta."
 
-#: cps/admin.py:2909
+#: cps/admin.py:2917
 #, fuzzy, python-format
 msgid "Connection failed: %(error)s"
 msgstr "Errore di connessione"
 
-#: cps/admin.py:2935
+#: cps/admin.py:2943
 #, fuzzy, python-format
 msgid ""
 "Metadata is missing required OIDC fields: %(fields)s. This may not be a "
 "valid OIDC metadata endpoint."
 msgstr "I metadati mancano dei campi obbligatori: %(fields)s"
 
-#: cps/admin.py:2946
+#: cps/admin.py:2954
 #, fuzzy, python-format
 msgid "Metadata URL is valid! Found %(count)s OAuth endpoints."
 msgstr "L'URL dei metadati è valido! Trovati %(count)s endpoint."
 
-#: cps/admin.py:2948
+#: cps/admin.py:2956
 #, fuzzy
 msgid " User info endpoint is available."
 msgstr "Nessuna informazione disponibile sulla versione"
 
-#: cps/admin.py:2950
+#: cps/admin.py:2958
 msgid ""
 " Note: User info endpoint not found - this may cause authentication issues."
 msgstr ""
 
-#: cps/admin.py:2955
+#: cps/admin.py:2963
 msgid "Metadata URL not found (404). Please check the URL is correct."
 msgstr ""
 
-#: cps/admin.py:2959
+#: cps/admin.py:2967
 #, fuzzy
 msgid ""
 "Connection failed: Could not connect to metadata URL. Check the URL and "
 "network connectivity."
 msgstr "Connessione fallita: Impossibile connettersi al server."
 
-#: cps/admin.py:2961
+#: cps/admin.py:2969
 msgid "Connection failed: Request timed out."
 msgstr "Connessione fallita: La richiesta è scaduta."
 
-#: cps/admin.py:2963
+#: cps/admin.py:2971
 msgid "Connection failed: Invalid JSON in response."
 msgstr "Connessione fallita: JSON non valido nella risposta."
 
-#: cps/admin.py:2966
+#: cps/admin.py:2974
 msgid "An unknown error occurred."
 msgstr "Si è verificato un errore sconosciuto."
 
-#: cps/admin.py:2978
+#: cps/admin.py:2986
 #, fuzzy
 msgid "Restore already in progress."
 msgstr "Errore di connessione"
 
-#: cps/admin.py:2982
+#: cps/admin.py:2990
 msgid "Restore failed: Calibre library path is not configured."
 msgstr ""
 
-#: cps/admin.py:2987
+#: cps/admin.py:2995
 #, python-format
 msgid "Restore failed: metadata.db not found at %(path)s"
 msgstr ""
 
-#: cps/admin.py:2992
+#: cps/admin.py:3000
 #, python-format
 msgid "Restore failed: app.db not found at %(path)s"
 msgstr ""
 
-#: cps/admin.py:3064 cps/admin.py:3104
+#: cps/admin.py:3072 cps/admin.py:3112
 #, fuzzy, python-format
 msgid "Restore failed: %(err)s"
 msgstr "Errore di connessione"
 
-#: cps/admin.py:3081
+#: cps/admin.py:3089
 msgid "Restore completed but app.db cleanup failed. See logs for details."
 msgstr ""
 
-#: cps/admin.py:3100
+#: cps/admin.py:3108
 #, python-format
 msgid ""
 "Restore complete. Backups and restore log saved to %(dir)s. All book-linked "
@@ -1222,8 +1222,8 @@ msgstr ""
 msgid "File to be uploaded must have an extension"
 msgstr "Il file da caricare deve avere un'estensione"
 
-#: cps/editbooks.py:849 cps/editbooks.py:1431 cps/web.py:645 cps/web.py:2925
-#: cps/web.py:3016 cps/web.py:3101
+#: cps/editbooks.py:849 cps/editbooks.py:1431 cps/web.py:645 cps/web.py:2935
+#: cps/web.py:3026 cps/web.py:3111
 msgid ""
 "Oops! Selected book is unavailable. File does not exist or is not accessible"
 msgstr ""
@@ -2512,30 +2512,30 @@ msgstr ""
 msgid "Your password has been updated. You can now log in."
 msgstr ""
 
-#: cps/web.py:2793
+#: cps/web.py:2803
 #, fuzzy
 msgid "Hardcover state sync queued. Check Tasks for progress."
 msgstr "Errore nel convertitore: %(error)s"
 
-#: cps/web.py:2795
+#: cps/web.py:2805
 #, fuzzy
 msgid "Hardcover state sync could not be queued."
 msgstr "Hardcover API Key"
 
-#: cps/web.py:2800
+#: cps/web.py:2810
 #, fuzzy, python-format
 msgid "Hardcover state sync queue failed: %(error)s"
 msgstr "Errore nel convertitore: %(error)s"
 
-#: cps/web.py:2801
+#: cps/web.py:2811
 msgid "Success! Profile Updated"
 msgstr "Tutto OK! Profilo aggiornato"
 
-#: cps/web.py:2807
+#: cps/web.py:2817
 msgid "Oops! An account already exists for this Email."
 msgstr "Esiste già un account per questa e-mail."
 
-#: cps/web.py:3029
+#: cps/web.py:3039
 msgid "Invalid book ID."
 msgstr "Book ID non valido."
 
