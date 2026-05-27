@@ -186,3 +186,139 @@ class TestCalculateYearSimilarity:
 
     def test_non_year_strings(self):
         assert calculate_year_similarity("not a year", "also not") == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Edge cases — read these to learn the precise contracts.
+# ---------------------------------------------------------------------------
+
+class TestNormalizeStringEdgeCases:
+    def test_preserves_numbers(self):
+        # Numbers are not stripped — useful for "Book 2" style titles.
+        # Note: only these are stopwords: ['the','a','an','and','&'].
+        # "are", "is", etc. are NOT stopwords — pinned here so a future
+        # widening of the stopword list catches our notice.
+        assert normalize_string("the book 2 and 3") == "book 2 3"
+
+    def test_preserves_non_ascii_lowercased(self):
+        # Cyrillic, Greek, etc. pass through lowercased — no transliteration
+        assert normalize_string("Привет МИР") == "привет мир"
+
+    def test_only_stopwords_returns_empty(self):
+        # All-stopword input collapses to ""
+        assert normalize_string("the a an and &") == ""
+
+    def test_none_returns_empty(self):
+        assert normalize_string(None) == ""
+
+    def test_only_punctuation_returns_empty(self):
+        assert normalize_string("!@#$%^") == ""
+
+    def test_unicode_punctuation_stripped(self):
+        # The regex `[^\w\s]` is Unicode-aware via \w — em-dash is gone
+        assert "—" not in normalize_string("foo — bar")
+
+
+class TestLevenshteinDistanceEdgeCases:
+    def test_both_empty(self):
+        assert levenshtein_distance("", "") == 0
+
+    def test_single_char_each(self):
+        assert levenshtein_distance("a", "a") == 0
+        assert levenshtein_distance("a", "b") == 1
+
+    def test_completely_different_lengths(self):
+        # Long deletion: minimum edits = length of longer
+        assert levenshtein_distance("", "abcdefghij") == 10
+
+    def test_unicode_chars_counted_correctly(self):
+        # Single-code-point Unicode → distance 1, not byte length
+        assert levenshtein_distance("café", "cafe") == 1
+
+
+class TestJaccardSimilarityEdgeCases:
+    def test_both_normalize_to_empty_returns_one(self):
+        # Both inputs reduce to {} after normalization → 1.0 by
+        # documented convention (both "empty" → identical)
+        assert jaccard_similarity("the", "the") == 1.0
+        assert jaccard_similarity("the a an", "the a an") == 1.0
+
+    def test_case_insensitive(self):
+        assert jaccard_similarity("HELLO", "hello") == 1.0
+
+    def test_duplicate_tokens_dont_affect_jaccard(self):
+        # Set semantics: "hello hello" tokenizes to {"hello"}
+        assert jaccard_similarity("hello hello", "hello") == 1.0
+
+
+class TestAuthorListSimilarityEdgeCases:
+    def test_none_returns_zero(self):
+        # Defensive: None propagates as "no list" rather than raising
+        assert author_list_similarity(None, ["King"]) == (0.0, False)
+        assert author_list_similarity(["King"], None) == (0.0, False)
+
+    def test_empty_string_in_list_normalizes_to_empty(self):
+        # Empty string normalizes to "" → similarity 0 against any
+        # non-empty author → the GOOD author still produces a high score
+        # because the function takes per-author max
+        score, is_and = author_list_similarity(["", "King"], ["King"])
+        # The "" entry pulls the average down; is_and is False because
+        # not every author from authors1 has a >0.8 match
+        assert 0.0 < score < 1.0
+        assert is_and is False
+
+    def test_self_comparison_perfect(self):
+        score, is_and = author_list_similarity(
+            ["Stephen King", "Joe Hill"], ["Stephen King", "Joe Hill"]
+        )
+        assert score == 1.0
+        assert is_and is True
+
+    def test_different_order_same_authors_perfect(self):
+        # Per-author max-best-match → order-independent.
+        # Use multi-char names so they survive normalization (single
+        # chars like "A" become stopwords or empty after normalize).
+        score, is_and = author_list_similarity(
+            ["Stephen King", "Joe Hill"], ["Joe Hill", "Stephen King"]
+        )
+        assert score == 1.0
+        assert is_and is True
+
+
+class TestCalculateYearSimilarityEdgeCases:
+    def test_three_digit_year_returns_zero(self):
+        # Regex requires \b\d{4}\b — 3 digits don't match
+        assert calculate_year_similarity("500", "500") == 0.0
+
+    def test_five_digit_year_returns_zero(self):
+        # Same — \b\d{4}\b doesn't match 5-digit
+        assert calculate_year_similarity("12345", "12345") == 0.0
+
+    def test_year_extracted_from_within_text(self):
+        # Regex finds first 4-digit number anywhere in the string
+        assert calculate_year_similarity("foo 2020 bar", "2020") == 1.0
+
+    def test_int_year_accepted(self):
+        # Internal str(year1) coercion handles ints
+        assert calculate_year_similarity(2020, 2021) == 0.5
+
+    def test_none_returns_zero(self):
+        assert calculate_year_similarity(None, "2020") == 0.0
+        assert calculate_year_similarity("2020", None) == 0.0
+
+
+class TestNormalizedLevenshteinSimilarityEdgeCases:
+    def test_substring_match_partial(self):
+        # "hello" vs "hello world" — substantial but not perfect
+        score = normalized_levenshtein_similarity("hello", "hello world")
+        assert 0.4 < score < 0.6
+
+    def test_one_normalized_to_empty(self):
+        # "the" normalizes to "" → returns 0.0
+        assert normalized_levenshtein_similarity("the", "hello") == 0.0
+
+    def test_both_normalized_to_empty(self):
+        # Documented edge: both empty → 0.0 (not 1.0)
+        # This is intentional: empty strings should not "match" anything
+        # in the metadata fuzzy-match flow
+        assert normalized_levenshtein_similarity("the", "the") == 0.0

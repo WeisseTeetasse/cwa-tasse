@@ -124,6 +124,61 @@ class TestNormalizeMagicShelfOrder:
         assert self.normalize(None, None) == []
         assert self.normalize(None, [1, 2]) == [1, 2]
 
+    # ----- Edge cases -----
+
+    def test_negative_ids_accepted_if_in_available(self):
+        # The function doesn't reject negative IDs (DB doesn't generate
+        # them, but we shouldn't blow up if someone hand-edits settings)
+        assert self.normalize([-1], [-1, 2]) == [-1, 2]
+
+    def test_float_string_id_skipped(self):
+        # "3.5" is not parseable as int — silently dropped, then
+        # available IDs are appended at the end
+        assert self.normalize(["3.5", 1], [1, 2]) == [1, 2]
+
+    def test_bool_values_coerced_to_int(self):
+        # True is int(True)=1 in Python — documented quirk. If a future
+        # change tightens this, the test will catch it.
+        assert self.normalize([True], [1, 2]) == [1, 2]
+        assert self.normalize([False], [0, 1]) == [0, 1]
+
+    def test_very_large_list_performance(self):
+        # 10k IDs: linear-time normalization should complete instantly
+        import time
+        big = list(range(10_000))
+        start = time.monotonic()
+        out = self.normalize(big, big)
+        elapsed = time.monotonic() - start
+        assert out == big
+        assert elapsed < 1.0  # generous bound — should be ~milliseconds
+
+    def test_generator_input_works(self):
+        # The function uses for-loops, so a generator should be fine
+        gen = (i for i in [2, 1, 3])
+        assert self.normalize(gen, [1, 2, 3]) == [2, 1, 3]
+
+    def test_order_with_only_unknown_ids(self):
+        # All explicit IDs unknown → behaves like empty order_list
+        assert self.normalize([99, 100, 101], [1, 2]) == [1, 2]
+
+    def test_available_empty_returns_empty(self):
+        # No shelves exist → empty result regardless of order_list
+        assert self.normalize([1, 2, 3], []) == []
+
+    def test_preserves_order_when_available_is_set(self):
+        # `available_ids` is iterable (could be set); the iteration order
+        # of a set isn't guaranteed but the test pins that we don't crash.
+        # We accept any permutation of {1,2,3}.
+        result = self.normalize([], {1, 2, 3})
+        assert set(result) == {1, 2, 3}
+        assert len(result) == 3
+
+    def test_string_id_with_leading_zero_coerced(self):
+        # "007" → int → 7. Then 7 must be in available to be kept.
+        assert self.normalize(["007"], [7, 8]) == [7, 8]
+        # Not in available → dropped
+        assert self.normalize(["007"], [8, 9]) == [8, 9]
+
 
 # ---------------------------------------------------------------------------
 # Static invariants: rule builder & system shelves

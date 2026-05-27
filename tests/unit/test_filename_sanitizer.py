@@ -128,3 +128,93 @@ class TestGetValidFilenameShared:
         # they can skip the *+:"/<>? replacement
         out = get_valid_filename_shared("a*b", replace_whitespace=False)
         assert "*" in out
+
+
+class TestGetValidFilenameSharedEdgeCases:
+    """Edge cases that pin observed behavior — read these tests to learn
+    the precise contract before refactoring this function."""
+
+    def test_only_dots_replaces_only_last_dot(self):
+        # Documented behavior: only the LAST trailing dot is replaced
+        # with '_', not all of them. "..." → ".._"
+        assert get_valid_filename_shared("...") == ".._"
+        assert get_valid_filename_shared("a..") == "a._"
+
+    def test_idempotent_on_already_safe_input(self):
+        once = get_valid_filename_shared("a/b:c")
+        twice = get_valid_filename_shared(once)
+        assert once == twice  # No further changes on second pass
+
+    def test_newline_passes_through(self):
+        # Documented quirk: newlines are NOT in the forbidden set.
+        # If you need newline-stripping, do it before calling.
+        out = get_valid_filename_shared("a\nb")
+        assert "\n" in out
+
+    def test_tab_passes_through(self):
+        # Same as newline — tabs are not stripped
+        out = get_valid_filename_shared("a\tb")
+        assert "\t" in out
+
+    def test_all_forbidden_chars_combined(self):
+        # Sanity: every char in the forbidden set replaced in one go
+        out = get_valid_filename_shared('a/b\\c:"d|e<f>g?h*i+j')
+        # /\:"<>?*+ → _, pipe → ,
+        for bad in '/\\:"<>?*+':
+            assert bad not in out
+        assert "|" not in out
+        assert "," in out  # pipe replacement marker
+
+    def test_chars_equals_1_truncates(self):
+        out = get_valid_filename_shared("hello", chars=1)
+        # 1 byte cap → 1-char ASCII
+        assert len(out.encode("utf-8")) <= 1
+
+    def test_only_zero_width_chars_raises(self):
+        # After stripping, nothing left → ValueError (don't return empty)
+        with pytest.raises(ValueError):
+            get_valid_filename_shared("​‌‍﻿")
+
+    def test_emoji_preserved_when_unicode_filename_off(self):
+        # Default mode keeps non-ASCII — Calibre's filesystem layer
+        # handles emoji on modern OSes
+        assert "📚" in get_valid_filename_shared("📚 Book")
+
+    def test_combining_accent_preserved(self):
+        # 'café' (composed or with combining accent) should pass through
+        assert "café" in get_valid_filename_shared("café")
+
+    def test_just_a_forward_slash(self):
+        # Pathological: input is literally one forbidden char
+        assert get_valid_filename_shared("/") == "_"
+
+    def test_unicode_transliteration_partial(self):
+        # Mixed-script with unicode=True: only the non-ASCII gets
+        # transliterated. ASCII stays as-is.
+        out = get_valid_filename_shared("Hello Привет", unicode_filename=True)
+        assert "Hello" in out
+        assert out.isascii()
+
+    def test_byte_truncation_caps_at_chars_for_multibyte(self):
+        # Sanity check: a long ASCII string is capped exactly at `chars`
+        out = get_valid_filename_shared("a" * 500, chars=128, replace_whitespace=False)
+        assert len(out.encode("utf-8")) == 128
+
+    def test_consecutive_regex_chars_collapse(self):
+        # Documented quirk: the regex `[*+:\"<>?]+` collapses runs of
+        # those chars to one `_`. But `/` is replaced earlier via plain
+        # str.replace("/","_"), so `///` becomes `___` (NOT collapsed).
+        # This test pins both behaviors.
+        assert get_valid_filename_shared("a***b") == "a_b"   # collapsed
+        assert get_valid_filename_shared("a///b") == "a___b"  # not collapsed
+
+    def test_float_input_coerced(self):
+        # Non-str inputs become str(value); 3.14 → "3.14"
+        assert get_valid_filename_shared(3.14) == "3.14"
+
+    def test_bytes_input_coerced(self):
+        # bytes goes through str() which gives "b'...'" — not ideal but
+        # documents current behavior so a refactor doesn't silently
+        # change it
+        out = get_valid_filename_shared(b"hello")
+        assert "hello" in out

@@ -80,3 +80,95 @@ class TestKoboCoverImageId:
             last_modified=last_modified,
             cover_path=None,
         ) == expected
+
+
+@pytest.mark.unit
+class TestKoboCoverImageIdEdgeCases:
+    """Edge cases that pin observed behavior."""
+
+    def test_normalize_uppercase_uuid_preserved_as_is(self):
+        # uuid.UUID() accepts uppercase — returned unchanged
+        base = str(uuidlib.uuid4()).upper()
+        assert kobo_cache.normalize_cover_uuid(base) == base
+
+    def test_normalize_hex_string_without_hyphens_passes_through(self):
+        # 32-char hex (valid input to uuid.UUID()) is preserved
+        base = uuidlib.uuid4().hex  # no hyphens
+        # The function calls uuid.UUID() which accepts hex; returns as-is
+        assert kobo_cache.normalize_cover_uuid(base) == base
+
+    def test_normalize_uuid_with_zero_mtime_suffix(self):
+        # mtime of 0 (epoch) is a valid suffix to strip
+        base = str(uuidlib.uuid4())
+        assert kobo_cache.normalize_cover_uuid(f"{base}-0") == base
+
+    def test_normalize_just_digits(self):
+        # No UUID, not a uuid-suffix pattern → unchanged
+        assert kobo_cache.normalize_cover_uuid("12345") == "12345"
+
+    def test_normalize_integer_returns_input_unchanged(self):
+        # Defensive: int input doesn't crash (UUID() raises TypeError,
+        # rsplit('-', 1) on str(int) gives single part → returned)
+        assert kobo_cache.normalize_cover_uuid(123) == 123
+
+    def test_build_with_empty_cover_path_returns_base(self):
+        # Empty string is falsy → no mtime suffix
+        base = str(uuidlib.uuid4())
+        assert kobo_cache.build_cover_image_id(
+            base, use_google_drive=False, last_modified=None, cover_path=""
+        ) == base
+
+    def test_build_with_mtime_zero_appends_zero(self, tmp_path):
+        # Edge case: cover file with mtime exactly at epoch (0)
+        cover = tmp_path / "c.jpg"
+        cover.write_bytes(b"x")
+        os.utime(cover, (0, 0))
+        base = str(uuidlib.uuid4())
+        result = kobo_cache.build_cover_image_id(
+            base, use_google_drive=False, last_modified=None, cover_path=str(cover)
+        )
+        assert result == f"{base}-0"
+
+    def test_build_gdrive_with_non_datetime_last_modified_returns_base(self):
+        # Documented: only datetime instances produce a suffix in gdrive
+        # mode. Strings/ints/None all fall through to base.
+        base = str(uuidlib.uuid4())
+        assert kobo_cache.build_cover_image_id(
+            base, use_google_drive=True, last_modified="2024-01-01", cover_path=None
+        ) == base
+        assert kobo_cache.build_cover_image_id(
+            base, use_google_drive=True, last_modified=12345, cover_path=None
+        ) == base
+
+    def test_build_gdrive_naive_datetime_uses_local_timestamp(self):
+        # Naive datetime → .timestamp() uses local timezone. We just
+        # check the suffix is numeric and reasonable; exact value depends
+        # on the host TZ.
+        base = str(uuidlib.uuid4())
+        result = kobo_cache.build_cover_image_id(
+            base,
+            use_google_drive=True,
+            last_modified=datetime(2024, 1, 1),
+            cover_path=None,
+        )
+        suffix = result.rsplit("-", 1)[1]
+        assert suffix.isdigit()
+        assert 1_700_000_000 < int(suffix) < 1_800_000_000  # 2024-ish
+
+    def test_build_with_empty_base_returns_empty_when_no_mtime(self):
+        # Pathological input: empty UUID. Documents behavior.
+        result = kobo_cache.build_cover_image_id(
+            "", use_google_drive=False, last_modified=None, cover_path=None
+        )
+        assert result == ""
+
+    def test_normalize_then_build_roundtrip(self, tmp_path):
+        # Critical invariant: build → normalize must always recover the
+        # base id, no matter what the suffix looks like
+        base = str(uuidlib.uuid4())
+        cover = tmp_path / "c.jpg"
+        cover.write_bytes(b"x")
+        built = kobo_cache.build_cover_image_id(
+            base, use_google_drive=False, last_modified=None, cover_path=str(cover)
+        )
+        assert kobo_cache.normalize_cover_uuid(built) == base
