@@ -20,91 +20,129 @@ def _install_stub(name, attrs=None):
     return module
 
 
+# Names we stub for isolation — snapshot these before, restore after,
+# so we don't pollute sys.modules for later test files (which would
+# break their `from sqlalchemy import text` etc.).
+_STUBBED_MODULES = (
+    "cps", "cps.db", "cps.calibre_db", "cps.logger", "cps.ub", "cps.csrf",
+    "cps.config", "cps.helper", "cps.services", "cps.services.worker",
+    "cps.admin", "cps.usermanagement", "cps.render_template", "cps.cw_login",
+    "cps.duplicates",
+    "flask", "flask_babel",
+    "sqlalchemy", "sqlalchemy.sql", "sqlalchemy.sql.expression", "sqlalchemy.orm",
+    "cwa_db",
+)
+
+
+_LOADED_MODULE = None
+
+
 def _load_duplicates_module():
-    if "cps.duplicates" in sys.modules:
-        return sys.modules["cps.duplicates"]
+    """Load cps.duplicates in isolation. Snapshots+restores sys.modules
+    so the heavy stubs (sqlalchemy, flask, etc.) don't leak into other
+    test files.
 
-    _install_stub("cps")
-    _install_stub("cps.db")
-    _install_stub("cps.calibre_db")
+    Caches the loaded module in _LOADED_MODULE so we only pay the import
+    cost once even though sys.modules gets restored on each call.
+    """
+    global _LOADED_MODULE
+    if _LOADED_MODULE is not None:
+        return _LOADED_MODULE
 
-    class _Logger:
-        def warning(self, *args, **kwargs):
-            return None
+    snapshot = {k: sys.modules.get(k) for k in _STUBBED_MODULES}
 
-        def error(self, *args, **kwargs):
-            return None
+    try:
+        _install_stub("cps")
+        _install_stub("cps.db")
+        _install_stub("cps.calibre_db")
 
-    _install_stub("cps.logger", {"create": lambda: _Logger()})
-    _install_stub("cps.ub", {"session": None, "DismissedDuplicateGroup": object()})
-    _install_stub("cps.csrf", {"exempt": lambda f: f})
-    _install_stub("cps.config")
-    _install_stub("cps.helper")
+        class _Logger:
+            def warning(self, *args, **kwargs):
+                return None
 
-    _install_stub("cps.services")
-    _install_stub(
-        "cps.services.worker",
-        {
-            "WorkerThread": object,
-            "STAT_FINISH_SUCCESS": 0,
-            "STAT_FAIL": 1,
-            "STAT_ENDED": 2,
-            "STAT_CANCELLED": 3,
-        },
-    )
+            def error(self, *args, **kwargs):
+                return None
 
-    _install_stub("cps.admin", {"admin_required": lambda f: f})
-    _install_stub("cps.usermanagement", {"login_required_if_no_ano": lambda f: f})
-    _install_stub("cps.render_template", {"render_title_template": lambda *args, **kwargs: ""})
+        _install_stub("cps.logger", {"create": lambda: _Logger()})
+        _install_stub("cps.ub", {"session": None, "DismissedDuplicateGroup": object()})
+        _install_stub("cps.csrf", {"exempt": lambda f: f})
+        _install_stub("cps.config")
+        _install_stub("cps.helper")
 
-    class _User:
-        is_authenticated = False
+        _install_stub("cps.services")
+        _install_stub(
+            "cps.services.worker",
+            {
+                "WorkerThread": object,
+                "STAT_FINISH_SUCCESS": 0,
+                "STAT_FAIL": 1,
+                "STAT_ENDED": 2,
+                "STAT_CANCELLED": 3,
+            },
+        )
 
-        def role_admin(self):
-            return False
+        _install_stub("cps.admin", {"admin_required": lambda f: f})
+        _install_stub("cps.usermanagement", {"login_required_if_no_ano": lambda f: f})
+        _install_stub("cps.render_template", {"render_title_template": lambda *args, **kwargs: ""})
 
-        def role_edit(self):
-            return False
+        class _User:
+            is_authenticated = False
 
-    _install_stub("cps.cw_login", {"current_user": _User()})
+            def role_admin(self):
+                return False
 
-    class _Blueprint:
-        def __init__(self, *args, **kwargs):
-            return None
+            def role_edit(self):
+                return False
 
-        def route(self, *args, **kwargs):
-            def _decorator(fn):
-                return fn
-            return _decorator
+        _install_stub("cps.cw_login", {"current_user": _User()})
 
-    _install_stub(
-        "flask",
-        {
-            "Blueprint": _Blueprint,
-            "jsonify": lambda *args, **kwargs: None,
-            "request": object(),
-            "abort": lambda *args, **kwargs: None,
-        },
-    )
-    _install_stub("flask_babel", {"gettext": lambda text: text})
-    _install_stub("sqlalchemy", {"func": object(), "and_": lambda *args, **kwargs: None, "case": lambda *args, **kwargs: None})
-    _install_stub("sqlalchemy.sql")
-    _install_stub("sqlalchemy.sql.expression", {"true": True, "false": False})
-    _install_stub("sqlalchemy.orm", {"joinedload": lambda *args, **kwargs: None})
+        class _Blueprint:
+            def __init__(self, *args, **kwargs):
+                return None
 
-    class _CWA_DB:
-        def __init__(self):
-            self.cwa_settings = {}
+            def route(self, *args, **kwargs):
+                def _decorator(fn):
+                    return fn
+                return _decorator
 
-    _install_stub("cwa_db", {"CWA_DB": _CWA_DB})
+        _install_stub(
+            "flask",
+            {
+                "Blueprint": _Blueprint,
+                "jsonify": lambda *args, **kwargs: None,
+                "request": object(),
+                "abort": lambda *args, **kwargs: None,
+            },
+        )
+        _install_stub("flask_babel", {"gettext": lambda text: text})
+        _install_stub("sqlalchemy", {"func": object(), "and_": lambda *args, **kwargs: None, "case": lambda *args, **kwargs: None})
+        _install_stub("sqlalchemy.sql")
+        _install_stub("sqlalchemy.sql.expression", {"true": True, "false": False})
+        _install_stub("sqlalchemy.orm", {"joinedload": lambda *args, **kwargs: None})
 
-    duplicates_path = pathlib.Path(__file__).resolve().parents[2] / "cps" / "duplicates.py"
-    spec = importlib.util.spec_from_file_location("cps.duplicates", duplicates_path)
-    module = importlib.util.module_from_spec(spec)
-    module.__package__ = "cps"
-    sys.modules["cps.duplicates"] = module
-    spec.loader.exec_module(module)
-    return module
+        class _CWA_DB:
+            def __init__(self):
+                self.cwa_settings = {}
+
+        _install_stub("cwa_db", {"CWA_DB": _CWA_DB})
+
+        duplicates_path = pathlib.Path(__file__).resolve().parents[2] / "cps" / "duplicates.py"
+        spec = importlib.util.spec_from_file_location("cps.duplicates", duplicates_path)
+        module = importlib.util.module_from_spec(spec)
+        module.__package__ = "cps"
+        sys.modules["cps.duplicates"] = module
+        spec.loader.exec_module(module)
+        _LOADED_MODULE = module
+        return module
+    finally:
+        # Restore sys.modules. The loaded `cps.duplicates` module keeps
+        # its own bound references to the fakes (captured at exec time),
+        # so it continues to work even after sys.modules is restored.
+        for k, v in snapshot.items():
+            if v is None:
+                sys.modules.pop(k, None)
+            else:
+                sys.modules[k] = v
 
 
 def _book(ts):

@@ -43,15 +43,25 @@ def _load_calibre_init():
     cps_module.db = db_module
     cps_module.logger = logger_module
 
-    sys.modules["cps"] = cps_module
-    sys.modules["cps.db"] = db_module
-    sys.modules["cps.logger"] = logger_module
+    # Snapshot+restore so the stubs don't leak into later test files
+    # (which would break their real `from cps import ...` imports).
+    snapshot = {k: sys.modules.get(k) for k in ("cps", "cps.db", "cps.logger")}
+    try:
+        sys.modules["cps"] = cps_module
+        sys.modules["cps.db"] = db_module
+        sys.modules["cps.logger"] = logger_module
 
-    module_path = Path(__file__).resolve().parents[2] / "cps" / "calibre_init.py"
-    spec = importlib.util.spec_from_file_location("calibre_init", module_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module, DummyCalibreDB
+        module_path = Path(__file__).resolve().parents[2] / "cps" / "calibre_init.py"
+        spec = importlib.util.spec_from_file_location("calibre_init", module_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module, DummyCalibreDB
+    finally:
+        for k, v in snapshot.items():
+            if v is None:
+                sys.modules.pop(k, None)
+            else:
+                sys.modules[k] = v
 
 
 def _create_settings_table(con, columns):
