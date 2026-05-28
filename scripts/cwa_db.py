@@ -19,7 +19,14 @@ class CWA_DB:
         self.verbose = verbose
 
         self.db_file = "cwa.db"
-        self.db_path = "/config/"
+        # Honor CWA_DB_PATH env var so tests (and CI runs) can point at
+        # a temp directory instead of the production /config/ path.
+        # Trailing slash is normalized — accept either form.
+        env_path = os.environ.get("CWA_DB_PATH", "").strip()
+        if env_path:
+            self.db_path = env_path if env_path.endswith(os.sep) else env_path + os.sep
+        else:
+            self.db_path = "/config/"
         self.con, self.cur = self.connect_to_db() # type: ignore
 
         # Support both Docker and CI environments for schema path
@@ -40,6 +47,17 @@ class CWA_DB:
         """Establishes connection with the db or makes one if one doesn't already exist"""
         con = None
         cur = None
+        # Ensure parent directory exists — sqlite3.connect can create the
+        # db file but NOT the directory, so a missing parent raises
+        # OperationalError. This matters on first run in a fresh
+        # container, in tests pointing at tmp_path/nonexistent, and on
+        # any host where /config is mounted but empty.
+        try:
+            os.makedirs(self.db_path, exist_ok=True)
+        except OSError:
+            # If we can't create the dir we'll get a clearer error from
+            # sqlite3.connect below
+            pass
         try:
             con = sqlite3.connect(self.db_path + self.db_file, timeout=30)
         except sqlError as e:
