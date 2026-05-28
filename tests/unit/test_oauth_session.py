@@ -176,6 +176,13 @@ module_patches = {
     'cps.db': create_mock_module('cps.db'),
 }
 
+# Snapshot sys.modules entries we (and the import below) will touch so we
+# can fully restore them in teardown_module. Otherwise the fake `cps` /
+# `cps.oauth_bb` / etc. leak into subsequent test files, breaking real
+# `from cps import config` imports there.
+_MODULES_TO_RESTORE = tuple(module_patches.keys()) + ('cps.oauth_bb',)
+_MODULE_SNAPSHOT = {k: sys.modules.get(k) for k in _MODULES_TO_RESTORE}
+
 # We use patch.dict to temporarily replace modules during import
 with patch.dict(sys.modules, module_patches):
     # Ensure project root is in sys.path
@@ -185,8 +192,19 @@ with patch.dict(sys.modules, module_patches):
     import cps.oauth_bb as oauth_bb
 
 # Keep oauth_bb in sys.modules so patch() can find it later
-# even after the patch.dict context manager exits
+# even after the patch.dict context manager exits. Cleaned up in
+# teardown_module below so it doesn't leak into other test files.
 sys.modules['cps.oauth_bb'] = oauth_bb
+
+
+def teardown_module(module):
+    """Restore sys.modules to the state before this file's import-time
+    monkey-patching, so later test files see the real `cps` package."""
+    for name, original in _MODULE_SNAPSHOT.items():
+        if original is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = original
 
 
 class TestGenericOIDCSession:
