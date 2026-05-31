@@ -1632,6 +1632,8 @@ def cwa_flash_status():
 ##————————————————————————————————————————————————————————————————————————————##
 
 @cwa_logs.route('/cwa-logs/download/<log_filename>')
+@login_required_if_no_ano
+@admin_required
 def download_log(log_filename):
     try:
         # Secure the filename to prevent directory traversal (e.g., '..')
@@ -1656,6 +1658,8 @@ def download_log(log_filename):
         abort(400)  # Bad request for malformed or unsafe file paths
 
 @cwa_logs.route('/cwa-logs/read/<log_filename>')
+@login_required_if_no_ano
+@admin_required
 def read_log(log_filename):
     try:
         # Secure the filename to prevent directory traversal (e.g., '..')

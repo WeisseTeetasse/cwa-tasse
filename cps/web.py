@@ -38,8 +38,7 @@ from .gdriveutils import getFileFromEbooksFolder, do_gdrive_download
 from .helper import check_valid_domain, check_email, check_username, \
     get_book_cover, get_series_cover_thumbnail, get_download_link, send_mail, generate_random_password, \
     send_registration_mail, check_send_to_ereader, check_read_formats, tags_filters, reset_password, valid_email, \
-    edit_book_read_status, valid_password, generate_password_reset_link, consume_password_reset_token, \
-    clear_password_reset_token
+    edit_book_read_status, valid_password
 from .pagination import Pagination
 from .redirect import get_redirect_location
 from .cw_babel import get_available_locale
@@ -2375,47 +2374,38 @@ def login_post():
     else:
         # Use request.remote_addr (already corrected by ProxyFix) instead of raw header
         ip_address = request.remote_addr
-        if form.get('forgot', "") == 'forgot':
-            # Always show the same generic message regardless of whether the
-            # username exists, to avoid leaking which accounts are valid.
-            generic_message = _(u"If that account exists, a password-reset link has been sent to its email address.")
-            if user is not None and user.name != "Guest":
-                ret, __ = generate_password_reset_link(user.id, request.host_url)
-                if ret == 1:
-                    log.info('Password reset link issued for user "%s" IP-address: %s', username, ip_address)
-                else:
-                    log.error('Password reset link failed for user "%s" IP-address: %s', username, ip_address)
-            else:
-                log.warning('Password reset requested for unknown user "%s" IP-address: %s', username, ip_address)
-            flash(generic_message, category="info")
+        # Self-service password reset was intentionally removed: it built the
+        # reset link from the client-controlled Host header, allowing reset-link
+        # poisoning / account takeover (CWE-640). Admins reset user passwords
+        # from the admin user page instead. A stray "forgot" field is therefore
+        # treated as an ordinary (failed) login attempt.
+        if user and check_password_hash(str(user.password), form['password']) and user.name != "Guest":
+            config.config_is_initial = False
+            log.debug(u"You are now logged in as: '{}'".format(user.name))
+            return handle_login_user(user,
+                                     remember_me,
+                                     _(u"You are now logged in as: '%(nickname)s'", nickname=user.name),
+                                     "success")
         else:
-            if user and check_password_hash(str(user.password), form['password']) and user.name != "Guest":
-                config.config_is_initial = False
-                log.debug(u"You are now logged in as: '{}'".format(user.name))
-                return handle_login_user(user,
-                                         remember_me,
-                                         _(u"You are now logged in as: '%(nickname)s'", nickname=user.name),
-                                         "success")
-            else:
-                log.warning('Login failed for user "{}" IP-address: {}'.format(username, ip_address))
-                
-                # Track failed login attempt
-                try:
-                    from scripts.cwa_db import CWA_DB
-                    import json
-                    cwa_db = CWA_DB()
-                    cwa_db.log_activity(
-                        user_id=None,
-                        user_name='Anonymous',
-                        event_type='LOGIN_FAILED',
-                        item_id=None,
-                        item_title=None,
-                        extra_data=json.dumps({'username_attempted': username, 'ip': ip_address, 'method': 'standard'})
-                    )
-                except Exception as e:
-                    log.debug(f"Failed to log failed login attempt: {e}")
-                
-                flash(_(u"Wrong Username or Password"), category="error")
+            log.warning('Login failed for user "{}" IP-address: {}'.format(username, ip_address))
+
+            # Track failed login attempt
+            try:
+                from scripts.cwa_db import CWA_DB
+                import json
+                cwa_db = CWA_DB()
+                cwa_db.log_activity(
+                    user_id=None,
+                    user_name='Anonymous',
+                    event_type='LOGIN_FAILED',
+                    item_id=None,
+                    item_title=None,
+                    extra_data=json.dumps({'username_attempted': username, 'ip': ip_address, 'method': 'standard'})
+                )
+            except Exception as e:
+                log.debug(f"Failed to log failed login attempt: {e}")
+
+            flash(_(u"Wrong Username or Password"), category="error")
     return render_login(username, form.get("password", ""))
 
 
@@ -2440,51 +2430,6 @@ def logout():
         return redirect(location)
     else:
         return redirect(url_for('web.login'))
-
-
-@web.route('/reset-password/<token>', methods=['GET'])
-@limiter.limit("60/hour", key_func=get_remote_address)
-def reset_password_form(token):
-    user = consume_password_reset_token(token)
-    if user is None:
-        flash(_(u"This password reset link is invalid or has expired."), category="error")
-        return redirect(url_for('web.login'))
-    return render_title_template('reset_password.html', token=token, title=_("Reset password"), page="reset_password")
-
-
-@web.route('/reset-password/<token>', methods=['POST'])
-@limiter.limit("20/hour", key_func=get_remote_address)
-def reset_password_submit(token):
-    user = consume_password_reset_token(token)
-    if user is None:
-        flash(_(u"This password reset link is invalid or has expired."), category="error")
-        return redirect(url_for('web.login'))
-    new_password = request.form.get('password', '')
-    confirm = request.form.get('password_confirm', '')
-    if not new_password or new_password != confirm:
-        flash(_(u"Passwords do not match."), category="error")
-        return render_title_template('reset_password.html', token=token, title=_("Reset password"), page="reset_password")
-    try:
-        valid_password(new_password)
-    except Exception as ex:
-        flash(str(ex), category="error")
-        return render_title_template('reset_password.html', token=token, title=_("Reset password"), page="reset_password")
-    try:
-        user.password = generate_password_hash(new_password)
-        clear_password_reset_token(user)
-        try:
-            from .kobo_auth import revoke_kobo_tokens_for_user
-            revoke_kobo_tokens_for_user(user.id)
-        except Exception as kobo_revoke_err:
-            log.warning("Could not revoke Kobo tokens after password reset: %s", kobo_revoke_err)
-        log.info('Password reset completed for user "%s" IP-address: %s', user.name, request.remote_addr)
-    except Exception as e:
-        log.error("Failed to apply password reset: %s", e)
-        ub.session.rollback()
-        flash(_(u"Could not reset password, please try again."), category="error")
-        return render_title_template('reset_password.html', token=token, title=_("Reset password"), page="reset_password")
-    flash(_(u"Your password has been updated. You can now log in."), category="success")
-    return redirect(url_for('web.login'))
 
 
 # ################################### Users own configuration #########################################################

@@ -27,6 +27,9 @@ KOBO_AUTH = PROJECT_ROOT / "cps" / "kobo_auth.py"
 USERMGMT = PROJECT_ROOT / "cps" / "usermanagement.py"
 KOSYNC = PROJECT_ROOT / "cps" / "progress_syncing" / "protocols" / "kosync.py"
 RESET_TPL = PROJECT_ROOT / "cps" / "templates" / "reset_password.html"
+CWA_FUNCTIONS = PROJECT_ROOT / "cps" / "cwa_functions.py"
+READ_LOG_TPL = PROJECT_ROOT / "cps" / "templates" / "cwa_read_log.html"
+LOGIN_TPL = PROJECT_ROOT / "cps" / "templates" / "login.html"
 
 
 def _read(p: Path) -> str:
@@ -99,61 +102,116 @@ class TestKoboSessionEscalation:
         assert "revoke_kobo_tokens_for_user(content.id)" in admin_src
 
 
-class TestPasswordResetTokenFlow:
-    def test_user_model_has_reset_columns(self):
+class TestSelfServicePasswordResetRemoved:
+    """Self-service ("Forgot Password?") reset was removed for security.
+
+    Risk: generate_password_reset_link() built the emailed reset URL from
+    request.host_url — the client-controlled Host / X-Forwarded-Host header —
+    with no trusted-host allowlist. An attacker could trigger a victim's reset
+    with a spoofed Host so the emailed link pointed at an attacker domain;
+    clicking it leaked the single-use token and allowed account takeover
+    (reset-link poisoning, CWE-640). The whole self-service flow was therefore
+    removed; admins reset user passwords from the admin user page instead.
+
+    These tests pin the removal so the vulnerable flow is not reintroduced
+    without consciously deleting a test.
+    """
+
+    def test_reset_link_helpers_removed_from_helper(self):
+        src = _read(HELPER)
+        assert "def generate_password_reset_link(" not in src
+        assert "def consume_password_reset_token(" not in src
+        assert "def clear_password_reset_token(" not in src
+        # The Host-header-derived reset URL must be gone entirely.
+        assert "reset-password/" not in src
+
+    def test_web_has_no_reset_routes(self):
+        src = _read(WEB)
+        assert "/reset-password/<token>" not in src
+        assert "def reset_password_form(" not in src
+        assert "def reset_password_submit(" not in src
+
+    def test_login_post_does_not_issue_reset_links(self):
+        src = _read(WEB)
+        # No code path may turn a request Host into an emailed reset link.
+        assert "generate_password_reset_link(" not in src
+        # The forgot-password branch must be gone.
+        assert "form.get('forgot'" not in src
+
+    def test_login_template_has_no_forgot_button(self):
+        src = _read(LOGIN_TPL)
+        assert 'name="forgot"' not in src
+        assert "Forgot Password?" not in src
+
+    def test_reset_password_template_deleted(self):
+        assert not RESET_TPL.exists(), (
+            "reset_password.html must stay deleted; it only served the removed "
+            "self-service reset flow."
+        )
+
+    def test_reset_columns_remain_for_migration_compatibility(self):
+        # The DB columns are intentionally left in place — dropping them would be
+        # a destructive migration on existing installs. They are inert now that
+        # no route can populate or read a reset token.
         src = _read(UB)
         assert "password_reset_token = Column(String" in src
         assert "password_reset_expires = Column(DateTime" in src
+        # The idempotent migration must remain so existing DBs stay valid.
+        assert "password_reset_columns = (" in src
 
-    def test_migration_adds_reset_columns(self):
-        src = _read(UB)
-        # The migrate_user_table block must add both columns idempotently
-        # (i.e. via the existing safe-migrate helper).
-        assert "password_reset_token" in src
-        assert "password_reset_expires" in src
-        assert "ALTER TABLE user ADD column" in src  # uses the same pattern
-        # Confirm both column names appear in the migration tuple. The outer
-        # tuple contains nested tuples, so we slice from the marker to the
-        # nearest blank-line / next statement to inspect the block.
-        idx = src.find("password_reset_columns = (")
-        assert idx != -1, "Could not find password_reset_columns migration block"
-        block = src[idx:idx + 600]
-        assert "password_reset_token" in block
-        assert "password_reset_expires" in block
 
-    def test_helper_provides_token_link_flow(self):
-        src = _read(HELPER)
-        assert "def generate_password_reset_link(" in src
-        assert "def consume_password_reset_token(" in src
-        assert "def clear_password_reset_token(" in src
-        # Must use a cryptographically strong token.
-        assert "secrets.token_urlsafe" in src
-        # Link must be rendered as /reset-password/<token>, not a cleartext password.
-        assert "reset-password/" in src
+class TestKosyncBruteForceThrottle:
+    """Bug: only /kosync/users/auth was rate-limited, but get_progress() and
+    update_progress() also call authenticate_user() (a full password / LDAP
+    check) with no @limiter and @csrf.exempt. An unauthenticated attacker could
+    brute-force credentials via the progress endpoints, bypassing the
+    auth-endpoint limit and the OPDS in-memory throttle. Fix: authenticate_user()
+    now enforces the shared per-IP failure throttle, covering every kosync
+    endpoint that authenticates.
+    """
 
-    def test_login_post_uses_token_link_not_cleartext(self):
-        src = _read(WEB)
-        # The forgot-password branch must call generate_password_reset_link,
-        # not the legacy reset_password() that emails a fresh password.
-        block = re.search(
-            r"if form\.get\('forgot', \"\"\) == 'forgot':(.*?)(?:else:|flash\(generic_message)",
-            src, re.DOTALL,
-        )
-        assert block, "Could not locate forgot-password branch"
-        body = block.group(1)
-        assert "generate_password_reset_link(" in body
-        assert "reset_password(user.id)" not in body
+    def test_authenticate_user_enforces_ip_throttle(self):
+        src = _read(KOSYNC)
+        fn = re.search(r"def authenticate_user\(.*?\):(.*?)\ndef ", src, re.DOTALL)
+        assert fn, "Could not locate authenticate_user"
+        body = fn.group(1)
+        # Must consult the shared throttle and record failures on the bad paths.
+        assert "_basic_auth_rate_limited(" in body
+        assert "_basic_auth_record_failure(" in body
 
-    def test_reset_routes_are_present(self):
-        src = _read(WEB)
-        assert "@web.route('/reset-password/<token>', methods=['GET'])" in src
-        assert "@web.route('/reset-password/<token>', methods=['POST'])" in src
-        # The submit handler must clear the token and revoke Kobo sessions.
-        assert "clear_password_reset_token(user)" in src
-        assert "revoke_kobo_tokens_for_user(user.id)" in src
+    def test_progress_endpoints_route_through_authenticate_user(self):
+        # The throttle only protects the progress endpoints if they actually
+        # authenticate via authenticate_user(); auth_user + get_progress +
+        # update_progress == 3 call sites.
+        src = _read(KOSYNC)
+        assert src.count("user = authenticate_user()") >= 3
 
-    def test_reset_template_exists_and_csrf_protected(self):
-        src = _read(RESET_TPL)
-        assert 'name="csrf_token"' in src
-        assert 'name="password"' in src
-        assert 'name="password_confirm"' in src
+
+class TestLogRoutesRequireAuth:
+    """Bug: /cwa-logs/download/<f> and /cwa-logs/read/<f> had no auth decorator,
+    so anyone on the internet could download/read application logs (client IPs,
+    usernames, attempted-login usernames, Kobo device names). read_log also
+    rendered log content through Jinja '| safe', turning log injection into
+    stored XSS in the viewer's (often admin's) browser. Fix: both routes require
+    admin; the read template autoescapes.
+    """
+
+    def test_log_routes_require_admin(self):
+        src = _read(CWA_FUNCTIONS)
+        for route in ("/cwa-logs/download/<log_filename>", "/cwa-logs/read/<log_filename>"):
+            block = re.search(
+                re.escape("@cwa_logs.route('" + route + "')") + r"(.*?)\ndef ",
+                src, re.DOTALL,
+            )
+            assert block, f"Could not locate route {route}"
+            decorators = block.group(1)
+            assert "@admin_required" in decorators, f"{route} is missing @admin_required"
+            assert "@login_required_if_no_ano" in decorators, (
+                f"{route} is missing @login_required_if_no_ano"
+            )
+
+    def test_read_log_template_autoescapes(self):
+        src = _read(READ_LOG_TPL)
+        # Attacker-influenced log content must be autoescaped — no '| safe'.
+        assert "| safe" not in src
+        assert "log | replace" not in src

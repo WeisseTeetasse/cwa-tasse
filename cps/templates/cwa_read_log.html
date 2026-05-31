@@ -17,7 +17,7 @@
                                           padding-bottom: 1px;
                                           max-height: calc(100vh - 27rem);
                                           overflow-y: scroll;">
-          <p id="innerStatus" style="color: whitesmoke; font-size: small;">{{ log | replace("\n", "<br>") | safe }}</p>
+          <pre id="innerStatus" style="color: whitesmoke; font-size: small; white-space: pre-wrap; word-break: break-word; font-family: inherit; margin: 0; border: 0; padding: 0; background: transparent;">{{ log }}</pre>
         </div>
       </div>
     </div>

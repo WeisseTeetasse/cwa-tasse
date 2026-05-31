@@ -174,6 +174,17 @@ def authenticate_user() -> Optional[ub.User]:
         log.debug(f"Invalid username or password format")
         return None
 
+    # Throttle password-guessing by source IP. The @limiter decorators only
+    # protect /kosync/users/auth; get_progress() and update_progress() also call
+    # authenticate_user() and would otherwise be an unthrottled credential
+    # brute-force surface. Reuse the shared per-IP failure budget that OPDS/API
+    # basic auth uses (usermanagement.verify_password) so guesses are capped
+    # regardless of which kosync endpoint the attacker hits.
+    client_ip = request.remote_addr
+    if usermanagement._basic_auth_rate_limited(client_ip):
+        log.warning("kosync: basic-auth rate-limit hit for IP %s (user '%s')", client_ip, username)
+        return None
+
     # Find user by username (case-insensitive for Calibre-Web compatibility)
     try:
         user = ub.session.query(ub.User).filter(
@@ -185,6 +196,7 @@ def authenticate_user() -> Optional[ub.User]:
 
     if not user:
         log.debug(f"User not found: {username}")
+        usermanagement._basic_auth_record_failure(client_ip)
         return None
 
     # Check if LDAP authentication is enabled
@@ -207,6 +219,7 @@ def authenticate_user() -> Optional[ub.User]:
         return user
 
     log.debug(f"Invalid password for user: {username}")
+    usermanagement._basic_auth_record_failure(client_ip)
     return None
 
 
