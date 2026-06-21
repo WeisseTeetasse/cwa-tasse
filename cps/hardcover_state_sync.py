@@ -692,7 +692,7 @@ def sync_user(user, source="manual"):
     
     # 15 minute throttle for scheduled/automatic syncs
     if source != "manual":
-        last_sync = getattr(user, "hardcover_state_last_sync", None)
+        last_sync = _as_utc_aware(getattr(user, "hardcover_state_last_sync", None))
         if last_sync and (_now() - last_sync).total_seconds() < 900:
             log.info("Hardcover state sync: throttled for user %s.", user.id)
             return {"changed": 0, "errors": ["Sync throttled."]}

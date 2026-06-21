@@ -137,3 +137,23 @@ class TestHardcoverListTagConflict:
         )
 
         assert action == state_sync.LIST_TAG_ACTION_PUSH_ADD
+
+
+@pytest.mark.unit
+class TestHardcoverStateSyncThrottle:
+    def test_scheduled_throttle_accepts_sqlite_naive_last_sync(self, monkeypatch):
+        monkeypatch.setattr(
+            state_sync,
+            "_now",
+            lambda: datetime(2026, 6, 21, 7, 0, tzinfo=timezone.utc),
+        )
+        user = types.SimpleNamespace(
+            id=1,
+            hardcover_state_sync_enabled=True,
+            hardcover_list_tag_sync_enabled=False,
+            hardcover_state_last_sync=datetime(2026, 6, 21, 6, 57, 30),
+        )
+
+        result = state_sync.sync_user(user, source="scheduled")
+
+        assert result == {"changed": 0, "errors": ["Sync throttled."]}
