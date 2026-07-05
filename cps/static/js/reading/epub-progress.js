@@ -73,12 +73,40 @@ window.addEventListener('locationchange',()=>{
 var epub=ePub(calibre.bookUrl)
 
 let progressDiv=document.getElementById("progress");
+let restoreOverlay=document.getElementById("restore-position-overlay");
+
+function getRestoreTargetPercentage(){
+    if (!window.calibre || !window.calibre.bookUrl) {
+        return null;
+    }
+    let bookKey = window.calibre.bookUrl;
+    // Treat missing / "0" / unparseable values as no local progress.
+    let savedProgress = parseInt(localStorage.getItem("calibre.reader.progress." + bookKey) || "0", 10);
+    let hasBookmark = window.calibre.bookmark && window.calibre.bookmark.length > 0;
+    let kosyncPercent = parseFloat(window.calibre.kosyncPercent);
+    if (savedProgress > 0) {
+        return savedProgress / 100;
+    }
+    if (!hasBookmark && !isNaN(kosyncPercent) && kosyncPercent > 0) {
+        return kosyncPercent / 100;
+    }
+    return null;
+}
+
+function setRestoreOverlayVisible(visible){
+    if (restoreOverlay) {
+        restoreOverlay.hidden = !visible;
+    }
+}
 
 qFinished(()=>{
     if (!epub || !epub.locations) {
         restoreComplete = true;
+        setRestoreOverlayVisible(false);
         return;
     }
+    let targetPercentage = getRestoreTargetPercentage();
+    setRestoreOverlayVisible(targetPercentage !== null);
     epub.locations.generate().then(()=> {
         // Choose the best starting position:
         //   1. local progress (you've read past 0% in the browser)
@@ -89,17 +117,6 @@ qFinished(()=>{
         // them, since users typically expect "where I left off on my device"
         // not "where I last manually bookmarked".
         if (window.calibre && window.calibre.bookUrl && reader && reader.rendition) {
-            let bookKey = window.calibre.bookUrl;
-            // Treat missing / "0" / unparseable values as no local progress.
-            let savedProgress = parseInt(localStorage.getItem("calibre.reader.progress." + bookKey) || "0", 10);
-            let hasBookmark = window.calibre.bookmark && window.calibre.bookmark.length > 0;
-            let kosyncPercent = parseFloat(window.calibre.kosyncPercent);
-            let targetPercentage = null;
-            if (savedProgress > 0) {
-                targetPercentage = savedProgress / 100;
-            } else if (!hasBookmark && !isNaN(kosyncPercent) && kosyncPercent > 0) {
-                targetPercentage = kosyncPercent / 100;
-            }
             if (targetPercentage !== null) {
                 let cfi = epub.locations.cfiFromPercentage(targetPercentage);
                 if (cfi) {
@@ -109,6 +126,10 @@ qFinished(()=>{
         }
         // From this point on, locationchange handlers may persist new positions.
         restoreComplete = true;
+        setRestoreOverlayVisible(false);
         window.dispatchEvent(new Event('locationchange'))
+    }).catch(()=> {
+        restoreComplete = true;
+        setRestoreOverlayVisible(false);
     });
 })

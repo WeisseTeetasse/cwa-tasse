@@ -23,10 +23,16 @@ pytestmark = pytest.mark.unit
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 EPUB_PROGRESS_JS = PROJECT_ROOT / "cps" / "static" / "js" / "reading" / "epub-progress.js"
+READ_TEMPLATE = PROJECT_ROOT / "cps" / "templates" / "read.html"
+READER_CSS = PROJECT_ROOT / "cps" / "static" / "css" / "reader.css"
 
 
 def _read() -> str:
     return EPUB_PROGRESS_JS.read_text(encoding="utf-8")
+
+
+def _read_file(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
 class TestRestoreOrder:
@@ -82,3 +88,30 @@ class TestRestoreSourcePriority:
         # Guard against regressing to `if (savedProgress) { ... }` where the
         # string "0" is truthy. The replacement must be a numeric check.
         assert "if (savedProgress)" not in src
+
+
+class TestRestoreStatusOverlay:
+    """Bug: restoring a saved percentage can take many seconds while EPUB.js
+    generates its location map, making the reader look stuck before it jumps."""
+
+    def test_reader_template_has_hidden_restore_overlay(self):
+        src = _read_file(READ_TEMPLATE)
+        assert 'id="restore-position-overlay"' in src
+        assert 'class="reader-status-overlay"' in src
+        assert "Restoring position..." in src
+        assert "hidden" in src
+
+    def test_restore_overlay_is_shown_while_locations_generate(self):
+        src = _read()
+        assert "let restoreOverlay=document.getElementById(\"restore-position-overlay\")" in src
+        assert "function setRestoreOverlayVisible(" in src
+        assert "let targetPercentage = getRestoreTargetPercentage()" in src
+        assert "setRestoreOverlayVisible(targetPercentage !== null)" in src
+        assert "epub.locations.generate().then" in src
+        assert "setRestoreOverlayVisible(false)" in src
+
+    def test_restore_overlay_has_reader_scoped_styles(self):
+        src = _read_file(READER_CSS)
+        assert ".reader-status-overlay" in src
+        assert ".reader-status-overlay[hidden]" in src
+        assert ".reader-status-message" in src
