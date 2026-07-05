@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version:  Calibre-Web Automated\n"
 "Report-Msgid-Bugs-To: https://github.com/crocodilestick/Calibre-Web-"
 "Automated\n"
-"POT-Creation-Date: 2026-05-31 14:55+0000\n"
+"POT-Creation-Date: 2026-07-05 12:56+0000\n"
 "PO-Revision-Date: 2020-06-09 21:11+0100\n"
 "Last-Translator: Lukas Heroudek <lukas.heroudek@gmail.com>\n"
 "Language-Team: \n"
@@ -6095,7 +6095,7 @@ msgstr "Odhlásit se"
 msgid "Switch Theme"
 msgstr "Standartní motiv"
 
-#: cps/templates/layout.html:166 cps/templates/read.html:78
+#: cps/templates/layout.html:166 cps/templates/read.html:81
 #: cps/templates/readcbr.html:70 cps/templates/readcbr.html:96
 #, fuzzy
 msgid "Settings"
@@ -6375,68 +6375,72 @@ msgstr "Calibre-Web katalog eknih"
 msgid "epub Reader"
 msgstr "Čtečka PDF"
 
-#: cps/templates/read.html:84 cps/templates/readcbr.html:104
+#: cps/templates/read.html:73
+msgid "Restoring position..."
+msgstr ""
+
+#: cps/templates/read.html:87 cps/templates/readcbr.html:104
 msgid "Light"
 msgstr "Světlý"
 
-#: cps/templates/read.html:86 cps/templates/readcbr.html:105
+#: cps/templates/read.html:89 cps/templates/readcbr.html:105
 msgid "Dark"
 msgstr "Tmavý"
 
-#: cps/templates/read.html:88
+#: cps/templates/read.html:91
 msgid "Sepia"
 msgstr ""
 
-#: cps/templates/read.html:90
+#: cps/templates/read.html:93
 #, fuzzy
 msgid "Black"
 msgstr "Zpět"
 
-#: cps/templates/read.html:95
+#: cps/templates/read.html:98
 msgid "Reflow text when sidebars are open."
 msgstr "Po otevření postranních panelů přeformátujte text."
 
-#: cps/templates/read.html:100
+#: cps/templates/read.html:103
 msgid "Font Sizes"
 msgstr ""
 
-#: cps/templates/read.html:105
-msgid "Font"
-msgstr ""
-
-#: cps/templates/read.html:106
-#, fuzzy
-msgid "Default"
-msgstr "Smazat"
-
-#: cps/templates/read.html:107
-msgid "Yahei"
-msgstr ""
-
 #: cps/templates/read.html:108
-msgid "SimSun"
+msgid "Font"
 msgstr ""
 
 #: cps/templates/read.html:109
 #, fuzzy
+msgid "Default"
+msgstr "Smazat"
+
+#: cps/templates/read.html:110
+msgid "Yahei"
+msgstr ""
+
+#: cps/templates/read.html:111
+msgid "SimSun"
+msgstr ""
+
+#: cps/templates/read.html:112
+#, fuzzy
 msgid "KaiTi"
 msgstr "Čekám"
 
-#: cps/templates/read.html:110
+#: cps/templates/read.html:113
 #, fuzzy
 msgid "Arial"
 msgstr "Svisle"
 
-#: cps/templates/read.html:113
+#: cps/templates/read.html:116
 #, fuzzy
 msgid "Spread"
 msgstr "Přečteno"
 
-#: cps/templates/read.html:114
+#: cps/templates/read.html:117
 msgid "Two columns"
 msgstr ""
 
-#: cps/templates/read.html:115
+#: cps/templates/read.html:118
 msgid "One column"
 msgstr ""
 
